@@ -6,3 +6,4 @@ export default function () {
     </>
   );
 }
+//agar kisi bhi component me not found page nhi hai toh next.js automatically root ke not found page ko render kar dega.
