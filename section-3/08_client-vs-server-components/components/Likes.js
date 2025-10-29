@@ -1,4 +1,16 @@
 // "use client";
+//by default its a server component
+//window & localstorage server pe kam nahi karta
+//usko karwane ke liye use client mark karo
+//async component sirf server pe chalega 
+
+//clinet - server // no error with use client
+
+//server ka code clinet par kabhi send nahi kiya jata
+//server ka client code client par send kiya jata hai pura(use clinet vala)
+
+//agar kisi bhi vajah se tune page ko client component kar diya to pura code client pe chala jayega(ex.jab page component me use client kiya to sabhi child component ke code client pe chale gaye.
+//but mujhe jaroorat thi page me client ko use karne ki.to ????----to tujhe jaha pe jaroorat hai usse alag component banakar use client mark karke fir import karta.)
 
 import { useState } from "react";
 
