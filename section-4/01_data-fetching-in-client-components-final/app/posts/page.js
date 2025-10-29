@@ -1,4 +1,6 @@
 "use client";
+//server se blank html file aayi hogi.sab kuch clinet show kiya hai api se.(client side rendering)
+//agar view page source karega to kuch nahi sirf empty html page aayega
 
 import { useEffect, useState } from "react";
 
