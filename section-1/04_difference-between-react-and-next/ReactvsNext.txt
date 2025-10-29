@@ -29,6 +29,11 @@ Bus! Automatic route ban gaya (/about).
 
 
 
+Rendering = Turning your React code into HTML that users can see in the browser.
+In Next.js, there are two main ways to render your pages:
+🪄 Static Rendering (HTML is created before user visits)
+⚡ Dynamic Rendering (HTML is created when user visits)
+
 ⚡ 3. Rendering Types
 | Type                                      | React.js      | Next.js            |
 | ----------------------------------------- | ------------- | ------------------ |
@@ -121,3 +126,5 @@ Next.js ek React framework hai jisse tum poora web app (frontend + backend + SEO
 
 Agar tumhe sirf ek single page app banana hai → React lo.
 Agar tumhe SEO, SSR, API routes, aur fast loading chahiye → Next.js best hai. 🚀
+
+
