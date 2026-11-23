@@ -3,7 +3,7 @@ import SlowComponent3s from "@/components/SlowComponent3s";
 import TodoItems from "@/components/TodoItems";
 import { Suspense } from "react";
 //suspense ke andar jo component async await use karta hai yani ki server component hai use dalo.
-//yaha pe to breakdown kar sakte hai lekin na kana ho to breakdown ? == to fir hame parallelly api call karna hoga == niche wala bhi waise parallely api call hi hai.
+//yaha pe to breakdown kar sakte hai lekin na karna ho to breakdown ? == to fir hame parallelly api call karna hoga == niche wala bhi waise parallely api call hi hai.
 const Todos = async () => {
   return (
     <>

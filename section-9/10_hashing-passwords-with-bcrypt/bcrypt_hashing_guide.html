@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Next.js Auth: Password Hashing with Bcrypt</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #070a11;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border-color: #334155;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --server-color: #10b981;
+      --server-bg: rgba(16, 185, 129, 0.12);
+      
+      --client-color: #38bdf8;
+      --client-bg: rgba(56, 189, 248, 0.12);
+
+      --danger-color: #f43f5e;
+      --danger-bg: rgba(244, 63, 94, 0.15);
+      
+      --warning-color: #fbbf24;
+      --warning-bg: rgba(251, 191, 36, 0.12);
+      
+      --purple-color: #a855f7;
+      --purple-bg: rgba(168, 85, 247, 0.12);
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+    }
+
+    .container { max-width: 1150px; margin: 0 auto; }
+
+    header.hero {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      background: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.15) 0%, rgba(7, 10, 17, 0) 70%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 2.5rem;
+    }
+
+    .badge-group { display: flex; justify-content: center; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .badge { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.35rem 0.85rem; border-radius: 9999px; border: 1px solid var(--border-color); }
+    .badge-server { background: var(--server-bg); color: var(--server-color); border-color: rgba(16, 185, 129, 0.4); }
+    .badge-warning { background: var(--warning-bg); color: var(--warning-color); }
+    .badge-danger { background: var(--danger-bg); color: var(--danger-color); }
+
+    h1 { font-size: 2.4rem; font-weight: 800; margin-bottom: 0.75rem; background: linear-gradient(135deg, #ffffff 40%, #10b981 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero-subtitle { font-size: 1.1rem; color: var(--text-muted); max-width: 800px; margin: 0 auto; }
+
+    .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 2rem; margin-bottom: 2.5rem; box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5); }
+    .card-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; }
+    .badge-icon { width: 40px; height: 40px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold; background: var(--server-bg); color: var(--server-color); border: 1px solid rgba(16, 185, 129, 0.4); }
+
+    .arch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 768px) { .arch-grid { grid-template-columns: 1fr; } }
+    .arch-box { border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.5rem; background: rgba(30, 41, 59, 0.4); }
+
+    .simulator-container { background: #030712; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.5rem; margin-top: 1rem; }
+    .sim-controls { display: flex; gap: 1rem; justify-content: center; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .sim-btn { padding: 0.75rem 1.5rem; border-radius: 9999px; border: none; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: all 0.2s ease; }
+    .sim-btn-hash { background: #10b981; color: #000; }
+    .sim-btn-compare { background: #38bdf8; color: #000; }
+
+    .mock-console { background: #020617; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-family: 'Fira Code', monospace; padding: 1rem; margin-top: 1rem; font-size: 0.85rem; line-height: 1.6; }
+
+    .code-panel { background: #050811; border: 1px solid var(--border-color); border-radius: var(--radius-md); overflow: hidden; }
+    .code-panel-header { padding: 0.65rem 1rem; background: #0d1322; border-bottom: 1px solid var(--border-color); font-size: 0.8rem; font-weight: 700; display: flex; justify-content: space-between; }
+    .code-content { padding: 1.25rem; font-family: 'Fira Code', monospace; font-size: 0.85rem; white-space: pre; overflow-x: auto; line-height: 1.6; }
+
+    .hl-kw { color: #f472b6; }
+    .hl-imp { color: #38bdf8; }
+    .hl-str { color: #a3e635; }
+    .hl-func { color: #fbbf24; }
+    .hl-comment { color: var(--text-dim); font-style: italic; }
+
+    .quiz-option { background: var(--bg-card-hover); border: 1px solid var(--border-color); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 0.75rem; }
+    .quiz-option.correct { background: var(--server-bg) !important; border-color: var(--server-color) !important; color: var(--server-color); }
+    .quiz-option.incorrect { background: var(--danger-bg) !important; border-color: var(--danger-color) !important; color: var(--danger-color); }
+    .radio-circle { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--text-dim); }
+
+    footer { text-align: center; padding: 2rem 0; color: var(--text-dim); font-size: 0.875rem; border-top: 1px solid var(--border-color); margin-top: 3rem; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- HERO -->
+    <header class="hero">
+      <div class="badge-group">
+        <span class="badge badge-server">bcrypt.hash</span>
+        <span class="badge badge-warning">bcrypt.compare</span>
+        <span class="badge badge-danger">One-Way Salted Hashing</span>
+      </div>
+      <h1>Password Hashing with Bcrypt in Next.js</h1>
+      <p class="hero-subtitle">
+        Master production password security: learn why storing plaintext passwords is catastrophic and how Bcrypt salt rounds prevent rainbow table &amp; timing attacks.
+      </p>
+    </header>
+
+    <!-- SECTION 1: TECHNICAL ARCHITECTURE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🛡️</div>
+        <h2>1. Plaintext Vulnerability vs Bcrypt Hashing</h2>
+      </div>
+
+      <div class="arch-grid">
+        <div class="arch-box" style="border-color: var(--danger-color); background: rgba(244, 63, 94, 0.05);">
+          <h3 style="color: var(--danger-color); margin-bottom: 0.5rem;">❌ Plaintext Password Catastrophe</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted);">
+            Storing <code>password: "mypassword123"</code> directly in MongoDB means a single database leak exposes all user passwords globally!<br>
+            It also allows rogue admins/developers to read user credentials in cleartext.
+          </p>
+        </div>
+
+        <div class="arch-box" style="border-color: var(--server-color); background: rgba(16, 185, 129, 0.05);">
+          <h3 style="color: var(--server-color); margin-bottom: 0.5rem;">✅ Bcrypt One-Way Salted Hashing</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted);">
+            • <code>bcrypt.hash(password, 10)</code> ➔ Converts plaintext password into an irreversible, salted hash string (e.g. <code>$2b$10$e8K...</code>).<br>
+            • <code>bcrypt.compare(plaintext, hash)</code> ➔ Cryptographically compares plaintext against the hash during login without ever decrypting it!
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: LIVE SIMULATOR -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">⚡</div>
+        <h2>2. Live Interactive Bcrypt Hashing &amp; Comparison Simulator</h2>
+      </div>
+
+      <div class="simulator-container">
+        <div class="sim-controls">
+          <button class="sim-btn sim-btn-hash" onclick="runSim('hash')">
+            🔒 Register: bcrypt.hash("myPassword123", 10)
+          </button>
+          <button class="sim-btn sim-btn-compare" onclick="runSim('compare')">
+            🔑 Login: bcrypt.compare("myPassword123", hash)
+          </button>
+        </div>
+
+        <div id="sim-console" class="mock-console">
+          Console Output: Click a button above to test Bcrypt hashing and comparison.
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: CODE ANATOMY -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🔍</div>
+        <h2>3. Code Breakdown: Registration &amp; Login Handlers</h2>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span>app/api/register/route.js</span>
+            <span style="color: var(--server-color);">Hashing Password on Registration</span>
+          </div>
+          <div class="code-content"><span class="hl-imp">import</span> bcrypt <span class="hl-imp">from</span> <span class="hl-str">"bcrypt"</span>;
+
+<span class="hl-kw">export async function</span> <span class="hl-func">POST</span>(request) {
+  <span class="hl-kw">const</span> { name, email, password } = <span class="hl-kw">await</span> request.<span class="hl-func">json</span>();
+
+  <span class="hl-comment">// 🔒 Hash plaintext password with 10 salt rounds:</span>
+  <span class="hl-kw">const</span> hashedPassword = <span class="hl-kw">await</span> bcrypt.<span class="hl-func">hash</span>(password, <span class="hl-str">10</span>);
+
+  <span class="hl-kw">const</span> newUser = <span class="hl-kw">await</span> User.<span class="hl-func">create</span>({
+    name,
+    email,
+    <span class="hl-str">password</span>: hashedPassword <span class="hl-comment">// 👈 Saved as "$2b$10$e8K..." in DB</span>
+  });
+
+  <span class="hl-kw">return</span> Response.<span class="hl-func">json</span>(newUser, { <span class="hl-str">status</span>: <span class="hl-str">201</span> });
+}</div>
+        </div>
+
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span>app/api/login/route.js</span>
+            <span style="color: var(--warning-color);">Comparing Password on Login</span>
+          </div>
+          <div class="code-content"><span class="hl-imp">import</span> bcrypt <span class="hl-imp">from</span> <span class="hl-str">"bcrypt"</span>;
+
+<span class="hl-kw">export async function</span> <span class="hl-func">POST</span>(request) {
+  <span class="hl-kw">const</span> { email, password } = <span class="hl-kw">await</span> request.<span class="hl-func">json</span>();
+  <span class="hl-kw">const</span> user = <span class="hl-kw">await</span> User.<span class="hl-func">findOne</span>({ email });
+
+  <span class="hl-comment">// 🛡️ Compare incoming plaintext password against DB hash:</span>
+  <span class="hl-kw">const</span> isPasswordValid = <span class="hl-kw">await</span> bcrypt.<span class="hl-func">compare</span>(password, user.password);
+
+  <span class="hl-kw">if</span> (!user || !isPasswordValid) {
+    <span class="hl-kw">return</span> Response.<span class="hl-func">json</span>({ <span class="hl-str">error</span>: <span class="hl-str">"Invalid Credentials!"</span> }, { <span class="hl-str">status</span>: <span class="hl-str">400</span> });
+  }
+
+  <span class="hl-comment">// Success: Proceed with Session creation</span>
+}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: KNOWLEDGE CHECK -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">❓</div>
+        <h2>4. Quick Knowledge Check</h2>
+      </div>
+
+      <div>
+        <h4 style="margin-bottom: 0.75rem;">Q1: Can a Bcrypt hash string be decrypted back into the original plaintext password?</h4>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>A) Yes, using bcrypt.decrypt().</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, true)">
+          <span class="radio-circle"></span>
+          <span>B) NO! Bcrypt is a ONE-WAY cryptographic hashing algorithm. Hashes cannot be reversed.</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>C) Yes, if you possess the secret env key.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 5: POORA SAAR / HINGLISH GOLDEN RULE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4);">💡</div>
+        <h2>5. Poora Saar &amp; Golden Master Rule (Hinglish)</h2>
+      </div>
+
+      <div style="padding: 1.5rem; background: #020617; border-left: 5px solid var(--purple-color); border-radius: var(--radius-md);">
+        <h3 style="color: var(--purple-color); margin-bottom: 0.75rem; font-size: 1.15rem;">💡 Password Hashing Ka Poora Saar:</h3>
+
+        <p style="font-size: 0.98rem; color: var(--text-main); line-height: 1.8; margin-bottom: 1rem;">
+          Database me plain text password rakhna Software Engineering me sabse bada paap (Fatal Vulnerability) hai!
+        </p>
+
+        <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 1.25rem;">
+          <strong>Bcrypt</strong> two-stage workflow par kaam karta hai:
+          <br>1. **Registration**: <code>await bcrypt.hash(password, 10)</code> run karke password ko <code>$2b$10$e8K...</code> me transform karke DB me save karte hain. (Yeh One-Way hai — isko reverse/decrypt KABHI nahi kiya ja sakta!).
+          <br>2. **Login**: <code>await bcrypt.compare(incomingPassword, dbHashedPassword)</code> chalate hain. Bcrypt internally same salt apply karke match verify karta hai aur boolean `true/false` return karta hai!
+        </p>
+
+        <div style="background: rgba(168, 85, 247, 0.1); border: 1px dashed var(--purple-color); padding: 1rem; border-radius: var(--radius-sm); font-size: 0.9rem;">
+          <strong style="color: var(--purple-color); display: block; margin-bottom: 0.5rem;">🔥 Password Security Golden Rules:</strong>
+          <ul style="padding-left: 1.2rem; line-height: 1.8; color: var(--text-main);">
+            <li><strong>1. Always Hash on Register 🔒</strong> ➔ Never execute <code>User.create()</code> with raw password text.</li>
+            <li><strong>2. Salt Rounds = 10 ⚡</strong> ➔ Use 10 salt rounds for optimal CPU performance vs security trade-off.</li>
+            <li><strong>3. Always Use bcrypt.compare 🛡️</strong> ➔ Never use string comparison (<code>===</code>) for hashed passwords.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Next.js Bcrypt Password Hashing Guide &bull; Section 9 Lesson 10
+    </footer>
+  </div>
+
+  <script>
+    let generatedHash = null;
+    function runSim(type) {
+      const consoleBox = document.getElementById('sim-console');
+      if (type === 'hash') {
+        generatedHash = "$2b$10$e8K9qZ2L8mXn0yP3rT1v4uW5xA6yB7zC8dD9eE0fF1gG2hH3iJ4kK";
+        consoleBox.innerHTML = `
+          <span style="color: var(--client-color)">[REGISTER INPUT] Plaintext Password: "myPassword123"</span><br>
+          <span style="color: var(--purple-color)">[BCRYPT HASHING] Executing await bcrypt.hash("myPassword123", 10)...</span><br>
+          <span style="color: var(--server-color)">[GENERATED HASH] "${generatedHash}"</span><br>
+          <span style="color: var(--server-color)">[DB SAVED] Saved Hash in MongoDB. Plaintext deleted from memory! ✅</span>
+        `;
+      } else {
+        if (generatedHash) {
+          consoleBox.innerHTML = `
+            <span style="color: var(--client-color)">[LOGIN INPUT] Incoming Password: "myPassword123"</span><br>
+            <span style="color: var(--purple-color)">[BCRYPT COMPARE] Executing await bcrypt.compare("myPassword123", DB_HASH)...</span><br>
+            <span style="color: var(--server-color)">[MATCH SUCCESS] bcrypt.compare() returned true! User Authenticated. ✅</span>
+          `;
+        } else {
+          consoleBox.innerHTML = `
+            <span style="color: var(--warning-color)">[NOTICE] Click 'Register: bcrypt.hash' first to generate a hash for testing comparison!</span>
+          `;
+        }
+      }
+    }
+
+    function checkAnswer(element, isCorrect) {
+      const parent = element.parentElement;
+      parent.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('correct', 'incorrect'));
+      if (isCorrect) element.classList.add('correct');
+      else element.classList.add('incorrect');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Next.js Guide: Understanding Middleware (middleware.js)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #070a11;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border-color: #334155;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --server-color: #10b981;
+      --server-bg: rgba(16, 185, 129, 0.12);
+      
+      --client-color: #38bdf8;
+      --client-bg: rgba(56, 189, 248, 0.12);
+
+      --danger-color: #f43f5e;
+      --danger-bg: rgba(244, 63, 94, 0.15);
+      --danger-border: rgba(244, 63, 94, 0.4);
+      
+      --warning-color: #fbbf24;
+      --warning-bg: rgba(251, 191, 36, 0.12);
+      
+      --purple-color: #a855f7;
+      --purple-bg: rgba(168, 85, 247, 0.12);
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+    }
+
+    .container { max-width: 1150px; margin: 0 auto; }
+
+    /* HERO HEADER */
+    header.hero {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      background: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.15) 0%, rgba(7, 10, 17, 0) 70%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 2.5rem;
+    }
+
+    .badge-group {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+    }
+
+    .badge-client { background: var(--client-bg); color: var(--client-color); border-color: rgba(56, 189, 248, 0.4); }
+    .badge-server { background: var(--server-bg); color: var(--server-color); border-color: rgba(16, 185, 129, 0.4); }
+    .badge-purple { background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4); }
+
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #ffffff 40%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .badge-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+      background: var(--client-bg);
+      color: var(--client-color);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+
+    /* PIPELINE GRID */
+    .pipeline-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    @media (max-width: 900px) { .pipeline-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 550px) { .pipeline-grid { grid-template-columns: 1fr; } }
+
+    .pipe-step {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+    }
+
+    .pipe-step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--client-bg);
+      color: var(--client-color);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.85rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .pipe-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+      color: var(--text-main);
+    }
+
+    .pipe-desc {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* SIMULATOR */
+    .simulator-container {
+      background: #030712;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    .sim-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      max-width: 550px;
+      margin: 0 auto 1.5rem auto;
+      background: #0b0f19;
+      padding: 1.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .sim-btn {
+      padding: 0.6rem 1.2rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      background: var(--bg-card-hover);
+      color: var(--text-main);
+      transition: all 0.2s ease;
+    }
+
+    .sim-btn.active {
+      background: var(--client-bg);
+      border-color: var(--client-color);
+      color: var(--client-color);
+    }
+
+    .mock-console {
+      background: #020617;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      font-family: 'Fira Code', monospace;
+      padding: 1rem;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+
+    /* CODE COMPARISON */
+    .code-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    @media (max-width: 850px) { .code-grid { grid-template-columns: 1fr; } }
+
+    .code-panel {
+      background: #050811;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .code-panel-header {
+      padding: 0.65rem 1rem;
+      background: #0d1322;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .code-content {
+      padding: 1.25rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      white-space: pre;
+      overflow-x: auto;
+      line-height: 1.6;
+    }
+
+    .hl-kw { color: #f472b6; }
+    .hl-imp { color: #38bdf8; }
+    .hl-str { color: #a3e635; }
+    .hl-func { color: #fbbf24; }
+    .hl-comment { color: var(--text-dim); font-style: italic; }
+    .hl-tag { color: #818cf8; }
+    .hl-purple { color: #a855f7; font-weight: bold; }
+    .hl-danger { color: #f43f5e; font-weight: bold; }
+    .hl-green { color: #10b981; font-weight: bold; }
+
+    /* QUIZ */
+    .quiz-option {
+      background: var(--bg-card-hover);
+      border: 1px solid var(--border-color);
+      padding: 1rem;
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .quiz-option.correct { background: var(--server-bg) !important; border-color: var(--server-color) !important; color: var(--server-color); }
+    .quiz-option.incorrect { background: var(--danger-bg) !important; border-color: var(--danger-color) !important; color: var(--danger-color); }
+    .radio-circle { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--text-dim); }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--text-dim);
+      font-size: 0.875rem;
+      border-top: 1px solid var(--border-color);
+      margin-top: 3rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- HERO -->
+    <header class="hero">
+      <div class="badge-group">
+        <span class="badge badge-client">middleware.js</span>
+        <span class="badge badge-purple">Edge Request Interception</span>
+        <span class="badge badge-server">Zero Flash Redirects</span>
+      </div>
+      <h1>Understanding Middleware in Next.js</h1>
+      <p class="hero-subtitle">
+        Master Edge Middleware in Next.js: intercept incoming HTTP requests before page rendering to enforce authentication rules, inspect cookies, and trigger instant server redirects.
+      </p>
+    </header>
+
+    <!-- SECTION 1: ARCHITECTURE PIPELINE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">⚙️</div>
+        <h2>1. Request Interception Pipeline</h2>
+      </div>
+
+      <div class="pipeline-grid">
+        <div class="pipe-step">
+          <div class="pipe-step-num">1</div>
+          <div class="pipe-title">Incoming Request</div>
+          <div class="pipe-desc">
+            Browser requests a URL (e.g. <code>/</code>, <code>/login</code>, <code>/register</code>).
+          </div>
+        </div>
+
+        <div class="pipe-step">
+          <div class="pipe-step-num">2</div>
+          <div class="pipe-title">Matcher Filter</div>
+          <div class="pipe-desc">
+            Next.js checks <code>config.matcher</code>. If URL matches, request routes to Edge Middleware.
+          </div>
+        </div>
+
+        <div class="pipe-step">
+          <div class="pipe-step-num">3</div>
+          <div class="pipe-title">Cookie &amp; Path Check</div>
+          <div class="pipe-desc">
+            <code>middleware(request)</code> reads <code>request.cookies.get("sid")</code> and <code>pathname</code>.
+          </div>
+        </div>
+
+        <div class="pipe-step">
+          <div class="pipe-step-num">4</div>
+          <div class="pipe-title">Redirect or Pass</div>
+          <div class="pipe-desc">
+            Executes <code>Response.redirect()</code> instantly OR allows request to reach page render!
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: MATCHERS AND COOKIE LOGIC -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4);">🛡️</div>
+        <h2>2. Route Protection Logic &amp; `config.matcher` Filter</h2>
+      </div>
+
+      <div style="font-family: 'Fira Code', monospace; background: #020617; padding: 1.25rem; border-radius: var(--radius-sm); font-size: 0.85rem; border-left: 4px solid var(--purple-color); margin-bottom: 1rem;">
+        // middleware.js<br>
+        export const middleware = (request) =&gt; {<br>
+        &nbsp;&nbsp;const hasSession = request.cookies.get("sid");<br>
+        &nbsp;&nbsp;const { pathname, origin } = request.nextUrl;<br><br>
+        &nbsp;&nbsp;if (hasSession) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;if (pathname === "/login" || pathname === "/register") {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return Response.redirect(new URL("/", origin)); // 🔒 Logged in user cannot visit login!<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        &nbsp;&nbsp;} else if (pathname === "/") {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;return Response.redirect(new URL("/login", origin)); // 🛑 Unauthenticated user redirected!<br>
+        &nbsp;&nbsp;}<br>
+        };<br><br>
+        export const config = {<br>
+        &nbsp;&nbsp;matcher: ["/", "/login", "/register"], // 👈 Limits execution to these routes only!<br>
+        };
+      </div>
+    </div>
+
+    <!-- SECTION 3: LIVE SIMULATOR -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🎮</div>
+        <h2>3. Live Interactive Middleware Route Interception Simulator</h2>
+      </div>
+
+      <div class="simulator-container">
+        <div class="sim-controls">
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">
+              Step 1: Set Cookie State (request.cookies.get("sid"))
+            </label>
+            <div class="btn-row">
+              <button id="btn-cookie-yes" class="sim-btn active" onclick="setCookieState(true)">
+                ✅ Logged In (`sid` Cookie Present)
+              </button>
+              <button id="btn-cookie-no" class="sim-btn" onclick="setCookieState(false)">
+                ❌ Unauthenticated (No `sid` Cookie)
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">
+              Step 2: Simulate Request URL Navigation
+            </label>
+            <div class="btn-row">
+              <button class="sim-btn" onclick="testRoute('/')">Navigate to "/"</button>
+              <button class="sim-btn" onclick="testRoute('/login')">Navigate to "/login"</button>
+              <button class="sim-btn" onclick="testRoute('/register')">Navigate to "/register"</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="sim-console" class="mock-console">
+          Console Log: Select Cookie state and click a route button to test middleware response.
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: CODE BREAKDOWN -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🔍</div>
+        <h2>4. Side-by-Side Comparison: Edge Middleware vs. Client useEffect</h2>
+      </div>
+
+      <div class="code-grid">
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span style="color: var(--server-color);">middleware.js (Edge Layer)</span>
+            <span>Zero Flashing</span>
+          </div>
+          <div class="code-content"><span class="hl-kw">export const</span> <span class="hl-func">middleware</span> = (request) =&gt; {
+  <span class="hl-kw">const</span> hasSid = request.cookies.<span class="hl-func">get</span>(<span class="hl-str">"sid"</span>);
+
+  <span class="hl-kw">if</span> (hasSid &amp;&amp; request.nextUrl.pathname === <span class="hl-str">"/login"</span>) {
+    <span class="hl-comment">// ⚡ Intercepts on Edge BEFORE page renders!</span>
+    <span class="hl-kw">return</span> Response.<span class="hl-func">redirect</span>(
+      <span class="hl-kw">new</span> <span class="hl-func">URL</span>(<span class="hl-str">"/"</span>, request.nextUrl.origin)
+    );
+  }
+};</div>
+        </div>
+
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span style="color: var(--danger-color);">Client useEffect (Bad Way)</span>
+            <span>Flashes Blank Page</span>
+          </div>
+          <div class="code-content"><span class="hl-str">"use client"</span>;
+
+<span class="hl-kw">export default function</span> <span class="hl-func">LoginPage</span>() {
+  <span class="hl-kw">const</span> router = <span class="hl-func">useRouter</span>();
+
+  <span class="hl-func">useEffect</span>(() =&gt; {
+    <span class="hl-comment">// ❌ Runs in browser AFTER page HTML has rendered!</span>
+    <span class="hl-comment">// Causes user to see screen flash/glitch.</span>
+    <span class="hl-kw">if</span> (isLoggedIn) router.<span class="hl-func">push</span>(<span class="hl-str">"/"</span>);
+  }, []);
+}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 5: KNOWLEDGE CHECK -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">❓</div>
+        <h2>5. Quick Knowledge Check</h2>
+      </div>
+
+      <div>
+        <h4 style="margin-bottom: 0.75rem;">Q1: What is the main performance advantage of Next.js Edge Middleware over Client-Side useEffect redirects?</h4>
+        <div class="quiz-option" onclick="checkAnswer(this, true)">
+          <span class="radio-circle"></span>
+          <span>A) Middleware intercepts requests on the Edge server before page HTML is generated, eliminating visual UI flashes and preventing unauthorized rendering.</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>B) Middleware automatically clears localStorage.</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>C) Client useEffect is faster than Edge server execution.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 6: POORA SAAR / HINGLISH GOLDEN RULE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4);">💡</div>
+        <h2>6. Poora Saar &amp; Golden Master Rule (Hinglish)</h2>
+      </div>
+
+      <div style="padding: 1.5rem; background: #020617; border-left: 5px solid var(--purple-color); border-radius: var(--radius-md);">
+        <h3 style="color: var(--purple-color); margin-bottom: 0.75rem; font-size: 1.15rem;">💡 Next.js Middleware Ka Poora Saar:</h3>
+
+        <p style="font-size: 0.98rem; color: var(--text-main); line-height: 1.8; margin-bottom: 1rem;">
+          <strong>Next.js Middleware (`middleware.js`)</strong> root directory me rehne wali ek aisi special file hai jo har incoming HTTP request ke beech me **Security Gatekeeper** ki tarah khadi hoti hai.
+        </p>
+
+        <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 1.25rem;">
+          1. <strong>Edge Execution (Zero UI Flash) ⚡</strong> ➔ Request Browser se nikalte hi sabse pehle Edge Network par `middleware.js` chalta hai (Page rendering hone se pehle). Agar user authenticated nahi hai, toh page HTML render hone se PEHLE hi direct `/login` redirect ho jata hai (bilkul bhi screen glitch nahi aata!).
+          <br>2. <strong>Cookie Inspection 🍪</strong> ➔ `request.cookies.get("sid")` se direct browser session cookies read kar sakte hain.
+          <br>3. <strong>Matcher Filter (`config.matcher`) 🎯</strong> ➔ Humesha `matcher: ["/", "/login", "/register"]` export karo taaki middleware static images (`.png`), CSS, ya JS chunks par fizool me na chale.
+        </p>
+
+        <div style="background: rgba(168, 85, 247, 0.1); border: 1px dashed var(--purple-color); padding: 1rem; border-radius: var(--radius-sm); font-size: 0.9rem;">
+          <strong style="color: var(--purple-color); display: block; margin-bottom: 0.5rem;">🔥 Middleware Golden Rules:</strong>
+          <ul style="padding-left: 1.2rem; line-height: 1.8; color: var(--text-main);">
+            <li><strong>1. Name &amp; Location 📁</strong> ➔ File name must be strictly `middleware.js` in root or `src/` directory.</li>
+            <li><strong>2. Always Export Matcher 🎯</strong> ➔ Define `export const config = { matcher: [...] }` to prevent running on static assets.</li>
+            <li><strong>3. Edge Redirects 🚀</strong> ➔ Use `Response.redirect(new URL("/path", request.nextUrl.origin))` for clean server-side redirects.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Next.js Middleware Guide &bull; Section 12 Lesson 01
+    </footer>
+  </div>
+
+  <script>
+    let hasCookie = true;
+
+    function setCookieState(state) {
+      hasCookie = state;
+      document.getElementById('btn-cookie-yes').classList.toggle('active', state);
+      document.getElementById('btn-cookie-no').classList.toggle('active', !state);
+      const consoleBox = document.getElementById('sim-console');
+      consoleBox.innerHTML = `Set request.cookies.get("sid") state to: <strong>${state ? 'PRESENT (Logged In)' : 'MISSING (Unauthenticated)'}</strong>`;
+    }
+
+    function testRoute(targetPath) {
+      const consoleBox = document.getElementById('sim-console');
+
+      let actionText = "";
+      if (hasCookie) {
+        if (targetPath === "/login" || targetPath === "/register") {
+          actionText = `<span style="color: var(--warning-color)">[MIDDLEWARE INTERCEPTED] 'sid' cookie is PRESENT!</span><br><span style="color: var(--purple-color)">➔ Response.redirect(new URL("/", origin))</span><br><span style="color: var(--server-color)">⚡ User redirected to "/" (Zero page flash!)</span>`;
+        } else {
+          actionText = `<span style="color: var(--server-color)">[MIDDLEWARE ALLOWED] 'sid' cookie is PRESENT. Target path "${targetPath}" is authorized!</span><br>➔ Rendered Page component normally.`;
+        }
+      } else {
+        if (targetPath === "/") {
+          actionText = `<span style="color: var(--danger-color)">[MIDDLEWARE INTERCEPTED] 'sid' cookie is MISSING! Protected route "/" blocked.</span><br><span style="color: var(--purple-color)">➔ Response.redirect(new URL("/login", origin))</span><br><span style="color: var(--danger-color)">⚡ User redirected to "/login"!</span>`;
+        } else {
+          actionText = `<span style="color: var(--server-color)">[MIDDLEWARE ALLOWED] Unauthenticated user allowed to visit public route "${targetPath}".</span>`;
+        }
+      }
+
+      consoleBox.innerHTML = `
+        <span style="color: var(--client-color)">[HTTP REQUEST] Target Path: "${targetPath}" | sid Cookie: ${hasCookie ? "PRESENT" : "MISSING"}</span><br>
+        ${actionText}
+      `;
+    }
+
+    function checkAnswer(element, isCorrect) {
+      const parent = element.parentElement;
+      parent.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('correct', 'incorrect'));
+      if (isCorrect) element.classList.add('correct');
+      else element.classList.add('incorrect');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Next.js Nested Route Error Handling &amp; Layout Propagation Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #070a11;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border-color: #334155;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --server-color: #10b981;
+      --server-bg: rgba(16, 185, 129, 0.12);
+      
+      --client-color: #38bdf8;
+      --client-bg: rgba(56, 189, 248, 0.12);
+
+      --danger-color: #f43f5e;
+      --danger-bg: rgba(244, 63, 94, 0.15);
+      --danger-border: rgba(244, 63, 94, 0.4);
+      
+      --warning-color: #fbbf24;
+      --warning-bg: rgba(251, 191, 36, 0.12);
+      
+      --purple-color: #a855f7;
+      --purple-bg: rgba(168, 85, 247, 0.12);
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+    }
+
+    .container { max-width: 1150px; margin: 0 auto; }
+
+    /* HERO HEADER */
+    header.hero {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      background: radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.15) 0%, rgba(7, 10, 17, 0) 70%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 2.5rem;
+    }
+
+    .badge-group {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+    }
+
+    .badge-purple { background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4); }
+    .badge-danger { background: var(--danger-bg); color: var(--danger-color); border-color: var(--danger-border); }
+    .badge-client { background: var(--client-bg); color: var(--client-color); border-color: rgba(56, 189, 248, 0.4); }
+
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #ffffff 40%, #a855f7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .badge-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+      background: var(--purple-bg);
+      color: var(--purple-color);
+      border: 1px solid rgba(168, 85, 247, 0.4);
+    }
+
+    /* ARCHITECTURE EXPLANATION SECTION */
+    .arch-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 768px) { .arch-grid { grid-template-columns: 1fr; } }
+
+    .arch-box {
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      background: rgba(30, 41, 59, 0.4);
+    }
+
+    .arch-box.nesting { border-color: var(--purple-color); background: var(--purple-bg); }
+    .arch-box.propagation { border-color: var(--client-color); background: var(--client-bg); }
+
+    .arch-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* TREE VISUALIZER */
+    .tree-container {
+      background: #030712;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+    }
+
+    .tree-controls {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .tree-btn {
+      padding: 0.65rem 1.25rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card-hover);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tree-btn.active {
+      background: var(--purple-bg);
+      color: var(--purple-color);
+      border-color: var(--purple-color);
+      box-shadow: 0 0 15px rgba(168, 85, 247, 0.3);
+    }
+
+    /* COMPONENT TREE DIAGRAM */
+    .nesting-diagram {
+      background: #020617;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      font-family: 'Fira Code', monospace;
+    }
+
+    .nest-box {
+      border: 2px dashed var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .nest-box.caught-here {
+      border-color: var(--danger-color) !important;
+      background: rgba(244, 63, 94, 0.15) !important;
+      box-shadow: 0 0 20px rgba(244, 63, 94, 0.3);
+    }
+
+    .nest-box.thrown-here {
+      border-color: var(--warning-color) !important;
+      background: rgba(251, 191, 36, 0.15) !important;
+    }
+
+    .nest-label {
+      font-size: 0.75rem;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 0.5rem;
+    }
+
+    .label-root { background: #3b82f6; color: #000; }
+    .label-error { background: #f43f5e; color: #fff; }
+    .label-layout { background: #a855f7; color: #fff; }
+    .label-page { background: #10b981; color: #000; }
+
+    .path-explanation {
+      margin-top: 1.25rem;
+      padding: 1rem;
+      background: rgba(168, 85, 247, 0.08);
+      border-left: 4px solid var(--purple-color);
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+    }
+
+    /* CODE BREAKDOWN */
+    .code-panel {
+      background: #050811;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .code-panel-header {
+      padding: 0.65rem 1rem;
+      background: #0d1322;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .code-content {
+      padding: 1.25rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      white-space: pre;
+      overflow-x: auto;
+      line-height: 1.6;
+    }
+
+    .hl-kw { color: #f472b6; }
+    .hl-imp { color: #38bdf8; }
+    .hl-str { color: #a3e635; }
+    .hl-func { color: #fbbf24; }
+    .hl-comment { color: var(--text-dim); font-style: italic; }
+    .hl-tag { color: #818cf8; }
+    .hl-danger { color: #f43f5e; font-weight: bold; }
+
+    /* QUIZ */
+    .quiz-option {
+      background: var(--bg-card-hover);
+      border: 1px solid var(--border-color);
+      padding: 1rem;
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .quiz-option.correct { background: var(--server-bg) !important; border-color: var(--server-color) !important; color: var(--server-color); }
+    .quiz-option.incorrect { background: var(--danger-bg) !important; border-color: var(--danger-color) !important; color: var(--danger-color); }
+    .radio-circle { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--text-dim); }
+
+    /* CHEAT SHEET MATRIX TABLE */
+    .matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .matrix-table th {
+      background: #0d1322;
+      color: var(--client-color);
+      text-align: left;
+      padding: 0.75rem 1rem;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .matrix-table td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      font-family: 'Fira Code', monospace;
+    }
+
+    .matrix-table tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--text-dim);
+      font-size: 0.875rem;
+      border-top: 1px solid var(--border-color);
+      margin-top: 3rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- HERO HEADER -->
+    <header class="hero">
+      <div class="badge-group">
+        <span class="badge badge-purple">Nested Error Boundaries</span>
+        <span class="badge badge-danger">Layout Error Catch Rule</span>
+        <span class="badge badge-client">Error Bubbling</span>
+      </div>
+      <h1>Handling Errors in Nested Routes</h1>
+      <p class="hero-subtitle">
+        Understand how errors bubble up through nested route segments and why an <code>error.js</code> file CANNOT catch errors in its own same-level <code>layout.js</code>.
+      </p>
+    </header>
+
+    <!-- SECTION 1: ARCHITECTURAL EXPLANATION -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🏗️</div>
+        <h2>1. Next.js App Router Component Tree Architecture</h2>
+      </div>
+
+      <div class="arch-grid">
+        <div class="arch-box nesting">
+          <div class="arch-title">
+            <span>⚙️ JSX Component Nesting Hierarchy</span>
+          </div>
+          <p>
+            When Next.js compiles route segments, it automatically wraps components in this exact order:<br>
+            <code>&lt;Layout&gt;</code> ➔ <code>&lt;ErrorBoundary (error.js)&gt;</code> ➔ <code>&lt;Page&gt;</code>
+          </p>
+        </div>
+
+        <div class="arch-box propagation">
+          <div class="arch-title">
+            <span>⬆️ Error Propagation (Bubbling Rule)</span>
+          </div>
+          <p>
+            If a component throws an error, React searches UPWARDS for the nearest parent Error Boundary. 
+            Because <code>layout.js</code> wraps <code>error.js</code> at the same folder level, same-level layout errors bubble UP to the parent folder's <code>error.js</code>!
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: INTERACTIVE BUBBLING SIMULATOR -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🌳</div>
+        <h2>2. Interactive Component Hierarchy &amp; Error Propagation Simulator</h2>
+      </div>
+
+      <p style="color: var(--text-muted); margin-bottom: 1.25rem;">
+        Click a button below to simulate an error in different files and watch where Next.js catches it:
+      </p>
+
+      <div class="tree-container">
+        <div class="tree-controls">
+          <button id="btn-page-err" class="tree-btn active" onclick="simulateScenario('page-error')">
+            1️⃣ Throw Error in app/blogs/[blogID]/page.js
+          </button>
+          <button id="btn-layout-err" class="tree-btn" onclick="simulateScenario('layout-error')">
+            2️⃣ Throw Error in app/blogs/[blogID]/layout.js ⚠️
+          </button>
+          <button id="btn-home-err" class="tree-btn" onclick="simulateScenario('home-error')">
+            3️⃣ Throw Error in app/page.js
+          </button>
+        </div>
+
+        <!-- COMPONENT TREE VISUALIZATION -->
+        <div class="nesting-diagram">
+          <!-- ROOT LAYOUT -->
+          <div class="nest-box" style="border-color: #3b82f6;">
+            <span class="nest-label label-root">app/layout.js (Root Layout)</span>
+
+            <!-- ROOT ERROR BOUNDARY -->
+            <div id="box-root-error" class="nest-box" style="border-color: #f43f5e;">
+              <span class="nest-label label-error">app/error.js (Root Error Boundary)</span>
+
+              <!-- BLOG LAYOUT -->
+              <div class="nest-box" style="border-color: #a855f7;">
+                <span class="nest-label label-layout">app/blogs/[blogID]/layout.js</span>
+
+                <!-- NESTED ERROR BOUNDARY -->
+                <div id="box-nested-error" class="nest-box" style="border-color: #f43f5e;">
+                  <span class="nest-label label-error">app/blogs/[blogID]/error.js</span>
+
+                  <!-- BLOG PAGE -->
+                  <div id="box-blog-page" class="nest-box" style="border-color: #10b981;">
+                    <span class="nest-label label-page">app/blogs/[blogID]/page.js</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="path-text" class="path-explanation">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: CODE BREAKDOWN -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🔍</div>
+        <h2>3. Code Breakdown: Lesson Files</h2>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span>app/blogs/[blogID]/layout.js</span>
+            <span style="color: var(--warning-color)">Throws Error in Layout</span>
+          </div>
+          <div class="code-content"><span class="hl-kw">export default function</span> <span class="hl-func">BlogLayout</span>({ children }) {
+  <span class="hl-comment">// ⚠️ THROWING ERROR IN LAYOUT:</span>
+  <span class="hl-danger">throw new Error("Error occurred in Blog Layout");</span>
+
+  <span class="hl-kw">return</span> (
+    &lt;<span class="hl-tag">div</span>&gt;
+      &lt;<span class="hl-tag">p</span>&gt;This is a Blog ID page.&lt;/<span class="hl-tag">p</span>&gt;
+      {children}
+    &lt;/<span class="hl-tag">div</span>&gt;
+  );
+}</div>
+        </div>
+
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span>app/error.js (Root Level Error Fallback)</span>
+            <span style="color: var(--server-color)">Catches same-level layout errors</span>
+          </div>
+          <div class="code-content"><span class="hl-str">"use client"</span>;
+
+<span class="hl-kw">export default function</span> <span class="hl-func">Error</span>() {
+  <span class="hl-kw">return</span> &lt;<span class="hl-tag">div</span>&gt;<span class="hl-danger">Server Side Error (Caught at Root Level)</span>&lt;/<span class="hl-tag">div</span>&gt;;
+}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: KNOWLEDGE CHECK -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">❓</div>
+        <h2>4. Quick Knowledge Check</h2>
+      </div>
+
+      <div>
+        <h4 style="margin-bottom: 0.75rem;">Q1: Can <code>app/blogs/[blogID]/error.js</code> catch an error thrown in <code>app/blogs/[blogID]/layout.js</code>?</h4>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>A) Yes, because error.js is in the same folder as layout.js.</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, true)">
+          <span class="radio-circle"></span>
+          <span>B) NO! Because in the component tree, layout.js wraps error.js, so layout errors bubble UP to app/error.js.</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>C) Yes, if layout.js is marked with "use client".</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEW SECTION 5: DEEP ARCHITECTURAL SUMMARY & MATRIX TABLE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--server-bg); color: var(--server-color); border-color: rgba(16, 185, 129, 0.4);">📊</div>
+        <h2>5. Deep Architectural Summary &amp; Error Propagation Matrix</h2>
+      </div>
+
+      <p style="color: var(--text-muted); margin-bottom: 1rem;">
+        Use this exact lookup matrix to instantly know where ANY thrown error will land in Next.js App Router:
+      </p>
+
+      <table class="matrix-table">
+        <thead>
+          <tr>
+            <th>Where Error is Thrown</th>
+            <th>Same Folder error.js</th>
+            <th>Where Error Lands (Caught By)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>app/blogs/[blogID]/page.js</code></td>
+            <td style="color: var(--server-color);">✅ Catches It</td>
+            <td><code>app/blogs/[blogID]/error.js</code></td>
+          </tr>
+          <tr>
+            <td><code>app/blogs/[blogID]/layout.js</code></td>
+            <td style="color: var(--danger-color);">❌ Bypasses It</td>
+            <td><code>app/error.js</code> (Parent Level)</td>
+          </tr>
+          <tr>
+            <td><code>app/blogs/page.js</code></td>
+            <td style="color: var(--server-color);">✅ Catches It</td>
+            <td><code>app/blogs/error.js</code> (or <code>app/error.js</code>)</td>
+          </tr>
+          <tr>
+            <td><code>app/layout.js</code> (Root Layout)</td>
+            <td style="color: var(--danger-color);">❌ Bypasses app/error.js</td>
+            <td><code>app/global-error.js</code> (Root Global Boundary)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="margin-top: 1.5rem; padding: 1.5rem; background: #020617; border-left: 5px solid var(--purple-color); border-radius: var(--radius-md);">
+        <h3 style="color: var(--purple-color); margin-bottom: 0.75rem; font-size: 1.15rem;">💡 Key Takeaway to Master Next.js Error Handling (Poora Saar / Golden Rule):</h3>
+        
+        <p style="font-size: 0.98rem; color: var(--text-main); line-height: 1.8; margin-bottom: 1rem;">
+          Aapka <code>error.js</code> bas unhi components ka error pakad sakta hai jo uske <strong>NEECHE (downstream `{children}` slot ke andar)</strong> render hote hain!
+        </p>
+
+        <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 1.25rem;">
+          Next.js me ek folder ka <code>layout.js</code> apne same-folder ke <code>error.js</code> ko apne andar wrap karta hai. 
+          Matlab <code>layout.js</code> <strong>UPPAR (Parent)</strong> hai aur <code>error.js</code> <strong>NEECHE (Child)</strong> hai! 
+          Isiliye agar <code>layout.js</code> khud phata (error diya), toh neeche baitha <code>error.js</code> use nahi bacha sakta — woh error uchhal kar UPPAR parent folder ke <code>error.js</code> par chala jata hai!
+        </p>
+
+        <div style="background: rgba(168, 85, 247, 0.1); border: 1px dashed var(--purple-color); padding: 1rem; border-radius: var(--radius-sm); font-size: 0.9rem;">
+          <strong style="color: var(--purple-color); display: block; margin-bottom: 0.5rem;">🔥 The 3 Golden Rules (Aapka Quick Cheat Code):</strong>
+          <ul style="padding-left: 1.2rem; line-height: 1.8; color: var(--text-main);">
+            <li><strong>1. 📄 <code>page.js</code> Phata 💥</strong> ➔ Same folder ka <code>error.js</code> bacha lega! ✅</li>
+            <li><strong>2. 🖼️ Same-folder <code>layout.js</code> Phata 💥</strong> ➔ Same folder ka <code>error.js</code> BYPASS ho jayega! UPPAR wala parent <code>error.js</code> bacha-ega! 🚀</li>
+            <li><strong>3. 🌐 Root <code>app/layout.js</code> Phata 💥</strong> ➔ <code>app/error.js</code> BYPASS ho jayega! Sirf <code>app/global-error.js</code> bacha sakta hai! 🛡️</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Next.js Nested Error Handling Guide &bull; Section 5 Lesson 03
+    </footer>
+  </div>
+
+  <script>
+    function simulateScenario(type) {
+      document.querySelectorAll('.tree-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.nest-box').forEach(box => box.classList.remove('caught-here', 'thrown-here'));
+
+      const pathText = document.getElementById('path-text');
+
+      if (type === 'page-error') {
+        document.getElementById('btn-page-err').classList.add('active');
+        document.getElementById('box-blog-page').classList.add('thrown-here');
+        document.getElementById('box-nested-error').classList.add('caught-here');
+
+        pathText.innerHTML = `
+          <strong>🎯 Execution Path:</strong> <code>app/blogs/[blogID]/page.js</code> threw an error.<br>
+          <span style="color: var(--server-color)">✅ Local Catch:</span> <code>app/blogs/[blogID]/error.js</code> is directly wrapping page.js, so it catches the error locally! The outer layouts &amp; pages remain 100% fine.
+        `;
+      } else if (type === 'layout-error') {
+        document.getElementById('btn-layout-err').classList.add('active');
+        document.getElementById('box-nested-error').style.borderColor = '#334155';
+        document.getElementById('box-root-error').classList.add('caught-here');
+
+        pathText.innerHTML = `
+          <strong>⚠️ Execution Path:</strong> <code>app/blogs/[blogID]/layout.js</code> threw an error.<br>
+          <span style="color: var(--danger-color)">❌ Bypassed Same-Folder error.js:</span> Because <code>layout.js</code> wraps <code>error.js</code> in the React component tree, <code>[blogID]/error.js</code> CANNOT catch it!<br>
+          <span style="color: var(--purple-color)">🚀 Bubbled Up:</span> Error bubbled UP to <code>app/error.js</code> (Root Error Boundary)!
+        `;
+      } else if (type === 'home-error') {
+        document.getElementById('btn-home-err').classList.add('active');
+        document.getElementById('box-root-error').classList.add('caught-here');
+
+        pathText.innerHTML = `
+          <strong>🎯 Execution Path:</strong> <code>app/page.js</code> threw an error.<br>
+          <span style="color: var(--server-color)">✅ Root Catch:</span> Caught by <code>app/error.js</code> at the root level!
+        `;
+      }
+    }
+
+    function checkAnswer(element, isCorrect) {
+      const parent = element.parentElement;
+      parent.querySelectorAll('.quiz-option').forEach(el => {
+        el.classList.remove('correct', 'incorrect');
+      });
+
+      if (isCorrect) {
+        element.classList.add('correct');
+      } else {
+        element.classList.add('incorrect');
+      }
+    }
+
+    // Default scenario
+    simulateScenario('page-error');
+  </script>
+</body>
+</html>

@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Next.js Guide: Calling Server Actions Manually &amp; Client Validation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #070a11;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border-color: #334155;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --server-color: #10b981;
+      --server-bg: rgba(16, 185, 129, 0.12);
+      
+      --client-color: #38bdf8;
+      --client-bg: rgba(56, 189, 248, 0.12);
+
+      --danger-color: #f43f5e;
+      --danger-bg: rgba(244, 63, 94, 0.15);
+      --danger-border: rgba(244, 63, 94, 0.4);
+      
+      --warning-color: #fbbf24;
+      --warning-bg: rgba(251, 191, 36, 0.12);
+      
+      --purple-color: #a855f7;
+      --purple-bg: rgba(168, 85, 247, 0.12);
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+    }
+
+    .container { max-width: 1150px; margin: 0 auto; }
+
+    /* HERO HEADER */
+    header.hero {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      background: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.15) 0%, rgba(7, 10, 17, 0) 70%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 2.5rem;
+    }
+
+    .badge-group {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+    }
+
+    .badge-client { background: var(--client-bg); color: var(--client-color); border-color: rgba(56, 189, 248, 0.4); }
+    .badge-server { background: var(--server-bg); color: var(--server-color); border-color: rgba(16, 185, 129, 0.4); }
+    .badge-purple { background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4); }
+
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #ffffff 40%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .badge-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+      background: var(--client-bg);
+      color: var(--client-color);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+
+    /* ARCHITECTURE GRID */
+    .arch-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 768px) { .arch-grid { grid-template-columns: 1fr; } }
+
+    .arch-box {
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      background: rgba(30, 41, 59, 0.4);
+    }
+
+    .arch-box.direct { border-color: var(--warning-color); background: var(--warning-bg); }
+    .arch-box.manual { border-color: rgba(56, 189, 248, 0.4); background: var(--client-bg); }
+
+    .arch-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* SIMULATOR */
+    .simulator-container {
+      background: #030712;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    .sim-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      max-width: 500px;
+      margin: 0 auto 1.5rem auto;
+      background: #0b0f19;
+      padding: 1.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .form-group label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .form-group input {
+      padding: 0.65rem 0.85rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: #020617;
+      color: var(--text-main);
+      font-family: 'Fira Code', monospace;
+      font-size: 0.9rem;
+    }
+
+    .err-msg {
+      font-size: 0.75rem;
+      color: var(--danger-color);
+      font-family: 'Fira Code', monospace;
+    }
+
+    .sim-btn-submit {
+      padding: 0.75rem 1.5rem;
+      border-radius: 9999px;
+      border: none;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      background: linear-gradient(135deg, #38bdf8 0%, #a855f7 100%);
+      color: #fff;
+      transition: all 0.2s ease;
+    }
+
+    .mock-console {
+      background: #020617;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      font-family: 'Fira Code', monospace;
+      padding: 1rem;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+
+    /* CODE COMPARISON */
+    .code-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    @media (max-width: 850px) { .code-grid { grid-template-columns: 1fr; } }
+
+    .code-panel {
+      background: #050811;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .code-panel-header {
+      padding: 0.65rem 1rem;
+      background: #0d1322;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .code-content {
+      padding: 1.25rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      white-space: pre;
+      overflow-x: auto;
+      line-height: 1.6;
+    }
+
+    .hl-kw { color: #f472b6; }
+    .hl-imp { color: #38bdf8; }
+    .hl-str { color: #a3e635; }
+    .hl-func { color: #fbbf24; }
+    .hl-comment { color: var(--text-dim); font-style: italic; }
+    .hl-tag { color: #818cf8; }
+    .hl-purple { color: #a855f7; font-weight: bold; }
+    .hl-danger { color: #f43f5e; font-weight: bold; }
+    .hl-green { color: #10b981; font-weight: bold; }
+
+    /* QUIZ */
+    .quiz-option {
+      background: var(--bg-card-hover);
+      border: 1px solid var(--border-color);
+      padding: 1rem;
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .quiz-option.correct { background: var(--server-bg) !important; border-color: var(--server-color) !important; color: var(--server-color); }
+    .quiz-option.incorrect { background: var(--danger-bg) !important; border-color: var(--danger-color) !important; color: var(--danger-color); }
+    .radio-circle { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--text-dim); }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--text-dim);
+      font-size: 0.875rem;
+      border-top: 1px solid var(--border-color);
+      margin-top: 3rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- HERO -->
+    <header class="hero">
+      <div class="badge-group">
+        <span class="badge badge-client">Manual Invocations</span>
+        <span class="badge badge-purple">handleFormAction Wrapper</span>
+        <span class="badge badge-server">Client-Side Validation</span>
+      </div>
+      <h1>Calling Server Actions Manually &amp; Client Validation</h1>
+      <p class="hero-subtitle">
+        Understand how wrapping Server Actions inside custom client event handlers allows executing client-side form validation and sending custom JavaScript objects.
+      </p>
+    </header>
+
+    <!-- SECTION 1: ARCHITECTURE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">⚙️</div>
+        <h2>1. Direct Binding vs. Manual Wrapper Handler</h2>
+      </div>
+
+      <div class="arch-grid">
+        <div class="arch-box direct">
+          <div class="arch-title">
+            <span>⚡ Direct Binding (&lt;form action={formAction}&gt;)</span>
+          </div>
+          <p style="font-size: 0.9rem; color: var(--text-muted);">
+            Directly submits raw <code>FormData</code> to the server without any client-side validation check.<br>
+            Sends network request immediately even if fields are invalid or empty!
+          </p>
+        </div>
+
+        <div class="arch-box manual">
+          <div class="arch-title">
+            <span>🛡️ Manual Wrapper (&lt;form action={handleFormAction}&gt;)</span>
+          </div>
+          <p style="font-size: 0.9rem; color: var(--text-muted);">
+            Intercepts submission in <code>handleFormAction</code>.<br>
+            Checks rules (e.g. name &ge; 3 chars, password &ge; 8 chars).<br>
+            If invalid ➔ Stops execution &amp; sets error state!<br>
+            If valid ➔ Manually invokes <code>formAction(newUser)</code>!
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: THE WRAPPER FLOW -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4);">🔄</div>
+        <h2>2. How Custom Objects Change the Server Action Signature</h2>
+      </div>
+
+      <p style="font-size: 0.95rem; color: var(--text-main); line-height: 1.7; margin-bottom: 1rem;">
+        When you manually call <code>formAction(newUser)</code> passing a custom object <code>{ name, email, password }</code> instead of raw <code>FormData</code>, the Server Action receives that custom object as its second argument!
+      </p>
+
+      <div style="font-family: 'Fira Code', monospace; background: #020617; padding: 1rem; border-radius: var(--radius-sm); font-size: 0.85rem; border-left: 4px solid var(--purple-color);">
+        // app/actions/userAction.js<br>
+        "use server";<br><br>
+        export async function registerUser(_, <span style="color: #38bdf8; font-weight: bold;">formData</span>) {<br>
+        &nbsp;&nbsp;// formData is now the custom JS object: { name: "...", email: "...", password: "..." }<br>
+        &nbsp;&nbsp;console.log(<span style="color: #a7f3d0;">formData.email</span>); // 👈 Direct property access instead of .get()!<br>
+        &nbsp;&nbsp;return { message: `${formData.email} registered` };<br>
+        }
+      </div>
+    </div>
+
+    <!-- SECTION 3: LIVE SIMULATOR -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🎮</div>
+        <h2>3. Live Interactive Client Validation &amp; Manual Action Simulator</h2>
+      </div>
+
+      <div class="simulator-container">
+        <div class="sim-form">
+          <div class="form-group">
+            <label>Name (Min 3 chars)</label>
+            <input id="input-name" type="text" value="Ab">
+            <div id="err-name" class="err-msg"></div>
+          </div>
+
+          <div class="form-group">
+            <label>Email (Must contain @)</label>
+            <input id="input-email" type="text" value="invalid-email">
+            <div id="err-email" class="err-msg"></div>
+          </div>
+
+          <div class="form-group">
+            <label>Password (Min 8 chars)</label>
+            <input id="input-password" type="password" value="123">
+            <div id="err-password" class="err-msg"></div>
+          </div>
+
+          <button class="sim-btn-submit" onclick="simulateManualAction()">
+            Submit Form (handleFormAction)
+          </button>
+        </div>
+
+        <div id="sim-console" class="mock-console">
+          Console Log: System initialized. Click Submit to test validation.
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: CODE BREAKDOWN -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🔍</div>
+        <h2>4. Side-by-Side Code Breakdown</h2>
+      </div>
+
+      <div class="code-grid">
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span style="color: var(--client-color);">app/register/page.js</span>
+            <span>Client Component Wrapper</span>
+          </div>
+          <div class="code-content"><span class="hl-str">"use client"</span>;
+
+<span class="hl-kw">export default function</span> <span class="hl-func">RegisterPage</span>() {
+  <span class="hl-kw">const</span> [state, formAction, isPending] = <span class="hl-func">useActionState</span>(registerUser, {});
+  <span class="hl-kw">const</span> [errors, setErrors] = <span class="hl-func">useState</span>({});
+
+  <span class="hl-comment">// 🛡️ Custom Client Wrapper Handler:</span>
+  <span class="hl-kw">const</span> <span class="hl-func">handleFormAction</span> = <span class="hl-kw">async</span> (formData) =&gt; {
+    <span class="hl-kw">const</span> newUser = {
+      <span class="hl-str">name</span>: formData.<span class="hl-func">get</span>(<span class="hl-str">"name"</span>),
+      <span class="hl-str">email</span>: formData.<span class="hl-func">get</span>(<span class="hl-str">"email"</span>),
+      <span class="hl-str">password</span>: formData.<span class="hl-func">get</span>(<span class="hl-str">"password"</span>),
+    };
+
+    <span class="hl-comment">// 1️⃣ Client-Side Validation:</span>
+    <span class="hl-kw">const</span> formErrors = {};
+    <span class="hl-kw">if</span> (newUser.name.length &lt; <span class="hl-str">3</span>) formErrors.name = <span class="hl-str">"Min 3 chars"</span>;
+    <span class="hl-kw">if</span> (!newUser.email.includes(<span class="hl-str">"@"</span>)) formErrors.email = <span class="hl-str">"Invalid email"</span>;
+    <span class="hl-kw">if</span> (newUser.password.length &lt; <span class="hl-str">8</span>) formErrors.password = <span class="hl-str">"Min 8 chars"</span>;
+
+    <span class="hl-kw">if</span> (Object.keys(formErrors).length) {
+      <span class="hl-kw">return</span> <span class="hl-func">setErrors</span>(formErrors); <span class="hl-comment">// 🛑 BLOCK REQUEST!</span>
+    }
+
+    <span class="hl-func">setErrors</span>({});
+    <span class="hl-comment">// 2️⃣ Manually trigger Server Action with custom object:</span>
+    <span class="hl-purple">formAction</span>(newUser);
+  };
+
+  <span class="hl-kw">return</span> &lt;<span class="hl-tag">form</span> action={<span class="hl-func">handleFormAction</span>}&gt;...&lt;/<span class="hl-tag">form</span>&gt;;
+}</div>
+        </div>
+
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span style="color: var(--server-color);">app/actions/userAction.js</span>
+            <span>Server Action</span>
+          </div>
+          <div class="code-content"><span class="hl-green">"use server"</span>;
+
+<span class="hl-kw">export async function</span> <span class="hl-func">registerUser</span>(_, <span class="hl-purple">formData</span>) {
+  <span class="hl-comment">// formData is the custom JS object passed from formAction(newUser):</span>
+  console.log(formData); 
+  <span class="hl-comment">// { name: "ProCodrr", email: "...", password: "..." }</span>
+
+  <span class="hl-kw">return</span> { <span class="hl-str">message</span>: <span class="hl-str">`</span><span class="hl-str">${formData.email}</span><span class="hl-str"> registered`</span> };
+}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 5: KNOWLEDGE CHECK -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">❓</div>
+        <h2>5. Quick Knowledge Check</h2>
+      </div>
+
+      <div>
+        <h4 style="margin-bottom: 0.75rem;">Q1: What is the main benefit of wrapping a Server Action inside a custom client handler (`handleFormAction`)?</h4>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>A) It automatically encrypts the MongoDB password.</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, true)">
+          <span class="radio-circle"></span>
+          <span>B) It allows performing client-side validation to block invalid requests before making a server network call.</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>C) It replaces the useActionState hook.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 6: POORA SAAR / HINGLISH GOLDEN RULE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4);">💡</div>
+        <h2>6. Poora Saar &amp; Golden Master Rule (Hinglish)</h2>
+      </div>
+
+      <div style="padding: 1.5rem; background: #020617; border-left: 5px solid var(--purple-color); border-radius: var(--radius-md);">
+        <h3 style="color: var(--purple-color); margin-bottom: 0.75rem; font-size: 1.15rem;">💡 Calling Server Actions Manually Ka Poora Saar:</h3>
+
+        <p style="font-size: 0.98rem; color: var(--text-main); line-height: 1.8; margin-bottom: 1rem;">
+          Jab aap `<form action={formAction}>` ko direct bind karte ho, toh invalid inputs par bhi network request server par chali jaati hai.
+        </p>
+
+        <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 1.25rem;">
+          Isse bachne ke liye hum ek custom wrapper handler `handleFormAction` banate hain:
+          <br>1. Client Form par `<form action={handleFormAction}>` bind karte hain.
+          <br>2. `handleFormAction` pehle client-side JS rules check karta hai (Name length, Email format, Password length).
+          <br>3. Agar koi error mila ➔ Function wahin `return` karke <strong>Network Request ko STOPS (Block)</strong> kar deta hai!
+          <br>4. Agar saare checks pass ho gaye ➔ Tab manually <code>formAction(newUser)</code> ko custom object ke saath invoke karta hai!
+        </p>
+
+        <div style="background: rgba(168, 85, 247, 0.1); border: 1px dashed var(--purple-color); padding: 1rem; border-radius: var(--radius-sm); font-size: 0.9rem;">
+          <strong style="color: var(--purple-color); display: block; margin-bottom: 0.5rem;">🔥 Manual Action Golden Pattern:</strong>
+          <ul style="padding-left: 1.2rem; line-height: 1.8; color: var(--text-main);">
+            <li><strong>1. Client Validation First 🛡️</strong> ➔ Validate form fields before triggering `formAction()`. Saves unnecessary server resources.</li>
+            <li><strong>2. Custom Payload Support 📦</strong> ➔ Calling <code>formAction(customObj)</code> passes custom JS objects directly to the Server Action.</li>
+            <li><strong>3. Direct Property Access 🔑</strong> ➔ In Server Action, access fields directly via `formData.email` instead of `formData.get("email")`.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Next.js Calling Server Actions Manually Guide &bull; Section 11 Lesson 04
+    </footer>
+  </div>
+
+  <script>
+    function simulateManualAction() {
+      const name = document.getElementById('input-name').value;
+      const email = document.getElementById('input-email').value;
+      const password = document.getElementById('input-password').value;
+      
+      const errName = document.getElementById('err-name');
+      const errEmail = document.getElementById('err-email');
+      const errPassword = document.getElementById('err-password');
+      const consoleBox = document.getElementById('sim-console');
+
+      errName.innerText = "";
+      errEmail.innerText = "";
+      errPassword.innerText = "";
+
+      const formErrors = {};
+      if (name.length < 3) formErrors.name = "Name should be at least 3 characters";
+      if (!email.includes("@")) formErrors.email = "Please enter a valid email";
+      if (password.length < 8) formErrors.password = "Password should be at least 8 characters";
+
+      if (Object.keys(formErrors).length) {
+        if (formErrors.name) errName.innerText = formErrors.name;
+        if (formErrors.email) errEmail.innerText = formErrors.email;
+        if (formErrors.password) errPassword.innerText = formErrors.password;
+
+        consoleBox.innerHTML = `
+          <span style="color: var(--danger-color)">[CLIENT VALIDATION FAILED] Blocked on browser!</span><br>
+          <span style="color: var(--warning-color)">[ERRORS] ${JSON.stringify(formErrors)}</span><br>
+          <span style="color: var(--danger-color)">🛑 Server Action WAS NOT CALLED! Zero network requests sent.</span>
+        `;
+        return;
+      }
+
+      consoleBox.innerHTML = `
+        <span style="color: var(--server-color)">[CLIENT VALIDATION PASSED] All checks passed!</span><br>
+        <span style="color: var(--purple-color)">[MANUAL CALL] Executing formAction({ name: "${name}", email: "${email}", password: "${password}" })</span><br>
+        <span style="color: var(--server-color)">[SERVER LOG] Received custom JS Object in registerUser(_, formData)!</span><br>
+        <span style="color: var(--server-color)">[SERVER RESPONSE] { message: "${email} registered" } ✅</span>
+      `;
+    }
+
+    function checkAnswer(element, isCorrect) {
+      const parent = element.parentElement;
+      parent.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('correct', 'incorrect'));
+      if (isCorrect) element.classList.add('correct');
+      else element.classList.add('incorrect');
+    }
+  </script>
+</body>
+</html>

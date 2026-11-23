@@ -1,0 +1,1905 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>React.js vs Next.js & The Deep Hydration Guide</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <!-- FontAwesome for Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <style>
+      :root {
+        --bg-dark: #0a0c10;
+        --bg-card: #12161f;
+        --bg-card-hover: #1a202c;
+        --bg-code: #0d1117;
+        --border-color: #232d3f;
+        --border-highlight: #3b82f6;
+
+        --text-main: #f3f4f6;
+        --text-muted: #9ca3af;
+        --text-accent: #60a5fa;
+
+        --react-blue: #61dafb;
+        --next-black: #000000;
+        --next-purple: #a855f7;
+        --accent-green: #10b981;
+        --accent-orange: #f59e0b;
+        --accent-red: #ef4444;
+        --accent-cyan: #06b6d4;
+
+        --gradient-react: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+        --gradient-next: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%);
+        --gradient-hydration: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+        --gradient-hero: linear-gradient(
+          135deg,
+          #1e1b4b 0%,
+          #0f172a 50%,
+          #090d16 100%
+        );
+
+        --radius-lg: 16px;
+        --radius-md: 10px;
+        --radius-sm: 6px;
+        --shadow-glow: 0 10px 30px -10px rgba(97, 218, 251, 0.25);
+        --shadow-glow-purple: 0 10px 30px -10px rgba(168, 85, 247, 0.25);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
+          sans-serif;
+        background-color: var(--bg-dark);
+        color: var(--text-main);
+        line-height: 1.6;
+        overflow-x: hidden;
+      }
+
+      /* Scrollbar */
+      ::-webkit-scrollbar {
+        width: 10px;
+      }
+      ::-webkit-scrollbar-track {
+        background: var(--bg-dark);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #1f293d;
+        border-radius: 5px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #374151;
+      }
+
+      /* Sticky Navigation */
+      nav {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background: rgba(10, 12, 16, 0.85);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border-color);
+        padding: 1rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .nav-logo {
+        font-family: "Outfit", sans-serif;
+        font-size: 1.3rem;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: linear-gradient(
+          90deg,
+          var(--react-blue),
+          var(--next-purple)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 1.5rem;
+        list-style: none;
+      }
+
+      .nav-links a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: color 0.2s ease;
+      }
+
+      .nav-links a:hover {
+        color: var(--react-blue);
+      }
+
+      /* Container */
+      .container {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+
+      /* Hero Section */
+      .hero {
+        background: var(--gradient-hero);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 3.5rem 2.5rem;
+        margin-top: 1rem;
+        margin-bottom: 3rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      }
+
+      .hero::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(
+          circle,
+          rgba(97, 218, 251, 0.12) 0%,
+          rgba(0, 0, 0, 0) 70%
+        );
+        border-radius: 50%;
+        pointer-events: none;
+      }
+
+      .hero::after {
+        content: "";
+        position: absolute;
+        bottom: -50%;
+        left: -20%;
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(
+          circle,
+          rgba(168, 85, 247, 0.12) 0%,
+          rgba(0, 0, 0, 0) 70%
+        );
+        border-radius: 50%;
+        pointer-events: none;
+      }
+
+      .hero-badge-container {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.25rem;
+      }
+
+      .badge {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        padding: 0.35rem 0.85rem;
+        border-radius: 30px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+
+      .badge.react {
+        color: var(--react-blue);
+        border-color: rgba(97, 218, 251, 0.3);
+      }
+      .badge.next {
+        color: #f8fafc;
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+      .badge.hydration {
+        color: var(--next-purple);
+        border-color: rgba(168, 85, 247, 0.3);
+      }
+
+      .hero h1 {
+        font-family: "Outfit", sans-serif;
+        font-size: 3rem;
+        font-weight: 800;
+        line-height: 1.15;
+        margin-bottom: 1rem;
+      }
+
+      .hero h1 span.react-text {
+        color: var(--react-blue);
+      }
+      .hero h1 span.next-text {
+        color: #ffffff;
+        text-decoration: underline var(--next-purple);
+      }
+
+      .hero p {
+        font-size: 1.15rem;
+        color: var(--text-muted);
+        max-width: 800px;
+        margin-bottom: 2rem;
+      }
+
+      .hero-hinglish-note {
+        background: rgba(16, 185, 129, 0.08);
+        border-left: 4px solid var(--accent-green);
+        padding: 1rem 1.25rem;
+        border-radius: 0 var(--radius-md) var(--radius-md) 0;
+        font-size: 0.95rem;
+        color: #d1fae5;
+      }
+
+      /* Section Headings */
+      .section-header {
+        margin-bottom: 2rem;
+        margin-top: 1rem;
+      }
+
+      .section-header h2 {
+        font-family: "Outfit", sans-serif;
+        font-size: 2rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .section-header p {
+        color: var(--text-muted);
+        margin-top: 0.5rem;
+        font-size: 1rem;
+      }
+
+      /* Card Component */
+      .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 1.75rem;
+        transition: all 0.25s ease;
+      }
+
+      .card:hover {
+        border-color: #3b82f666;
+        transform: translateY(-2px);
+      }
+
+      /* Grid Layouts */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+      }
+
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+      }
+
+      .grid-4 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 1.25rem;
+        margin-bottom: 2.5rem;
+      }
+
+      /* Comparison Table */
+      .table-wrapper {
+        overflow-x: auto;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        margin-bottom: 3rem;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+      }
+
+      th,
+      td {
+        padding: 1.1rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      th {
+        background: rgba(255, 255, 255, 0.03);
+        font-family: "Outfit", sans-serif;
+        font-weight: 700;
+        font-size: 1rem;
+        color: var(--text-main);
+      }
+
+      tr:last-child td {
+        border-bottom: none;
+      }
+
+      tr:hover td {
+        background: rgba(255, 255, 255, 0.015);
+      }
+
+      .feature-title {
+        font-weight: 600;
+        color: var(--text-accent);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      /* Hydration Deep Dive Box */
+      .hydration-master-box {
+        background: linear-gradient(
+          180deg,
+          rgba(168, 85, 247, 0.08) 0%,
+          rgba(18, 22, 31, 1) 100%
+        );
+        border: 1px solid rgba(168, 85, 247, 0.3);
+        border-radius: var(--radius-lg);
+        padding: 2.5rem;
+        margin-bottom: 3rem;
+        box-shadow: var(--shadow-glow-purple);
+      }
+
+      .analogy-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+      }
+
+      @media (max-width: 768px) {
+        .analogy-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .analogy-card {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 1.5rem;
+      }
+
+      .analogy-card h4 {
+        color: var(--next-purple);
+        font-family: "Outfit", sans-serif;
+        font-size: 1.15rem;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      /* Pipeline Comparison Flow */
+      .pipeline-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-bottom: 3rem;
+      }
+
+      @media (max-width: 900px) {
+        .pipeline-container {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .pipeline-column {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 1.75rem;
+      }
+
+      .pipeline-column.react-flow {
+        border-top: 4px solid var(--react-blue);
+      }
+      .pipeline-column.next-flow {
+        border-top: 4px solid var(--next-purple);
+      }
+
+      .pipeline-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .pipeline-header h3 {
+        font-family: "Outfit", sans-serif;
+        font-size: 1.3rem;
+      }
+
+      .step-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .step-item {
+        display: flex;
+        gap: 12px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 1rem;
+        position: relative;
+      }
+
+      .step-number {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+      }
+
+      .react-flow .step-number {
+        background: rgba(97, 218, 251, 0.2);
+        color: var(--react-blue);
+      }
+      .next-flow .step-number {
+        background: rgba(168, 85, 247, 0.2);
+        color: var(--next-purple);
+      }
+
+      .step-content h5 {
+        font-size: 0.95rem;
+        margin-bottom: 0.25rem;
+        color: var(--text-main);
+      }
+
+      .step-content p {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+      }
+
+      /* Interactive Hydration Visualizer */
+      .visualizer-card {
+        background: #0b0f19;
+        border: 1px solid var(--next-purple);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        margin-bottom: 3rem;
+        box-shadow: 0 0 25px rgba(168, 85, 247, 0.15);
+      }
+
+      .visualizer-controls {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        background: #1f293d;
+        color: var(--text-main);
+        border: 1px solid var(--border-color);
+        padding: 0.65rem 1.25rem;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+      }
+
+      .btn:hover {
+        background: #2b3853;
+        border-color: var(--text-accent);
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #9333ea 0%, #c084fc 100%);
+        color: #ffffff;
+        border: none;
+      }
+
+      .btn-primary:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+      }
+
+      .stage-display {
+        background: var(--bg-code);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 1.5rem;
+        min-height: 200px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        position: relative;
+      }
+
+      .stage-title {
+        font-family: "Outfit", sans-serif;
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+      }
+
+      .stage-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0.4rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+      }
+
+      .status-dry {
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--accent-orange);
+        border: 1px solid var(--accent-orange);
+      }
+      .status-hydrating {
+        background: rgba(97, 218, 251, 0.15);
+        color: var(--react-blue);
+        border: 1px solid var(--react-blue);
+      }
+      .status-active {
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--accent-green);
+        border: 1px solid var(--accent-green);
+      }
+
+      .demo-button-box {
+        margin-top: 1rem;
+        padding: 1rem 2rem;
+        border-radius: var(--radius-md);
+        border: 2px dashed var(--border-color);
+        transition: all 0.3s ease;
+      }
+
+      /* Code Snippet Formatting */
+      .code-block {
+        background: var(--bg-code);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 1.25rem;
+        font-family: "Fira Code", monospace;
+        font-size: 0.88rem;
+        color: #e2e8f0;
+        overflow-x: auto;
+        margin: 1rem 0;
+        line-height: 1.5;
+      }
+
+      .code-keyword {
+        color: #f472b6;
+      }
+      .code-func {
+        color: #60a5fa;
+      }
+      .code-string {
+        color: #34d399;
+      }
+      .code-comment {
+        color: #6b7280;
+        font-style: italic;
+      }
+      .code-attr {
+        color: #fbbf24;
+      }
+
+      /* Mismatch Solutions Grid */
+      .mismatch-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .mismatch-card h4 {
+        color: var(--accent-red);
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      /* Tab Navigation for Rendering Modes */
+      .tabs {
+        display: flex;
+        gap: 0.5rem;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 1.5rem;
+        overflow-x: auto;
+      }
+
+      .tab-btn {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        padding: 0.75rem 1.25rem;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+      }
+
+      .tab-btn.active {
+        color: var(--react-blue);
+        border-bottom-color: var(--react-blue);
+      }
+
+      .tab-content {
+        display: none;
+      }
+
+      .tab-content.active {
+        display: block;
+      }
+
+      /* Footer */
+      footer {
+        border-top: 1px solid var(--border-color);
+        padding: 2.5rem 0;
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        margin-top: 4rem;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Sticky Navigation -->
+    <nav>
+      <div class="nav-logo">
+        <i class="fa-brands fa-react"></i> React vs Next.js & Hydration
+      </div>
+      <ul class="nav-links">
+        <li>
+          <a href="#overview"
+            ><i class="fa-solid fa-layer-group"></i> Overview</a
+          >
+        </li>
+        <li>
+          <a href="#comparison"
+            ><i class="fa-solid fa-table-columns"></i> Comparison</a
+          >
+        </li>
+        <li>
+          <a href="#hydration"
+            ><i class="fa-solid fa-droplet"></i> Deep Hydration</a
+          >
+        </li>
+        <li>
+          <a href="#visualizer"
+            ><i class="fa-solid fa-flask"></i> Interactive Demo</a
+          >
+        </li>
+        <li>
+          <a href="#mismatches"
+            ><i class="fa-solid fa-triangle-exclamation"></i> Mismatches</a
+          >
+        </li>
+        <li>
+          <a href="#rendering"
+            ><i class="fa-solid fa-bolt"></i> Rendering Modes</a
+          >
+        </li>
+      </ul>
+    </nav>
+
+    <div class="container">
+      <!-- Hero Section -->
+      <section class="hero" id="overview">
+        <div class="hero-badge-container">
+          <span class="badge react"
+            ><i class="fa-brands fa-react"></i> React 18 Library</span
+          >
+          <span class="badge next"
+            ><i class="fa-solid fa-N"></i> Next.js 14 Framework</span
+          >
+          <span class="badge hydration"
+            ><i class="fa-solid fa-droplet"></i> Hydration Engine</span
+          >
+        </div>
+        <h1>
+          React.js vs Next.js <br />
+          <span class="react-text">Library</span> vs
+          <span class="next-text">Framework</span> & The Hydration Deep-Dive
+        </h1>
+        <p>
+          Understand every exact architectural difference between React.js and
+          Next.js, and master how <strong>React Hydration</strong> turns dry
+          static HTML into living, interactive DOM elements behind the scenes.
+        </p>
+        <div class="hero-hinglish-note">
+          💡 <strong>In Short (Hinglish):</strong> React.js sirf frontend UI
+          banane ki ek library hai (Client-Side Rendering). Next.js ek
+          full-stack framework hai jo React ke upar bana hai aur Server-Side
+          Rendering (SSR), Static Generation (SSG), Automatic Routing, aur
+          Hydration handle karta hai!
+        </div>
+      </section>
+
+      <!-- Section 1: Core Comparison Grid -->
+      <section id="comparison">
+        <div class="section-header">
+          <h2>
+            <i
+              class="fa-solid fa-scale-balanced"
+              style="color: var(--react-blue)"
+            ></i>
+            Core Comparison: Library vs Framework
+          </h2>
+          <p>
+            How React.js and Next.js compare across architecture, setup,
+            routing, and capabilities.
+          </p>
+        </div>
+
+        <div class="grid-2">
+          <div class="card" style="border-top: 4px solid var(--react-blue)">
+            <h3
+              style="
+                color: var(--react-blue);
+                font-family: &quot;Outfit&quot;, sans-serif;
+                font-size: 1.5rem;
+                margin-bottom: 0.75rem;
+              "
+            >
+              <i class="fa-brands fa-react"></i> React.js
+            </h3>
+            <p
+              style="
+                color: var(--text-muted);
+                font-size: 0.95rem;
+                margin-bottom: 1rem;
+              "
+            >
+              A UI component library created by Meta (Facebook). Focused purely
+              on building client-side views.
+            </p>
+            <ul
+              style="
+                list-style: none;
+                display: flex;
+                flex-direction: column;
+                gap: 0.6rem;
+                font-size: 0.9rem;
+              "
+            >
+              <li>
+                <i
+                  class="fa-solid fa-check"
+                  style="color: var(--accent-green)"
+                ></i>
+                <strong>Type:</strong> JavaScript Library
+              </li>
+              <li>
+                <i
+                  class="fa-solid fa-check"
+                  style="color: var(--accent-green)"
+                ></i>
+                <strong>Rendering:</strong> Client-Side Rendering (CSR) by
+                default
+              </li>
+              <li>
+                <i
+                  class="fa-solid fa-check"
+                  style="color: var(--accent-green)"
+                ></i>
+                <strong>Routing:</strong> Manual (via
+                <code>react-router-dom</code>)
+              </li>
+              <li>
+                <i
+                  class="fa-solid fa-check"
+                  style="color: var(--accent-green)"
+                ></i>
+                <strong>Backend APIs:</strong> Requires separate backend
+                (Express/Node.js)
+              </li>
+              <li>
+                <i
+                  class="fa-solid fa-check"
+                  style="color: var(--accent-green)"
+                ></i>
+                <strong>SEO:</strong> Requires extra effort/plugins (Weak out of
+                box)
+              </li>
+            </ul>
+          </div>
+
+          <div class="card" style="border-top: 4px solid var(--next-purple)">
+            <h3
+              style="
+                color: #ffffff;
+                font-family: &quot;Outfit&quot;, sans-serif;
+                font-size: 1.5rem;
+                margin-bottom: 0.75rem;
+              "
+            >
+              <i class="fa-solid fa-n"></i> Next.js
+            </h3>
+            <p
+              style="
+                color: var(--text-muted);
+                font-size: 0.95rem;
+                margin-bottom: 1rem;
+              "
+            >
+              A production React framework built by Vercel. Gives you full-stack
+              capabilities out of the box.
+            </p>
+            <ul
+              style="
+                list-style: none;
+                display: flex;
+                flex-direction: column;
+                gap: 0.6rem;
+                font-size: 0.9rem;
+              "
+            >
+              <li>
+                <i
+                  class="fa-solid fa-check"
+                  style="color: var(--accent-green)"
+                ></i>
+                <strong>Type:</strong> Full-Stack React Framework
+              </li>
+              <li>
+                <i
+                  class="fa-solid fa-check"
+                  style="color: var(--accent-green)"
+                ></i>
+                <strong>Rendering:</strong> SSR, SSG, ISR, and CSR
+              </li>
+              <li>
+                <i
+                  class="fa-solid fa-check"
+                  style="color: var(--accent-green)"
+                ></i>
+                <strong>Routing:</strong> Automatic File-based Routing (<code
+                  >app/</code
+                >
+                or <code>pages/</code>)
+              </li>
+              <li>
+                <i
+                  class="fa-solid fa-check"
+                  style="color: var(--accent-green)"
+                ></i>
+                <strong>Backend APIs:</strong> Built-in API Routes & Server
+                Actions
+              </li>
+              <li>
+                <i
+                  class="fa-solid fa-check"
+                  style="color: var(--accent-green)"
+                ></i>
+                <strong>SEO:</strong> Excellent (Pre-rendered HTML sent to
+                search crawlers)
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Detailed Table -->
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Feature</th>
+                <th>
+                  <i
+                    class="fa-brands fa-react"
+                    style="color: var(--react-blue)"
+                  ></i>
+                  React.js
+                </th>
+                <th>
+                  <i
+                    class="fa-solid fa-n"
+                    style="color: var(--next-purple)"
+                  ></i>
+                  Next.js
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="feature-title">
+                  <i class="fa-solid fa-wrench"></i> Setup Command
+                </td>
+                <td>
+                  <code>npx create-react-app myapp</code> or
+                  <code>npm create vite@latest</code>
+                </td>
+                <td><code>npx create-next-app@latest myapp</code></td>
+              </tr>
+              <tr>
+                <td class="feature-title">
+                  <i class="fa-solid fa-route"></i> Routing System
+                </td>
+                <td>
+                  Manual routing using <code>&lt;BrowserRouter&gt;</code> &
+                  <code>react-router-dom</code>
+                </td>
+                <td>
+                  File-system based automatic routing (Folder name = URL route)
+                </td>
+              </tr>
+              <tr>
+                <td class="feature-title">
+                  <i class="fa-solid fa-server"></i> Rendering Engine
+                </td>
+                <td>
+                  Browser renders everything on client side (Blank HTML
+                  initially)
+                </td>
+                <td>
+                  Server generates ready HTML (SSR/SSG), browser performs
+                  Hydration
+                </td>
+              </tr>
+              <tr>
+                <td class="feature-title">
+                  <i class="fa-solid fa-network-wired"></i> API Handling
+                </td>
+                <td>
+                  Needs separate Express/Node server or external REST/GraphQL
+                  API
+                </td>
+                <td>
+                  Built-in API Routes (<code>pages/api</code> or
+                  <code>app/api/route.js</code>)
+                </td>
+              </tr>
+              <tr>
+                <td class="feature-title">
+                  <i class="fa-solid fa-image"></i> Image Optimization
+                </td>
+                <td>
+                  Standard HTML <code>&lt;img&gt;</code> tag (Manual compression
+                  & loading)
+                </td>
+                <td>
+                  Built-in <code>&lt;Image /&gt;</code> component (Auto WebP
+                  conversion, resize, lazy load)
+                </td>
+              </tr>
+              <tr>
+                <td class="feature-title">
+                  <i class="fa-solid fa-magnifying-glass"></i> SEO & Metadata
+                </td>
+                <td>
+                  Difficult; Google crawlers receive empty
+                  <code>&lt;div id="root"&gt;&lt;/div&gt;</code>
+                </td>
+                <td>
+                  Native Metadata API; pre-rendered full HTML indexed instantly
+                </td>
+              </tr>
+              <tr>
+                <td class="feature-title">
+                  <i class="fa-solid fa-cloud-arrow-up"></i> Deployment
+                </td>
+                <td>Static File Hosts (Netlify, Vercel, S3, GitHub Pages)</td>
+                <td>
+                  Server/Serverless environment (Vercel, AWS Amplify, Node
+                  server)
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Section 2: Deep Hydration Explanation -->
+      <section id="hydration">
+        <div class="section-header">
+          <h2>
+            <i
+              class="fa-solid fa-droplet"
+              style="color: var(--next-purple)"
+            ></i>
+            Deep Dive: What is React Hydration?
+          </h2>
+          <p>
+            Uncovering the exact mechanism that converts static HTML into an
+            active React tree.
+          </p>
+        </div>
+
+        <div class="hydration-master-box">
+          <h3
+            style="
+              font-family: &quot;Outfit&quot;, sans-serif;
+              font-size: 1.8rem;
+              margin-bottom: 1rem;
+              color: #ffffff;
+            "
+          >
+            🧠 Definition of Hydration
+          </h3>
+          <p
+            style="
+              font-size: 1.1rem;
+              color: #e2e8f0;
+              margin-bottom: 1.5rem;
+              line-height: 1.7;
+            "
+          >
+            <strong>Hydration</strong> is the process where React runs in the
+            browser, inspects the <strong>static pre-rendered HTML</strong> sent
+            by the server, attaches
+            <strong>event handlers (onClick, onChange, etc.)</strong> to the DOM
+            elements, initializes state/effects, and binds its
+            <strong>Virtual DOM</strong> to make the page interactive.
+          </p>
+
+          <div class="hero-hinglish-note" style="margin-bottom: 2rem">
+            🟢 <strong>Hinglish Summary:</strong> Next.js server pe pehle se ek
+            <em>"dry" (sookha) HTML page</em> bana deta hai jisse browser screen
+            pe instantly dikha sake. Jab JavaScript browser me download hokar
+            run hoti hai, toh React us HTML me
+            <em>"paani daalta hai" (Hydrate karta hai)</em> — yaani click
+            listeners aur state attach karke use interactive banata hai!
+          </div>
+
+          <!-- Real World Analogies -->
+          <h4
+            style="
+              font-family: &quot;Outfit&quot;, sans-serif;
+              font-size: 1.3rem;
+              color: var(--react-blue);
+              margin-top: 1.5rem;
+            "
+          >
+            💡 Real-World Analogies to Understand Hydration
+          </h4>
+
+          <div class="analogy-grid">
+            <div class="analogy-card">
+              <h4>
+                <i class="fa-solid fa-bowl-food"></i> 1. The Instant Noodles
+                Analogy
+              </h4>
+              <p
+                style="
+                  font-size: 0.92rem;
+                  color: var(--text-muted);
+                  line-height: 1.6;
+                "
+              >
+                <strong>Server (HTML):</strong> You receive a box of instant
+                noodles. It looks like noodles, it has the exact shape of
+                noodles, but it's dry and non-edible.<br /><br />
+                <strong>Hydration (JS Execution):</strong> You pour boiling hot
+                water into it! The noodles soften, absorb flavor, and become
+                ready to eat (interactive).
+              </p>
+            </div>
+
+            <div class="analogy-card">
+              <h4>
+                <i class="fa-solid fa-house"></i> 2. The House Wiring Analogy
+              </h4>
+              <p
+                style="
+                  font-size: 0.92rem;
+                  color: var(--text-muted);
+                  line-height: 1.6;
+                "
+              >
+                <strong>Server (HTML):</strong> The builder constructs the
+                physical brick walls, doors, and light fixtures. You can see the
+                house instantly.<br /><br />
+                <strong>Hydration (JS Execution):</strong> Electricians connect
+                the wiring behind the switches. Now when you flip a light
+                switch, the light turns on!
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 3: CSR vs SSR Execution Pipeline -->
+      <section>
+        <div class="section-header">
+          <h2>
+            <i
+              class="fa-solid fa-diagram-project"
+              style="color: var(--accent-green)"
+            ></i>
+            Execution Pipeline: React CSR vs Next.js SSR + Hydration
+          </h2>
+          <p>
+            Step-by-step trace of how the user's browser processes your code.
+          </p>
+        </div>
+
+        <div class="pipeline-container">
+          <!-- React CSR Flow -->
+          <div class="pipeline-column react-flow">
+            <div class="pipeline-header">
+              <h3>
+                <i
+                  class="fa-brands fa-react"
+                  style="color: var(--react-blue)"
+                ></i>
+                React.js (CSR) Flow
+              </h3>
+              <span class="badge react">Render from Scratch</span>
+            </div>
+
+            <div class="step-list">
+              <div class="step-item">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                  <h5>User Requests Page</h5>
+                  <p>Browser sends HTTP GET request to server.</p>
+                </div>
+              </div>
+
+              <div class="step-item">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                  <h5>Server Returns Empty HTML</h5>
+                  <p>
+                    Server returns a blank HTML file containing only
+                    <code>&lt;div id="root"&gt;&lt;/div&gt;</code> and a script
+                    tag.
+                  </p>
+                </div>
+              </div>
+
+              <div class="step-item">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                  <h5>Blank Screen Shown to User</h5>
+                  <p>User sees a white blank page while JS bundle downloads.</p>
+                </div>
+              </div>
+
+              <div class="step-item">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                  <h5>JS Bundle Executes</h5>
+                  <p>
+                    Browser executes React bundle, builds Virtual DOM, and
+                    renders Real DOM tree inside <code>#root</code>.
+                  </p>
+                </div>
+              </div>
+
+              <div class="step-item">
+                <div class="step-number">5</div>
+                <div class="step-content">
+                  <h5>UI Appears & Becomes Interactive</h5>
+                  <p>
+                    Page renders content and becomes clickable at the exact same
+                    moment.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Next.js SSR + Hydration Flow -->
+          <div class="pipeline-column next-flow">
+            <div class="pipeline-header">
+              <h3>
+                <i class="fa-solid fa-n" style="color: var(--next-purple)"></i>
+                Next.js (SSR + Hydration) Flow
+              </h3>
+              <span class="badge hydration">Hydrate Existing HTML</span>
+            </div>
+
+            <div class="step-list">
+              <div class="step-item">
+                <div class="step-number">1</div>
+                <div
+                  class="step-number"
+                  style="
+                    background: rgba(168, 85, 247, 0.2);
+                    color: var(--next-purple);
+                  "
+                >
+                  1
+                </div>
+                <div class="step-content">
+                  <h5>User Requests Page</h5>
+                  <p>Browser sends HTTP GET request to Next.js server.</p>
+                </div>
+              </div>
+
+              <div class="step-item">
+                <div
+                  class="step-number"
+                  style="
+                    background: rgba(168, 85, 247, 0.2);
+                    color: var(--next-purple);
+                  "
+                >
+                  2
+                </div>
+                <div class="step-content">
+                  <h5>Server Pre-Renders Full HTML</h5>
+                  <p>
+                    Next.js server runs React components to generate full HTML
+                    string with actual text, images, and markup.
+                  </p>
+                </div>
+              </div>
+
+              <div class="step-item">
+                <div
+                  class="step-number"
+                  style="
+                    background: rgba(168, 85, 247, 0.2);
+                    color: var(--next-purple);
+                  "
+                >
+                  3
+                </div>
+                <div class="step-content">
+                  <h5>Instant First Contentful Paint (FCP)</h5>
+                  <p>
+                    Browser displays the pre-rendered HTML immediately. User
+                    sees content right away! (Not interactive yet).
+                  </p>
+                </div>
+              </div>
+
+              <div class="step-item">
+                <div
+                  class="step-number"
+                  style="
+                    background: rgba(168, 85, 247, 0.2);
+                    color: var(--next-purple);
+                  "
+                >
+                  4
+                </div>
+                <div class="step-content">
+                  <h5>Hydration Stage Starts</h5>
+                  <p>
+                    React client JS bundle downloads in background and calls
+                    <code>hydrateRoot()</code> to inspect existing DOM.
+                  </p>
+                </div>
+              </div>
+
+              <div class="step-item">
+                <div
+                  class="step-number"
+                  style="
+                    background: rgba(168, 85, 247, 0.2);
+                    color: var(--next-purple);
+                  "
+                >
+                  5
+                </div>
+                <div class="step-content">
+                  <h5>Fully Interactive (Time to Interactive)</h5>
+                  <p>
+                    Event listeners (onClick) attach seamlessly. Page becomes
+                    fully dynamic without any screen flicker!
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 4: Interactive Step Visualizer -->
+      <section id="visualizer">
+        <div class="section-header">
+          <h2>
+            <i class="fa-solid fa-flask" style="color: var(--react-blue)"></i>
+            Interactive Hydration State Simulator
+          </h2>
+          <p>
+            Click through the steps below to watch how HTML transforms during
+            Next.js Hydration.
+          </p>
+        </div>
+
+        <div class="visualizer-card">
+          <div class="visualizer-controls">
+            <button
+              class="btn btn-primary"
+              id="btn-next-step"
+              onclick="nextHydrationStep()"
+            >
+              <i class="fa-solid fa-play"></i> Advance Step
+            </button>
+            <button class="btn" onclick="resetHydrationStep()">
+              <i class="fa-solid fa-rotate-right"></i> Reset Simulation
+            </button>
+          </div>
+
+          <div class="stage-display">
+            <div id="sim-status" class="stage-status status-dry">
+              <i class="fa-solid fa-sun"></i> Stage 1: Server HTML Pre-Rendered
+              (Dry DOM)
+            </div>
+            <div id="sim-title" class="stage-title">
+              Static HTML Rendered on Server
+            </div>
+            <p
+              id="sim-desc"
+              style="
+                color: var(--text-muted);
+                max-width: 650px;
+                font-size: 0.95rem;
+              "
+            >
+              The Next.js server pre-computed the component and sent raw HTML.
+              The user sees a button, but clicking it will do NOTHING because
+              event listeners haven't been attached yet.
+            </p>
+
+            <div class="demo-button-box" id="demo-box">
+              <p
+                style="
+                  font-size: 0.85rem;
+                  color: var(--text-muted);
+                  margin-bottom: 0.5rem;
+                "
+                id="box-label"
+              >
+                DOM State: Non-interactive HTML
+              </p>
+              <button
+                class="btn"
+                id="interactive-demo-btn"
+                onclick="handleDemoClick()"
+                style="margin: 0 auto"
+              >
+                <i class="fa-solid fa-thumbs-up"></i> Counter:
+                <span id="counter-val">0</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 5: Hydration Errors & Solutions -->
+      <section id="mismatches">
+        <div class="section-header">
+          <h2>
+            <i
+              class="fa-solid fa-triangle-exclamation"
+              style="color: var(--accent-red)"
+            ></i>
+            Hydration Mismatch Errors & Fixes
+          </h2>
+          <p>
+            Why "Text content does not match server-rendered HTML" happens and
+            how to solve it.
+          </p>
+        </div>
+
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem">
+          A <strong>Hydration Mismatch Error</strong> occurs when the HTML
+          string generated on the server is different from the HTML tree React
+          builds on the client's first render pass. React expects both trees to
+          match 100%!
+        </p>
+
+        <div class="grid-2">
+          <div class="mismatch-card">
+            <h4>
+              <i class="fa-solid fa-bug"></i> Cause 1: Browser-Only APIs
+              (window, localStorage)
+            </h4>
+            <p
+              style="
+                font-size: 0.9rem;
+                color: var(--text-muted);
+                margin-bottom: 0.5rem;
+              "
+            >
+              Accessing <code>window</code> or
+              <code>localStorage</code> directly during initial component
+              execution. Server doesn't have <code>window</code>!
+            </p>
+            <div class="code-block">
+              <span class="code-comment"
+                >// ❌ BAD: Mismatch error on server</span
+              >
+              <span class="code-keyword">const</span> theme =
+              window.localStorage.getItem(<span class="code-string"
+                >'theme'</span
+              >);
+            </div>
+            <p
+              style="
+                font-size: 0.85rem;
+                color: var(--accent-green);
+                margin-top: 0.5rem;
+              "
+            >
+              <strong>✅ Fix:</strong> Read inside <code>useEffect</code> or
+              state after mounting:
+            </p>
+            <div class="code-block">
+              <span class="code-keyword">const</span> [theme, setTheme] =
+              useState(<span class="code-string">'light'</span>); useEffect(()
+              => { setTheme(localStorage.getItem(<span class="code-string"
+                >'theme'</span
+              >) || <span class="code-string">'light'</span>); }, []);
+            </div>
+          </div>
+
+          <div class="mismatch-card">
+            <h4>
+              <i class="fa-solid fa-clock"></i> Cause 2: Dynamic Data (Dates &
+              Math.random)
+            </h4>
+            <p
+              style="
+                font-size: 0.9rem;
+                color: var(--text-muted);
+                margin-bottom: 0.5rem;
+              "
+            >
+              <code>new Date().toLocaleTimeString()</code> evaluates at
+              different milliseconds on the server vs client.
+            </p>
+            <div class="code-block">
+              <span class="code-comment"
+                >// ❌ BAD: Server & Client show different times</span
+              >
+              &lt;<span class="code-keyword">div</span>&gt;Time: {<span
+                class="code-keyword"
+                >new</span
+              >
+              Date().toLocaleTimeString()}&lt;/<span class="code-keyword"
+                >div</span
+              >&gt;
+            </div>
+            <p
+              style="
+                font-size: 0.85rem;
+                color: var(--accent-green);
+                margin-top: 0.5rem;
+              "
+            >
+              <strong>✅ Fix:</strong> Use
+              <code>suppressHydrationWarning</code> attribute for dynamic text:
+            </p>
+            <div class="code-block">
+              &lt;<span class="code-keyword">div</span>
+              <span class="code-attr">suppressHydrationWarning</span>&gt; Time:
+              {<span class="code-keyword">new</span>
+              Date().toLocaleTimeString()} &lt;/<span class="code-keyword"
+                >div</span
+              >&gt;
+            </div>
+          </div>
+        </div>
+
+        <!-- Mismatch Solutions Cards -->
+        <div class="grid-2">
+          <div class="mismatch-card">
+            <h4 style="color: var(--react-blue)">
+              <i class="fa-solid fa-code"></i> Solution 3: Client-Only Component
+              Wrapper
+            </h4>
+            <p
+              style="
+                font-size: 0.9rem;
+                color: var(--text-muted);
+                margin-bottom: 0.5rem;
+              "
+            >
+              Create an <code>isMounted</code> hook to defer rendering
+              browser-dependent components until hydration completes.
+            </p>
+            <div class="code-block">
+              <span class="code-keyword">function</span> ClientOnly({ children
+              }) { <span class="code-keyword">const</span> [hasMounted,
+              setHasMounted] = useState(<span class="code-keyword">false</span
+              >); useEffect(() => setHasMounted(<span class="code-keyword"
+                >true</span
+              >), []); <span class="code-keyword">if</span> (!hasMounted)
+              <span class="code-keyword">return</span>
+              <span class="code-keyword">null</span>;
+              <span class="code-keyword">return</span> children; }
+            </div>
+          </div>
+
+          <div class="mismatch-card" style="border-color: var(--next-purple)">
+            <h4 style="color: var(--next-purple)">
+              <i class="fa-solid fa-bolt"></i> Solution 4: Next.js Dynamic
+              Import with ssr: false
+            </h4>
+            <p
+              style="
+                font-size: 0.9rem;
+                color: var(--text-muted);
+                margin-bottom: 0.5rem;
+              "
+            >
+              Disable Server-Side Rendering completely for a single component
+              that relies heavily on window DOM.
+            </p>
+            <div class="code-block">
+              <span class="code-keyword">import</span> dynamic
+              <span class="code-keyword">from</span>
+              <span class="code-string">'next/dynamic'</span>;
+
+              <span class="code-keyword">const</span> ThemeToggle = dynamic( ()
+              => <span class="code-keyword">import</span>(<span
+                class="code-string"
+                >'../components/ThemeToggle'</span
+              >), { <span class="code-attr">ssr</span>:
+              <span class="code-keyword">false</span> } );
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 6: Next.js Rendering Strategies -->
+      <!-- <section id="rendering">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-bolt" style="color: var(--accent-orange);"></i> Next.js Rendering Strategies Demystified</h2>
+                <p>CSR vs SSR vs SSG vs ISR — When and where each rendering mode is executed.</p>
+            </div>
+
+            <div class="card">
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="openTab(event, 'tab-csr')">CSR (Client-Side Rendering)</button>
+                    <button class="tab-btn" onclick="openTab(event, 'tab-ssr')">SSR (Server-Side Rendering)</button>
+                    <button class="tab-btn" onclick="openTab(event, 'tab-ssg')">SSG (Static Site Generation)</button>
+                    <button class="tab-btn" onclick="openTab(event, 'tab-isr')">ISR (Incremental Static Regeneration)</button>
+                </div>
+
+                <div id="tab-csr" class="tab-content active">
+                    <h4 style="color: var(--react-blue); margin-bottom: 0.5rem;">CSR: Client-Side Rendering</h4>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1rem;">
+                        Standard React approach. Browser fetches JS and builds UI client-side. Good for private dashboards, admin panels, and apps behind login where SEO is irrelevant.
+                    </p>
+                    <div class="code-block">
+<span class="code-comment">// Next.js App Router (Client Component)</span>
+<span class="code-string">'use client'</span>;
+
+<span class="code-keyword">import</span> { useState, useEffect } <span class="code-keyword">from</span> <span class="code-string">'react'</span>;
+
+<span class="code-keyword">export default function</span> Dashboard() {
+  <span class="code-keyword">const</span> [data, setData] = useState(<span class="code-keyword">null</span>);
+  useEffect(() => {
+    fetch(<span class="code-string">'/api/user'</span>).then(res => res.json()).then(setData);
+  }, []);
+  <span class="code-keyword">return</span> &lt;<span class="code-keyword">div</span>&gt;Welcome {data?.name}&lt;/<span class="code-keyword">div</span>&gt;;
+}
+                    </div>
+                </div>
+
+                <div id="tab-ssr" class="tab-content">
+                    <h4 style="color: var(--next-purple); margin-bottom: 0.5rem;">SSR: Server-Side Rendering</h4>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1rem;">
+                        HTML is generated dynamically on the server for <strong>every single request</strong>. Perfect for live feeds, stock updates, e-commerce product pages with real-time pricing.
+                    </p>
+                    <div class="code-block">
+<span class="code-comment">// Pages Router: getServerSideProps</span>
+<span class="code-keyword">export async function</span> getServerSideProps(context) {
+  <span class="code-keyword">const</span> res = <span class="code-keyword">await</span> fetch(<span class="code-string">`https://api.example.com/data`</span>);
+  <span class="code-keyword">const</span> data = <span class="code-keyword">await</span> res.json();
+  <span class="code-keyword">return</span> { <span class="code-attr">props</span>: { data } };
+}
+                    </div>
+                </div>
+
+                <div id="tab-ssg" class="tab-content">
+                    <h4 style="color: var(--accent-green); margin-bottom: 0.5rem;">SSG: Static Site Generation</h4>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1rem;">
+                        HTML is pre-built ONCE at build time (<code>npm run build</code>). Served blazing fast via CDN. Ideal for blogs, documentation, marketing landing pages.
+                    </p>
+                    <div class="code-block">
+<span class="code-comment">// Pages Router: getStaticProps</span>
+<span class="code-keyword">export async function</span> getStaticProps() {
+  <span class="code-keyword">const</span> posts = <span class="code-keyword">await</span> getBlogPosts();
+  <span class="code-keyword">return</span> { <span class="code-attr">props</span>: { posts } };
+}
+                    </div>
+                </div>
+
+                <div id="tab-isr" class="tab-content">
+                    <h4 style="color: var(--accent-orange); margin-bottom: 0.5rem;">ISR: Incremental Static Regeneration</h4>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1rem;">
+                        Re-generate static pages in the background after a specific timeout without re-deploying the entire site!
+                    </p>
+                    <div class="code-block">
+<span class="code-comment">// Revalidate every 60 seconds</span>
+<span class="code-keyword">export async function</span> getStaticProps() {
+  <span class="code-keyword">const</span> products = <span class="code-keyword">await</span> getProducts();
+  <span class="code-keyword">return</span> {
+    <span class="code-attr">props</span>: { products },
+    <span class="code-attr">revalidate</span>: <span class="code-number">60</span> <span class="code-comment">// Rebuild page in background every 60s</span>
+  };
+}
+                    </div>
+                </div>
+            </div>
+        </section> -->
+
+      <!-- Final Decision Cheat Sheet -->
+      <section style="margin-top: 3rem">
+        <div
+          class="card"
+          style="
+            background: linear-gradient(
+              135deg,
+              rgba(30, 27, 75, 0.6) 0%,
+              rgba(15, 23, 42, 0.8) 100%
+            );
+            border-color: var(--border-highlight);
+          "
+        >
+          <h3
+            style="
+              font-family: &quot;Outfit&quot;, sans-serif;
+              font-size: 1.6rem;
+              color: #ffffff;
+              margin-bottom: 1rem;
+            "
+          >
+            🚀 Decision Matrix: Which One Should You Choose?
+          </h3>
+          <div class="grid-2" style="margin-bottom: 0">
+            <div>
+              <h4 style="color: var(--react-blue); margin-bottom: 0.5rem">
+                <i class="fa-brands fa-react"></i> Choose React.js if:
+              </h4>
+              <ul
+                style="
+                  list-style: none;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 0.5rem;
+                  font-size: 0.9rem;
+                  color: var(--text-muted);
+                "
+              >
+                <li>
+                  <i
+                    class="fa-solid fa-angle-right"
+                    style="color: var(--react-blue)"
+                  ></i>
+                  Building a simple Single Page Application (SPA)
+                </li>
+                <li>
+                  <i
+                    class="fa-solid fa-angle-right"
+                    style="color: var(--react-blue)"
+                  ></i>
+                  Building behind-login web applications (Dashboards, Admin
+                  tools)
+                </li>
+                <li>
+                  <i
+                    class="fa-solid fa-angle-right"
+                    style="color: var(--react-blue)"
+                  ></i>
+                  SEO is not required
+                </li>
+                <li>
+                  <i
+                    class="fa-solid fa-angle-right"
+                    style="color: var(--react-blue)"
+                  ></i>
+                  You want total custom control over client router & build tools
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 style="color: var(--next-purple); margin-bottom: 0.5rem">
+                <i class="fa-solid fa-n"></i> Choose Next.js if:
+              </h4>
+              <ul
+                style="
+                  list-style: none;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 0.5rem;
+                  font-size: 0.9rem;
+                  color: var(--text-muted);
+                "
+              >
+                <li>
+                  <i
+                    class="fa-solid fa-angle-right"
+                    style="color: var(--next-purple)"
+                  ></i>
+                  SEO and Google ranking are critical for your business
+                </li>
+                <li>
+                  <i
+                    class="fa-solid fa-angle-right"
+                    style="color: var(--next-purple)"
+                  ></i>
+                  E-commerce stores, blogs, marketing sites, news platforms
+                </li>
+                <li>
+                  <i
+                    class="fa-solid fa-angle-right"
+                    style="color: var(--next-purple)"
+                  ></i>
+                  You want automatic code-splitting, image/font optimizations
+                  out of the box
+                </li>
+                <li>
+                  <i
+                    class="fa-solid fa-angle-right"
+                    style="color: var(--next-purple)"
+                  ></i>
+                  You want a full-stack solution with integrated API routes
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer>
+        <p>
+          React.js vs Next.js & Deep Hydration Technical Guide • Interactive
+          Learning Documentation
+        </p>
+      </footer>
+    </div>
+
+    <!-- Interactive Scripts -->
+    <script>
+      // Hydration Simulator Logic
+      let currentStep = 1;
+      let counterValue = 0;
+      let isHydrated = false;
+
+      const simStatus = document.getElementById("sim-status");
+      const simTitle = document.getElementById("sim-title");
+      const simDesc = document.getElementById("sim-desc");
+      const boxLabel = document.getElementById("box-label");
+      const demoBox = document.getElementById("demo-box");
+      const interactiveBtn = document.getElementById("interactive-demo-btn");
+      const counterVal = document.getElementById("counter-val");
+      const btnNext = document.getElementById("btn-next-step");
+
+      function updateStepUI() {
+        if (currentStep === 1) {
+          simStatus.className = "stage-status status-dry";
+          simStatus.innerHTML =
+            '<i class="fa-solid fa-sun"></i> Stage 1: Server HTML Pre-Rendered (Dry DOM)';
+          simTitle.innerText = "1. Static HTML Rendered on Server";
+          simDesc.innerText =
+            "The Next.js server pre-computed the component and sent raw HTML. The user sees a button instantly, but clicking it does NOTHING because JS event handlers have not loaded yet.";
+          boxLabel.innerText =
+            "DOM State: Static HTML (Clicking counter won't work)";
+          demoBox.style.borderColor = "var(--accent-orange)";
+          demoBox.style.background = "rgba(245, 158, 11, 0.05)";
+          isHydrated = false;
+          btnNext.innerHTML =
+            '<i class="fa-solid fa-play"></i> Step 2: Download JS Bundle';
+        } else if (currentStep === 2) {
+          simStatus.className = "stage-status status-hydrating";
+          simStatus.innerHTML =
+            '<i class="fa-solid fa-download"></i> Stage 2: Downloading React JS Bundle';
+          simTitle.innerText = "2. Browser Receives JavaScript Bundle";
+          simDesc.innerText =
+            "The browser downloads the client-side React bundle in the background while the user reads the visible static HTML page. React prepares hydrateRoot().";
+          boxLabel.innerText =
+            "DOM State: JS Bundle executing in background...";
+          demoBox.style.borderColor = "var(--react-blue)";
+          demoBox.style.background = "rgba(97, 218, 251, 0.05)";
+          isHydrated = false;
+          btnNext.innerHTML =
+            '<i class="fa-solid fa-play"></i> Step 3: Hydrate DOM (Attach Handlers)';
+        } else if (currentStep === 3) {
+          simStatus.className = "stage-status status-active";
+          simStatus.innerHTML =
+            '<i class="fa-solid fa-droplet"></i> Stage 3: Hydration Complete (Active DOM)';
+          simTitle.innerText = "3. React Hydrated the DOM!";
+          simDesc.innerText =
+            "React matched the Virtual DOM with the pre-rendered static HTML, attached onClick event listeners, and initialized useState(0). Try clicking the counter button now!";
+          boxLabel.innerText =
+            "DOM State: Fully Interactive React State Active!";
+          demoBox.style.borderColor = "var(--accent-green)";
+          demoBox.style.background = "rgba(16, 185, 129, 0.1)";
+          isHydrated = true;
+          btnNext.innerHTML =
+            '<i class="fa-solid fa-check"></i> Simulation Finished (Reset)';
+        }
+      }
+
+      function nextHydrationStep() {
+        if (currentStep < 3) {
+          currentStep++;
+        } else {
+          currentStep = 1;
+          counterValue = 0;
+          counterVal.innerText = counterValue;
+        }
+        updateStepUI();
+      }
+
+      function resetHydrationStep() {
+        currentStep = 1;
+        counterValue = 0;
+        counterVal.innerText = counterValue;
+        updateStepUI();
+      }
+
+      function handleDemoClick() {
+        if (!isHydrated) {
+          alert(
+            "⚠️ Hydration Warning: The page is currently in Stage 1 or 2 (Dry HTML). Event listeners are not attached yet! Advance to Stage 3 to hydrate the page.",
+          );
+        } else {
+          counterValue++;
+          counterVal.innerText = counterValue;
+        }
+      }
+
+      // Tab Switcher
+      function openTab(evt, tabId) {
+        const tabContents = document.getElementsByClassName("tab-content");
+        for (let i = 0; i < tabContents.length; i++) {
+          tabContents[i].classList.remove("active");
+        }
+
+        const tabBtns = document.getElementsByClassName("tab-btn");
+        for (let i = 0; i < tabBtns.length; i++) {
+          tabBtns[i].classList.remove("active");
+        }
+
+        document.getElementById(tabId).classList.add("active");
+        evt.currentTarget.classList.add("active");
+      }
+    </script>
+  </body>
+</html>

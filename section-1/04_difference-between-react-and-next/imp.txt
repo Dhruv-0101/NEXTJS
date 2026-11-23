@@ -1,0 +1,8 @@
+-code sabse pehle server par run hota hai and then server client ko code bhejta hai and phir waha pe run hota hai.
+
+-react me to html bhejte hia woh bhi blank baad me js bundle donwload hoke sab kuch hota hai.and disable hi karde js ko 
+to to kuch nahi dikhta.
+
+-while in next js code jo hai woh sabse pehle server par run hota hai and then server client ko code bhejta hai and phir 
+waha pe run hota hai.sare ke saare code jo hai woh server par run hote hai.and agar next js me js ko disable kardia to bhi 
+blank page nahi ata.

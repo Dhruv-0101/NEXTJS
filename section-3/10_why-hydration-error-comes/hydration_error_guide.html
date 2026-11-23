@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why Hydration Error Comes in Next.js? - Master Guide</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-dark: #07090e;
+            --bg-card: #111622;
+            --bg-card-hover: #182030;
+            --bg-code: #0b0e17;
+            --border-color: #1e293b;
+            
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-accent: #38bdf8;
+            
+            --dynamic-rose: #f43f5e;
+            --dynamic-bg: rgba(244, 63, 94, 0.1);
+            
+            --static-green: #10b981;
+            --next-purple: #c084fc;
+            --accent-amber: #fbbf24;
+            --accent-cyan: #22d3ee;
+            
+            --gradient-hero: linear-gradient(135deg, #881337 0%, #0f172a 50%, #3b0764 100%);
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --radius-sm: 6px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 5px;
+        }
+
+        /* Sticky Navigation */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(7, 9, 14, 0.85);
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(90deg, var(--dynamic-rose), var(--accent-amber));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.25rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--dynamic-rose);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: var(--gradient-hero);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 3.5rem 2.5rem;
+            margin-top: 1rem;
+            margin-bottom: 3rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .hero-badges {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.25rem;
+        }
+
+        .badge {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 0.35rem 0.85rem;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .badge.error { color: var(--dynamic-rose); border-color: rgba(244, 63, 94, 0.4); }
+        .badge.green { color: var(--static-green); border-color: rgba(16, 185, 129, 0.4); }
+
+        .hero h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.8rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        .hero p {
+            font-size: 1.15rem;
+            color: #cbd5e1;
+            max-width: 850px;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-hinglish {
+            background: rgba(0, 0, 0, 0.4);
+            border-left: 4px solid var(--dynamic-rose);
+            padding: 1rem 1.25rem;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            font-size: 0.98rem;
+            color: #fecdd3;
+        }
+
+        /* Section Title Header */
+        .section-header {
+            margin-bottom: 2rem;
+            margin-top: 1rem;
+        }
+
+        .section-header h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-header p {
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            font-size: 1rem;
+        }
+
+        /* Card Component */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.75rem;
+            transition: all 0.25s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(244, 63, 94, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        /* Mismatch Demo Card */
+        .mismatch-demo-card {
+            background: linear-gradient(135deg, rgba(244, 63, 94, 0.1) 0%, rgba(15, 23, 42, 0.95) 100%);
+            border: 2px solid var(--dynamic-rose);
+            border-radius: var(--radius-lg);
+            padding: 2.25rem;
+            margin-bottom: 3rem;
+        }
+
+        /* Screenshot Explanation Card */
+        .screenshot-card {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(15, 23, 42, 0.95) 100%);
+            border: 2px solid var(--accent-amber);
+            border-radius: var(--radius-lg);
+            padding: 2.25rem;
+            margin-bottom: 3rem;
+        }
+
+        /* Line by Line Code Table & Box */
+        .line-by-line-container {
+            background: #090d16;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .code-line-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.9rem;
+            border-radius: var(--radius-sm);
+            transition: background 0.2s ease;
+        }
+
+        .code-line-row:hover {
+            background: rgba(255, 255, 255, 0.025);
+        }
+
+        .line-num {
+            font-family: 'Fira Code', monospace;
+            color: #64748b;
+            font-weight: 600;
+            width: 35px;
+            flex-shrink: 0;
+        }
+
+        .code-snippet {
+            font-family: 'Fira Code', monospace;
+            color: #e2e8f0;
+            width: 44%;
+            flex-shrink: 0;
+            overflow-x: auto;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 0.35rem 0.75rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .line-explanation {
+            color: #cbd5e1;
+            flex-grow: 1;
+            line-height: 1.5;
+        }
+
+        .badge-error {
+            background: rgba(244, 63, 94, 0.15);
+            color: var(--dynamic-rose);
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Terminal Simulator */
+        .terminal-card {
+            background: #090d16;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.75rem;
+            margin-bottom: 3rem;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        }
+
+        .terminal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .terminal-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot.red { background: #ef4444; }
+        .dot.yellow { background: #f59e0b; }
+        .dot.green { background: #10b981; }
+
+        .terminal-controls {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.25rem;
+        }
+
+        .btn {
+            background: #1e293b;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 0.6rem 1.1rem;
+            border-radius: var(--radius-md);
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background: #334155;
+        }
+
+        .btn-error {
+            background: rgba(244, 63, 94, 0.2);
+            color: var(--dynamic-rose);
+            border-color: var(--dynamic-rose);
+        }
+
+        .btn-fix {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--static-green);
+            border-color: var(--static-green);
+        }
+
+        .terminal-window {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.88rem;
+            min-height: 240px;
+            max-height: 380px;
+            overflow-y: auto;
+            color: #475569;
+        }
+
+        .terminal-line {
+            margin-bottom: 0.5rem;
+            display: flex;
+            gap: 10px;
+        }
+
+        .line-time { color: #64748b; }
+        .line-error { color: var(--dynamic-rose); }
+        .line-fix { color: var(--static-green); }
+        .line-info { color: var(--text-accent); }
+
+        /* Code Block */
+        .code-block {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            color: #e2e8f0;
+            overflow-x: auto;
+            margin: 1rem 0;
+            line-height: 1.5;
+        }
+
+        .kw { color: #f472b6; }
+        .fn { color: #60a5fa; }
+        .str { color: #34d399; }
+        .cm { color: #64748b; font-style: italic; }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border-color);
+            padding: 2.5rem 0;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 4rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-logo">
+            <i class="fa-solid fa-triangle-exclamation"></i> Hydration Error Master Guide
+        </div>
+        <ul class="nav-links">
+            <li><a href="#overview"><i class="fa-solid fa-layer-group"></i> Overview</a></li>
+            <li><a href="#screenshot-example"><i class="fa-solid fa-code"></i> Screenshot Code Example</a></li>
+            <li><a href="#cause"><i class="fa-solid fa-bug"></i> Why It Occurs</a></li>
+            <li><a href="#solutions"><i class="fa-solid fa-wrench"></i> 3 Fix Solutions</a></li>
+            <li><a href="#line-by-line"><i class="fa-solid fa-list-check"></i> Line-by-Line</a></li>
+            <li><a href="#simulator"><i class="fa-solid fa-terminal"></i> Log Simulator</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+
+        <!-- Hero Section -->
+        <section class="hero" id="overview">
+            <div class="hero-badges">
+                <span class="badge error"><i class="fa-solid fa-triangle-exclamation"></i> Hydration Mismatch</span>
+                <span class="badge green"><i class="fa-solid fa-wrench"></i> useEffect Mount Fix</span>
+                <span class="badge error"><i class="fa-solid fa-code-compare"></i> Server vs Client HTML Mismatch</span>
+            </div>
+            <h1>Why Hydration Errors Occur in Next.js & How to Fix Them</h1>
+            <p>
+                A deep dive into why React throws <em>"Text content does not match server-rendered HTML"</em> and the 3 proven strategies to solve hydration errors permanently.
+            </p>
+            <div class="hero-hinglish">
+                🧠 <strong>Hinglish Summary:</strong><br>
+                Hydration Error tab aata hai jab **Server dwara bheja gaya HTML** aur **Browser me React ke hydration render ka HTML** 100% match NAI karte! Jaise agar aap <code>Date.now()</code>, <code>Math.random()</code>, ya <code>typeof window === "undefined"</code> se JSX return karte hain, toh Server ek HTML text output bhejta hai aur Client dusra!
+            </div>
+        </section>
+
+
+        <!-- NEW SPECIAL SECTION: EXPLAINING THE USER'S SCREENSHOT CODE EXAMPLE -->
+        <section id="screenshot-example">
+            <div class="screenshot-card">
+                <h3 style="color: var(--accent-amber); font-family: 'Outfit', sans-serif; font-size: 1.6rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 10px;">
+                    <i class="fa-solid fa-laptop-code"></i> Deep-Dive: Screenshot Code Example Breakdown
+                </h3>
+
+                <div class="code-block" style="border: 2px solid var(--accent-amber);">
+<span class="kw">"use client"</span>;
+
+<span class="kw">export default function</span> <span class="fn">Comments</span>() {
+  <span class="kw">if</span> (<span class="kw">typeof</span> window === <span class="str">"undefined"</span>) {
+    <span class="kw">return</span> &lt;<span class="fn">div</span>&gt;500 Comments Client.&lt;/<span class="fn">div</span>&gt;; <span class="cm">// 🔴 Notice the DOT "." at the end!</span>
+  }
+  <span class="kw">return</span> &lt;<span class="fn">div</span>&gt;500 Comments Client&lt;/<span class="fn">div</span>&gt;;   <span class="cm">// 🔴 Notice NO dot at the end!</span>
+}
+                </div>
+
+                <div style="background: rgba(0, 0, 0, 0.4); border-left: 4px solid var(--dynamic-rose); padding: 1.25rem; border-radius: var(--radius-md); margin-top: 1.25rem;">
+                    <h4 style="color: var(--dynamic-rose); margin-bottom: 0.5rem;">🔍 Why does this cause a Hydration Error?</h4>
+                    <p style="font-size: 0.95rem; color: #e2e8f0; line-height: 1.6;">
+                        1️⃣ <strong>Server Execution (SSR on Node.js)</strong>:<br>
+                        • <code>"use client"</code> components ARE STILL PRE-RENDERED ON THE SERVER first!<br>
+                        • On the Node.js server, <code>window</code> object does NOT exist. So <code>typeof window === "undefined"</code> is <strong>TRUE</strong>.<br>
+                        • Server generates HTML: <code style="color: var(--accent-amber);">&lt;div&gt;500 Comments Client.&lt;/div&gt;</code> (WITH dot).
+                        <br><br>
+                        2️⃣ <strong>Client Execution (Hydration in Browser)</strong>:<br>
+                        • In the browser, <code>window</code> object DOES exist. So <code>typeof window === "undefined"</code> is <strong>FALSE</strong>.<br>
+                        • Browser React client renders: <code style="color: var(--hydrate-cyan);">&lt;div&gt;500 Comments Client&lt;/div&gt;</code> (WITHOUT dot).
+                        <br><br>
+                        3️⃣ <strong>The Mismatch Collision</strong>:<br>
+                        • React compares Server HTML (<code>"500 Comments Client."</code>) vs Client Render (<code>"500 Comments Client"</code>).<br>
+                        • ❌ Text content does not match! React throws: <code style="color: var(--dynamic-rose);">Warning: Text content did not match. Server: "500 Comments Client." Client: "500 Comments Client"</code>.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 1: The Root Cause Breakdown -->
+        <section id="cause">
+            <div class="mismatch-demo-card">
+                <h3 style="color: var(--dynamic-rose); font-family: 'Outfit', sans-serif; font-size: 1.6rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 10px;">
+                    <i class="fa-solid fa-bug"></i> The Core Mismatch Breakdown
+                </h3>
+
+                <div class="grid-2">
+                    <div style="background: rgba(0, 0, 0, 0.4); border-left: 4px solid var(--server-blue); padding: 1.25rem; border-radius: var(--radius-md);">
+                        <h4 style="color: var(--server-blue); margin-bottom: 0.5rem;">🖥️ Server HTML (Pre-rendered on Node.js at 10:00:00.100)</h4>
+                        <div class="code-block" style="margin: 0.5rem 0;">
+&lt;<span class="fn">div</span>&gt;500 Comments 1730192345223&lt;/<span class="fn">div</span>&gt;
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(0, 0, 0, 0.4); border-left: 4px solid var(--dynamic-rose); padding: 1.25rem; border-radius: var(--radius-md);">
+                        <h4 style="color: var(--dynamic-rose); margin-bottom: 0.5rem;">🌐 Client Initial Hydration (Executed in Browser at 10:00:00.250)</h4>
+                        <div class="code-block" style="margin: 0.5rem 0;">
+&lt;<span class="fn">div</span>&gt;500 Comments 1730192345298&lt;/<span class="fn">div</span>&gt;
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: rgba(244, 63, 94, 0.15); border: 1px solid var(--dynamic-rose); padding: 1rem; border-radius: var(--radius-md); margin-top: 1.25rem; color: #fecdd3; font-size: 0.95rem;">
+                    ❌ <strong>Mismatch Result:</strong> `1730192345223 !== 1730192345298` ➔ React logs: <code style="color: white; font-weight: 700;">Warning: Text content did not match. Server: "1730192345223" Client: "1730192345298"</code>!
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 2: Codebase Case Study -->
+        <section id="codebase">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-code" style="color: var(--next-purple);"></i> Project Code Analysis</h2>
+                <p>Examining <code>components/Comments.js</code> in project <code>10_why-hydration-error-comes</code></p>
+            </div>
+
+            <div class="card" style="margin-bottom: 2.5rem;">
+                <h4 style="color: var(--dynamic-rose); font-size: 1.2rem; margin-bottom: 0.5rem;">
+                    📄 File: <code>components/Comments.js</code> (Causes Mismatch Error)
+                </h4>
+                <div class="code-block">
+<span class="kw">"use client"</span>;
+
+<span class="kw">export default function</span> <span class="fn">Comments</span>() {
+  <span class="cm">// ❌ Date.now() returns different millisecond values on Server vs Client hydration!</span>
+  <span class="kw">return</span> &lt;<span class="fn">div</span>&gt;500 Comments {Date.now()}&lt;/<span class="fn">div</span>&gt;;
+}
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 3: Top Causes & 3 Solutions -->
+        <section id="solutions">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-wrench" style="color: var(--static-green);"></i> 3 Solutions to Fix Hydration Errors</h2>
+                <p>How to handle dynamic data without breaking server-client HTML consistency.</p>
+            </div>
+
+            <div class="grid-3">
+                <!-- Solution 1 -->
+                <div class="card" style="border-top: 4px solid var(--static-green);">
+                    <h4 style="color: var(--static-green); margin-bottom: 0.5rem;">
+                        ✅ Solution 1: `useEffect()` Mount Pattern (Recommended)
+                    </h4>
+                    <p style="font-size: 0.88rem; color: #cbd5e1; margin-bottom: 0.75rem;">
+                        Renders `null` or loading state on Server & Initial Hydration (matching HTML), then updates dynamic value inside `useEffect()` AFTER client mount!
+                    </p>
+                    <div class="code-block" style="font-size: 0.8rem;">
+<span class="kw">"use client"</span>;
+<span class="kw">import</span> { useState, useEffect } <span class="kw">from</span> <span class="str">"react"</span>;
+
+<span class="kw">export default function</span> <span class="fn">Comments</span>() {
+  <span class="kw">const</span> [time, setTime] = useState(<span class="kw">null</span>);
+
+  useEffect(() => {
+    setTime(Date.now()); <span class="cm">// Runs ONLY in browser after mount</span>
+  }, []);
+
+  <span class="kw">if</span> (time === <span class="kw">null</span>) <span class="kw">return</span> &lt;<span class="fn">div</span>&gt;Loading...&lt;/<span class="fn">div</span>&gt;;
+  <span class="kw">return</span> &lt;<span class="fn">div</span>&gt;500 Comments {time}&lt;/<span class="fn">div</span>&gt;;
+}
+                    </div>
+                </div>
+
+                <!-- Solution 2 -->
+                <div class="card" style="border-top: 4px solid var(--accent-cyan);">
+                    <h4 style="color: var(--accent-cyan); margin-bottom: 0.5rem;">
+                        ✅ Solution 2: `suppressHydrationWarning`
+                    </h4>
+                    <p style="font-size: 0.88rem; color: #cbd5e1; margin-bottom: 0.75rem;">
+                        Disables hydration warning logs for expected single-element dynamic differences (like live timestamps).
+                    </p>
+                    <div class="code-block" style="font-size: 0.8rem;">
+&lt;<span class="fn">span</span> <span class="kw">suppressHydrationWarning</span>&gt;
+  {<span class="kw">new</span> Date().toLocaleTimeString()}
+&lt;/<span class="fn">span</span>&gt;
+                    </div>
+                </div>
+
+                <!-- Solution 3 -->
+                <div class="card" style="border-top: 4px solid var(--next-purple);">
+                    <h4 style="color: var(--next-purple); margin-bottom: 0.5rem;">
+                        ✅ Solution 3: `next/dynamic` with `{ ssr: false }`
+                    </h4>
+                    <p style="font-size: 0.88rem; color: #cbd5e1; margin-bottom: 0.75rem;">
+                        Disables Server-Side Rendering entirely for client-only components that heavily depend on browser APIs.
+                    </p>
+                    <div class="code-block" style="font-size: 0.8rem;">
+<span class="kw">import</span> dynamic <span class="kw">from</span> <span class="str">'next/dynamic'</span>;
+
+<span class="kw">const</span> Comments = dynamic(
+  () => import(<span class="str">'@/components/Comments'</span>),
+  { ssr: <span class="kw">false</span> }
+);
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 4: Line-by-Line Breakdown -->
+        <section id="line-by-line">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-list-check" style="color: var(--static-green);"></i> Line-by-Line Code Breakdown</h2>
+                <p>Analyzing every line of `components/Comments.js` comments & code.</p>
+            </div>
+
+            <div class="line-by-line-container" style="border-top: 4px solid var(--dynamic-rose);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="font-family: 'Outfit', sans-serif; color: var(--dynamic-rose);">File: <code>components/Comments.js</code></h3>
+                    <span class="badge-error">Hydration Error Trigger</span>
+                </div>
+
+                <div class="code-line-row">
+                    <div class="line-num">L1</div>
+                    <div class="code-snippet"><span class="kw">"use client"</span>;</div>
+                    <div class="line-explanation">
+                        <strong>Client Directive:</strong> Marks component for client hydration. However, Client Components ARE STILL PRE-RENDERED ON THE SERVER (SSR HTML) first!
+                    </div>
+                </div>
+
+                <div class="code-line-row">
+                    <div class="line-num">L8</div>
+                    <div class="code-snippet">&lt;<span class="fn">div</span>&gt;500 Comments {Date.now()}&lt;/<span class="fn">div</span>&gt;</div>
+                    <div class="line-explanation">
+                        <span class="badge-error">DYNAMIC MISMATCH LINE</span><br>
+                        • On Server SSR: <code>Date.now()</code> evaluates to Server timestamp (e.g. `1730192345223`).<br>
+                        • On Client Hydration: <code>Date.now()</code> evaluates to Client timestamp (e.g. `1730192345298`).<br>
+                        • Because the two strings do not match, React throws a Hydration Mismatch Error!
+                    </div>
+                </div>
+
+                <div class="code-line-row">
+                    <div class="line-num">L71-73</div>
+                    <div class="code-snippet">useEffect(() => { setTime(Date.now()); }, []);</div>
+                    <div class="line-explanation">
+                        <span class="badge-error">EFFECT FIX PATTERN</span><br>
+                        <code>useEffect()</code> is guaranteed to run <strong>ONLY in the browser AFTER initial hydration completes</strong>. By delaying dynamic state updates into <code>useEffect()</code>, initial Server HTML and Client HTML match 100%!
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 5: Log Simulator -->
+        <section id="simulator">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-terminal" style="color: var(--accent-amber);"></i> Hydration Error & Fix Simulator</h2>
+                <p>Observe DevTools console error outputs when Mismatch occurs vs Clean `useEffect()` fix!</p>
+            </div>
+
+            <div class="terminal-card">
+                <div class="terminal-header">
+                    <div class="terminal-dots">
+                        <div class="dot red"></div>
+                        <div class="dot yellow"></div>
+                        <div class="dot green"></div>
+                    </div>
+                    <span style="font-family: 'Fira Code', monospace; font-size: 0.85rem; color: var(--text-muted);">Browser DevTools Console (F12 Tracker)</span>
+                </div>
+
+                <div class="terminal-controls">
+                    <button class="btn btn-error" onclick="simTriggerMismatch()">
+                        <i class="fa-solid fa-bug"></i> 1. Render `Date.now()` without Fix (Triggers Hydration Error)
+                    </button>
+                    <button class="btn btn-error" onclick="simTriggerScreenshotExample()">
+                        <i class="fa-solid fa-bug"></i> 2. Render Screenshot `typeof window === "undefined"` Example
+                    </button>
+                    <button class="btn btn-fix" onclick="simApplyFix()">
+                        <i class="fa-solid fa-circle-check"></i> 3. Render with `useEffect()` Fix (Clean 100% Match!)
+                    </button>
+                    <button class="btn" onclick="clearTerminal()">
+                        <i class="fa-solid fa-trash-can"></i> Clear
+                    </button>
+                </div>
+
+                <div class="terminal-window" id="term-output">
+                    <div class="terminal-line"><span class="line-time">[SYSTEM]</span> Ready. Click buttons to test Hydration Error vs Solution.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <p>Next.js Why Hydration Error Comes Master Guide</p>
+        </footer>
+
+    </div>
+
+    <!-- Simulator Script -->
+    <script>
+        const term = document.getElementById('term-output');
+
+        function getTimeStamp() {
+            const now = new Date();
+            return `[${now.toLocaleTimeString()}]`;
+        }
+
+        function appendLog(htmlContent) {
+            const line = document.createElement('div');
+            line.className = 'terminal-line';
+            line.innerHTML = `<span class="line-time">${getTimeStamp()}</span> ${htmlContent}`;
+            term.appendChild(line);
+            term.scrollTop = term.scrollHeight;
+        }
+
+        function simTriggerMismatch() {
+            const serverTime = Date.now();
+            const clientTime = serverTime + 75;
+            appendLog('<span class="line-info">🖥️ Server rendered HTML: &lt;div&gt;500 Comments ' + serverTime + '&lt;/div&gt;</span>');
+            appendLog('<span class="line-info">🌐 Client initial hydration: &lt;div&gt;500 Comments ' + clientTime + '&lt;/div&gt;</span>');
+            appendLog('<span class="line-error">❌ [REACT HYDRATION ERROR] Uncaught Error: Text content does not match server-rendered HTML.</span>');
+            appendLog('<span class="line-error">    Server: "' + serverTime + '" | Client: "' + clientTime + '"</span>');
+        }
+
+        function simTriggerScreenshotExample() {
+            appendLog('<span class="line-info">🖥️ Server rendered HTML (typeof window === "undefined" is TRUE): &lt;div&gt;500 Comments Client.&lt;/div&gt; (WITH dot)</span>');
+            appendLog('<span class="line-info">🌐 Client initial hydration (typeof window === "undefined" is FALSE): &lt;div&gt;500 Comments Client&lt;/div&gt; (WITHOUT dot)</span>');
+            appendLog('<span class="line-error">❌ [REACT HYDRATION ERROR] Uncaught Error: Text content does not match server-rendered HTML.</span>');
+            appendLog('<span class="line-error">    Server: "500 Comments Client." | Client: "500 Comments Client"</span>');
+        }
+
+        function simApplyFix() {
+            appendLog('<span class="line-info">🖥️ Server rendered HTML: &lt;div&gt;Loading comments...&lt;/div&gt; (time === null)</span>');
+            appendLog('<span class="line-info">🌐 Client initial hydration: &lt;div&gt;Loading comments...&lt;/div&gt; (Match 100%! ✓)</span>');
+            appendLog('<span class="line-fix">🎉 Hydration successful! No errors thrown.</span>');
+            setTimeout(() => {
+                appendLog('<span class="line-fix">⚙️ useEffect() executed in browser ➔ Updated UI to: &lt;div&gt;500 Comments ' + Date.now() + '&lt;/div&gt;</span>');
+            }, 500);
+        }
+
+        function clearTerminal() {
+            term.innerHTML = '<div class="terminal-line"><span class="line-time">[SYSTEM]</span> Terminal cleared.</div>';
+        }
+    </script>
+</body>
+</html>

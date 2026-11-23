@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Next.js Handling Client-Side Exceptions &amp; Naming Conventions Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #070a11;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border-color: #334155;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --server-color: #10b981;
+      --server-bg: rgba(16, 185, 129, 0.12);
+      
+      --client-color: #38bdf8;
+      --client-bg: rgba(56, 189, 248, 0.12);
+
+      --danger-color: #f43f5e;
+      --danger-bg: rgba(244, 63, 94, 0.15);
+      --danger-border: rgba(244, 63, 94, 0.4);
+      
+      --warning-color: #fbbf24;
+      --warning-bg: rgba(251, 191, 36, 0.12);
+      
+      --purple-color: #a855f7;
+      --purple-bg: rgba(168, 85, 247, 0.12);
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+    }
+
+    .container { max-width: 1150px; margin: 0 auto; }
+
+    /* HERO HEADER */
+    header.hero {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      background: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.15) 0%, rgba(7, 10, 17, 0) 70%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 2.5rem;
+    }
+
+    .badge-group {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+    }
+
+    .badge-client { background: var(--client-bg); color: var(--client-color); border-color: rgba(56, 189, 248, 0.4); }
+    .badge-danger { background: var(--danger-bg); color: var(--danger-color); border-color: var(--danger-border); }
+    .badge-server { background: var(--server-bg); color: var(--server-color); border-color: rgba(16, 185, 129, 0.4); }
+
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #ffffff 40%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .badge-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+      background: var(--client-bg);
+      color: var(--client-color);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+
+    /* ARCHITECTURE GRID */
+    .arch-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 768px) { .arch-grid { grid-template-columns: 1fr; } }
+
+    .arch-box {
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      background: rgba(30, 41, 59, 0.4);
+    }
+
+    .arch-box.wrong { border-color: var(--danger-border); background: var(--danger-bg); }
+    .arch-box.right { border-color: rgba(16, 185, 129, 0.4); background: var(--server-bg); }
+
+    .arch-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* SIMULATOR */
+    .simulator-container {
+      background: #030712;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    .sim-controls {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .sim-btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 9999px;
+      border: none;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .sim-btn-starter { background: #f43f5e; color: #fff; }
+    .sim-btn-final { background: #10b981; color: #000; box-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
+
+    .mock-browser {
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      background: #0b0f19;
+    }
+
+    .mock-browser-bar {
+      background: #1e293b;
+      padding: 0.5rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .mock-dots { display: flex; gap: 6px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-red { background: #f43f5e; }
+    .dot-yellow { background: #fbbf24; }
+    .dot-green { background: #10b981; }
+
+    .mock-browser-content { padding: 1.5rem; min-height: 200px; }
+
+    .mock-page-success {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid var(--server-color);
+      border-radius: var(--radius-sm);
+      padding: 1.25rem;
+      color: #a7f3d0;
+    }
+
+    .mock-page-error {
+      background: rgba(244, 63, 94, 0.1);
+      border: 1px solid var(--danger-color);
+      border-radius: var(--radius-sm);
+      padding: 1.25rem;
+      color: #fca5a5;
+    }
+
+    .console-box {
+      background: #020617;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      font-family: 'Fira Code', monospace;
+      padding: 1rem;
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+
+    /* CODE TABS */
+    .code-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    @media (max-width: 850px) { .code-grid { grid-template-columns: 1fr; } }
+
+    .code-panel {
+      background: #050811;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .code-panel-header {
+      padding: 0.65rem 1rem;
+      background: #0d1322;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .code-content {
+      padding: 1.25rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      white-space: pre;
+      overflow-x: auto;
+      line-height: 1.6;
+    }
+
+    .hl-kw { color: #f472b6; }
+    .hl-imp { color: #38bdf8; }
+    .hl-str { color: #a3e635; }
+    .hl-func { color: #fbbf24; }
+    .hl-comment { color: var(--text-dim); font-style: italic; }
+    .hl-tag { color: #818cf8; }
+    .hl-danger { color: #f43f5e; font-weight: bold; }
+    .hl-green { color: #10b981; font-weight: bold; }
+
+    /* QUIZ */
+    .quiz-option {
+      background: var(--bg-card-hover);
+      border: 1px solid var(--border-color);
+      padding: 1rem;
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .quiz-option.correct { background: var(--server-bg) !important; border-color: var(--server-color) !important; color: var(--server-color); }
+    .quiz-option.incorrect { background: var(--danger-bg) !important; border-color: var(--danger-color) !important; color: var(--danger-color); }
+    .radio-circle { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--text-dim); }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--text-dim);
+      font-size: 0.875rem;
+      border-top: 1px solid var(--border-color);
+      margin-top: 3rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- HERO -->
+    <header class="hero">
+      <div class="badge-group">
+        <span class="badge badge-client">Client-Side Exceptions</span>
+        <span class="badge badge-danger">Strict File Naming</span>
+        <span class="badge badge-server">error.js Convention</span>
+      </div>
+      <h1>Handling Client-Side Exceptions &amp; Strict Conventions</h1>
+      <p class="hero-subtitle">
+        Understand how Next.js App Router handles client-side runtime errors and why strict file naming (<code>error.js</code> vs <code>errors.js</code>) determines whether React Error Boundaries are created.
+      </p>
+    </header>
+
+    <!-- SECTION 1: STRICT CONVENTION EXPLANATION -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">⚙️</div>
+        <h2>1. Next.js Strict Convention: <code>error.js</code> vs <code>errors.js</code></h2>
+      </div>
+
+      <div class="arch-grid">
+        <div class="arch-box wrong">
+          <div class="arch-title">
+            <span>❌ Starter Typo: errors.js (Unrecognized)</span>
+          </div>
+          <p>
+            In starter code, the developer named the file <code>errors.js</code> (plural with an 's'). 
+            <strong>Next.js treats this as a regular helper file and DOES NOT create a React Error Boundary!</strong> Unhandled errors cause the page to crash or unmount completely.
+          </p>
+        </div>
+
+        <div class="arch-box right">
+          <div class="arch-title">
+            <span>✅ Final Fix: error.js (Recognized Convention)</span>
+          </div>
+          <p>
+            Naming the file strictly <code>error.js</code> (singular) instructs Next.js compiler to automatically wrap the route segment inside a React <code>&lt;ErrorBoundary&gt;</code>. 
+            Client-side runtime exceptions are caught gracefully!
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: LIVE SIMULATOR -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🎮</div>
+        <h2>2. Live Interactive Convention &amp; Exception Simulator</h2>
+      </div>
+
+      <div class="simulator-container">
+        <div class="sim-controls">
+          <button class="sim-btn sim-btn-starter" onclick="runScenario('starter')">
+            ❌ Starter Scenario: errors.js (Typo in Filename)
+          </button>
+          <button class="sim-btn sim-btn-final" onclick="runScenario('final')">
+            ✅ Final Scenario: error.js (Correct Convention)
+          </button>
+        </div>
+
+        <div class="mock-browser">
+          <div class="mock-browser-bar">
+            <div class="mock-dots">
+              <span class="dot dot-red"></span>
+              <span class="dot dot-yellow"></span>
+              <span class="dot dot-green"></span>
+            </div>
+            <span style="margin-left: 10px;">http://localhost:3000/blogs/1</span>
+          </div>
+
+          <div class="mock-browser-content">
+            <div id="sim-display">
+              <div class="mock-page-success">
+                <h3>Welcome to Our Blog 1</h3>
+                <p>Click a button above to test how Next.js responds when an exception occurs!</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="console-output" class="console-box">
+          Console Log: System initialized. Choose Starter vs Final scenario above.
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: CODE COMPARISON -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🔍</div>
+        <h2>3. Side-by-Side Code Comparison: Starter vs Final</h2>
+      </div>
+
+      <div class="code-grid">
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span style="color: var(--danger-color);">Starter: Incorrect Filename</span>
+            <span>app/blogs/[blogID]/errors.js</span>
+          </div>
+          <div class="code-content"><span class="hl-comment">// ❌ FILENAME: errors.js (Plural - TYPO!)</span>
+<span class="hl-str">"use client"</span>;
+
+<span class="hl-kw">export default function</span> <span class="hl-func">Error</span>({ error, reset }) {
+  <span class="hl-comment">// Next.js ignores this file as an Error Boundary!</span>
+  <span class="hl-kw">return</span> &lt;<span class="hl-tag">div</span>&gt;<span class="hl-danger">Something went wrong</span>&lt;/<span class="hl-tag">div</span>&gt;;
+}</div>
+        </div>
+
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span style="color: var(--server-color);">Final: Correct Convention</span>
+            <span>app/blogs/[blogID]/error.js</span>
+          </div>
+          <div class="code-content"><span class="hl-comment">// ✅ FILENAME: error.js (Singular - EXACT!)</span>
+<span class="hl-str">"use client"</span>;
+
+<span class="hl-kw">export default function</span> <span class="hl-func">Error</span>({ error, reset }) {
+  <span class="hl-comment">// Next.js recognizes this file &amp; wraps page in Error Boundary!</span>
+  <span class="hl-kw">return</span> &lt;<span class="hl-tag">div</span>&gt;<span class="hl-green">Something went wrong</span>&lt;/<span class="hl-tag">div</span>&gt;;
+}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: KNOWLEDGE CHECK -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">❓</div>
+        <h2>4. Quick Knowledge Check</h2>
+      </div>
+
+      <div>
+        <h4 style="margin-bottom: 0.75rem;">Q1: What happens if you name your error boundary file <code>errors.jsx</code> instead of <code>error.jsx</code>?</h4>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>A) Next.js automatically renames it during build time.</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, true)">
+          <span class="radio-circle"></span>
+          <span>B) Next.js ignores it as an Error Boundary because convention requires the exact singular name error.js!</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>C) It works identically; plural names are also supported.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 5: POORA SAAR / HINGLISH GOLDEN RULE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4);">💡</div>
+        <h2>5. Poora Saar &amp; Golden Master Rule (Hinglish)</h2>
+      </div>
+
+      <div style="padding: 1.5rem; background: #020617; border-left: 5px solid var(--purple-color); border-radius: var(--radius-md);">
+        <h3 style="color: var(--purple-color); margin-bottom: 0.75rem; font-size: 1.15rem;">💡 Client-Side Exceptions &amp; Convention Ka Poora Saar:</h3>
+
+        <p style="font-size: 0.98rem; color: var(--text-main); line-height: 1.8; margin-bottom: 1rem;">
+          Next.js App Router me file names ka <strong>Strict Convention</strong> hota hai! 
+          Jab aap file ka naam <code>errors.js</code> (plural with an 's') rakh dete ho, toh Next.js use ek normal utility file samajhta hai aur **React Error Boundary** create nahi karta!
+        </p>
+
+        <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 1.25rem;">
+          Jaise hi aap naam <code>error.js</code> (singular) karte ho, Next.js ka compiler automatically route segment ko React <code>&lt;ErrorBoundary&gt;</code> me wrap kar deta hai. 
+          Ab chahe Server Error aaye ya Browser me Client-Side Exception (JS Error) phate, aapka fallback UI screen par smoothly render ho jayega!
+        </p>
+
+        <div style="background: rgba(168, 85, 247, 0.1); border: 1px dashed var(--purple-color); padding: 1rem; border-radius: var(--radius-sm); font-size: 0.9rem;">
+          <strong style="color: var(--purple-color); display: block; margin-bottom: 0.5rem;">🔥 3 Rules to Remember Forever:</strong>
+          <ul style="padding-left: 1.2rem; line-height: 1.8; color: var(--text-main);">
+            <li><strong>1. Strict Name 🎯</strong> ➔ File ka naam ALWAYS <code>error.js</code> or <code>error.jsx</code> hona chahiye (NOT <code>errors.js</code>!).</li>
+            <li><strong>2. Client Boundary 🌐</strong> ➔ <code>error.js</code> ke top par ALWAYS <code>"use client"</code> hona chahiye!</li>
+            <li><strong>3. Instant Client Catch ⚡</strong> ➔ Client-Side Exceptions (Browser JS Errors) immediate Catch hote hain aur client boundary UI load ho jata hai.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Next.js Client Exceptions &amp; Conventions Guide &bull; Section 5 Lesson 04
+    </footer>
+  </div>
+
+  <script>
+    function runScenario(type) {
+      const display = document.getElementById('sim-display');
+      const consoleBox = document.getElementById('console-output');
+
+      if (type === 'starter') {
+        display.innerHTML = `
+          <div class="mock-page-error" style="border-color: var(--danger-color);">
+            <h3 style="color: var(--danger-color); margin-bottom: 0.5rem;">💥 UNCAUGHT CRASH (White Screen of Death)</h3>
+            <p style="font-size: 0.9rem;">Filename was errors.js! Next.js did NOT create an Error Boundary. Exception unhandled in browser!</p>
+          </div>
+        `;
+        consoleBox.innerHTML = `<span style="color: var(--danger-color)">[CONVENTION ERROR] 'errors.js' unrecognized by Next.js App Router compiler! React Error Boundary was NOT created.</span>`;
+      } else {
+        display.innerHTML = `
+          <div class="mock-page-error" style="border-color: var(--server-color); background: rgba(16, 185, 129, 0.1);">
+            <h3 style="color: var(--server-color); margin-bottom: 0.5rem;">🛡️ Error Boundary Active (Handled Gracefully)</h3>
+            <p style="font-size: 0.9rem; color: #a7f3d0;">Filename is error.js! Next.js created ErrorBoundary. Client exception caught smoothly!</p>
+          </div>
+        `;
+        consoleBox.innerHTML = `<span style="color: var(--server-color)">[CONVENTION SUCCESS] 'error.js' recognized! React Error Boundary wrapped route segment and rendered fallback UI.</span>`;
+      }
+    }
+
+    function checkAnswer(element, isCorrect) {
+      const parent = element.parentElement;
+      parent.querySelectorAll('.quiz-option').forEach(el => {
+        el.classList.remove('correct', 'incorrect');
+      });
+
+      if (isCorrect) {
+        element.classList.add('correct');
+      } else {
+        element.classList.add('incorrect');
+      }
+    }
+  </script>
+</body>
+</html>

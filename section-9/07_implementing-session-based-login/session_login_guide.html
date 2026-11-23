@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Next.js Auth: Implementing Session-Based Login Architecture</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #070a11;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border-color: #334155;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --server-color: #10b981;
+      --server-bg: rgba(16, 185, 129, 0.12);
+      
+      --client-color: #38bdf8;
+      --client-bg: rgba(56, 189, 248, 0.12);
+
+      --danger-color: #f43f5e;
+      --danger-bg: rgba(244, 63, 94, 0.15);
+      
+      --warning-color: #fbbf24;
+      --warning-bg: rgba(251, 191, 36, 0.12);
+      
+      --purple-color: #a855f7;
+      --purple-bg: rgba(168, 85, 247, 0.12);
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+    }
+
+    .container { max-width: 1150px; margin: 0 auto; }
+
+    header.hero {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      background: radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.15) 0%, rgba(7, 10, 17, 0) 70%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 2.5rem;
+    }
+
+    .badge-group { display: flex; justify-content: center; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .badge { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.35rem 0.85rem; border-radius: 9999px; border: 1px solid var(--border-color); }
+    .badge-purple { background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4); }
+    .badge-server { background: var(--server-bg); color: var(--server-color); border-color: rgba(16, 185, 129, 0.4); }
+    .badge-client { background: var(--client-bg); color: var(--client-color); border-color: rgba(56, 189, 248, 0.4); }
+
+    h1 { font-size: 2.4rem; font-weight: 800; margin-bottom: 0.75rem; background: linear-gradient(135deg, #ffffff 40%, #a855f7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero-subtitle { font-size: 1.1rem; color: var(--text-muted); max-width: 800px; margin: 0 auto; }
+
+    .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 2rem; margin-bottom: 2.5rem; box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5); }
+    .card-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; }
+    .badge-icon { width: 40px; height: 40px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold; background: var(--purple-bg); color: var(--purple-color); border: 1px solid rgba(168, 85, 247, 0.4); }
+
+    .arch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 768px) { .arch-grid { grid-template-columns: 1fr; } }
+    .arch-box { border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.5rem; background: rgba(30, 41, 59, 0.4); }
+
+    .simulator-container { background: #030712; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.5rem; margin-top: 1rem; }
+    .sim-controls { display: flex; gap: 1rem; justify-content: center; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .sim-btn { padding: 0.75rem 1.5rem; border-radius: 9999px; border: none; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: all 0.2s ease; }
+    .sim-btn-login { background: #a855f7; color: #fff; }
+    .sim-btn-verify { background: #10b981; color: #000; }
+
+    .mock-console { background: #020617; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-family: 'Fira Code', monospace; padding: 1rem; margin-top: 1rem; font-size: 0.85rem; line-height: 1.6; }
+
+    .code-panel { background: #050811; border: 1px solid var(--border-color); border-radius: var(--radius-md); overflow: hidden; }
+    .code-panel-header { padding: 0.65rem 1rem; background: #0d1322; border-bottom: 1px solid var(--border-color); font-size: 0.8rem; font-weight: 700; display: flex; justify-content: space-between; }
+    .code-content { padding: 1.25rem; font-family: 'Fira Code', monospace; font-size: 0.85rem; white-space: pre; overflow-x: auto; line-height: 1.6; }
+
+    .hl-kw { color: #f472b6; }
+    .hl-imp { color: #38bdf8; }
+    .hl-str { color: #a3e635; }
+    .hl-func { color: #fbbf24; }
+    .hl-comment { color: var(--text-dim); font-style: italic; }
+
+    .quiz-option { background: var(--bg-card-hover); border: 1px solid var(--border-color); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 0.75rem; }
+    .quiz-option.correct { background: var(--server-bg) !important; border-color: var(--server-color) !important; color: var(--server-color); }
+    .quiz-option.incorrect { background: var(--danger-bg) !important; border-color: var(--danger-color) !important; color: var(--danger-color); }
+    .radio-circle { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--text-dim); }
+
+    footer { text-align: center; padding: 2rem 0; color: var(--text-dim); font-size: 0.875rem; border-top: 1px solid var(--border-color); margin-top: 3rem; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- HERO -->
+    <header class="hero">
+      <div class="badge-group">
+        <span class="badge badge-purple">MongoDB Session Store</span>
+        <span class="badge badge-server">sessionId in Cookie</span>
+        <span class="badge badge-client">Server-Side Invalidation</span>
+      </div>
+      <h1>Implementing Session-Based Login Architecture</h1>
+      <p class="hero-subtitle">
+        Learn how industry-standard session management stores active session records in a MongoDB <code>Session</code> collection while providing instant server-side revocation capabilities.
+      </p>
+    </header>
+
+    <!-- SECTION 1: TECHNICAL ARCHITECTURE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">⚙️</div>
+        <h2>1. Stateful Session Architecture vs Direct Cookie ID</h2>
+      </div>
+
+      <div class="arch-grid">
+        <div class="arch-box">
+          <h3 style="color: var(--warning-color); margin-bottom: 0.5rem;">⚠️ Why Direct userId Cookie Is Limited</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted);">
+            If a cookie directly stores <code>userId</code>, the server CANNOT force-logout a user or revoke stolen sessions! The cookie remains valid until its <code>maxAge</code> expires.
+          </p>
+        </div>
+
+        <div class="arch-box">
+          <h3 style="color: var(--purple-color); margin-bottom: 0.5rem;">🚀 MongoDB Session Store Architecture</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted);">
+            1. User logs in ➔ Server creates a <code>Session</code> document in MongoDB: <code>{ userId, createdAt }</code>.<br>
+            2. Server issues a signed cookie storing <code>sessionId</code> (not userId!).<br>
+            3. On API requests, server verifies <code>sessionId</code> against MongoDB. Deleting the Session record instantly revokes access!
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: LIVE SIMULATOR -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">⚡</div>
+        <h2>2. Live Interactive Session Store Simulator</h2>
+      </div>
+
+      <div class="simulator-container">
+        <div class="sim-controls">
+          <button class="sim-btn sim-btn-login" onclick="runSim('login')">
+            🔑 Create Session in MongoDB (Session.create({ userId }))
+          </button>
+          <button class="sim-btn sim-btn-verify" onclick="runSim('verify')">
+            🔍 Verify Session Flow (Cookie ➔ Session ➔ User)
+          </button>
+        </div>
+
+        <div id="sim-console" class="mock-console">
+          Console Output: Click a button above to test session creation and verification.
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: CODE ANATOMY -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🔍</div>
+        <h2>3. Code Breakdown: <code>models/sessionModel.js</code> &amp; <code>lib/auth.js</code></h2>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span>models/sessionModel.js</span>
+            <span style="color: var(--purple-color);">MongoDB Session Schema</span>
+          </div>
+          <div class="code-content"><span class="hl-imp">import</span> mongoose, { Schema } <span class="hl-imp">from</span> <span class="hl-str">"mongoose"</span>;
+
+<span class="hl-kw">const</span> Session = mongoose.models.Session || mongoose.<span class="hl-func">model</span>(<span class="hl-str">"Session"</span>, {
+  <span class="hl-str">userId</span>: {
+    <span class="hl-str">type</span>: Schema.Types.ObjectId,
+    <span class="hl-str">required</span>: <span class="hl-kw">true</span>
+  },
+  <span class="hl-str">createdAt</span>: {
+    <span class="hl-str">type</span>: Date,
+    <span class="hl-str">default</span>: Date.now,
+    <span class="hl-str">expires</span>: <span class="hl-str">3600 * 24 * 7</span> <span class="hl-comment">// 👈 Auto TTL Index: MongoDB deletes after 7 days</span>
+  }
+});
+
+<span class="hl-kw">export default</span> Session;</div>
+        </div>
+
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span>lib/auth.js</span>
+            <span style="color: var(--server-color);">2-Step Lookup: Cookie ➔ Session ➔ User</span>
+          </div>
+          <div class="code-content"><span class="hl-kw">export async function</span> <span class="hl-func">getLoggedInUser</span>() {
+  <span class="hl-kw">const</span> cookieStore = <span class="hl-kw">await</span> <span class="hl-func">cookies</span>();
+  <span class="hl-kw">const</span> cookie = cookieStore.<span class="hl-func">get</span>(<span class="hl-str">"userId"</span>)?.value;
+  
+  <span class="hl-kw">const</span> sessionId = <span class="hl-func">verifyCookie</span>(cookie);
+  <span class="hl-kw">if</span> (!sessionId) <span class="hl-kw">return</span> errorResponse;
+
+  <span class="hl-comment">// Step 1: Look up Session in DB</span>
+  <span class="hl-kw">const</span> session = <span class="hl-kw">await</span> Session.<span class="hl-func">findById</span>(sessionId);
+  <span class="hl-kw">if</span> (!session) <span class="hl-kw">return</span> errorResponse; <span class="hl-comment">// Revoked or Expired!</span>
+
+  <span class="hl-comment">// Step 2: Fetch User using session.userId</span>
+  <span class="hl-kw">const</span> user = <span class="hl-kw">await</span> User.<span class="hl-func">findById</span>(session.userId);
+  <span class="hl-kw">return</span> user;
+}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: KNOWLEDGE CHECK -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">❓</div>
+        <h2>4. Quick Knowledge Check</h2>
+      </div>
+
+      <div>
+        <h4 style="margin-bottom: 0.75rem;">Q1: What is the primary security advantage of Session-based auth over stateless user cookies?</h4>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>A) Session cookies don't require HTTPS.</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, true)">
+          <span class="radio-circle"></span>
+          <span>B) The server can instantly invalidate/delete a session record in DB to force-logout a user or revoke access.</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>C) MongoDB automatically encrypts all passwords.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 5: POORA SAAR / HINGLISH GOLDEN RULE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4);">💡</div>
+        <h2>5. Poora Saar &amp; Golden Master Rule (Hinglish)</h2>
+      </div>
+
+      <div style="padding: 1.5rem; background: #020617; border-left: 5px solid var(--purple-color); border-radius: var(--radius-md);">
+        <h3 style="color: var(--purple-color); margin-bottom: 0.75rem; font-size: 1.15rem;">💡 Session-Based Auth Ka Poora Saar:</h3>
+
+        <p style="font-size: 0.98rem; color: var(--text-main); line-height: 1.8; margin-bottom: 1rem;">
+          Production Web Apps me cookie me direct <code>userId</code> rakhna aachi practice nahi hoti kyunki server par user ko Instant Logout karne ki taakat nahi rehti.
+        </p>
+
+        <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 1.25rem;">
+          Isiliye hum **Session-Based Login** use karte hain:
+          <br>1. User Login karta hai ➔ MongoDB me <code>Session</code> Document banta hai (<code>{ _id: "sess_123", userId: "user_456" }</code>).
+          <br>2. Cookie me <code>sessionId</code> bhejte hain (Signed HMAC ke sath).
+          <br>3. Request aane par server pehle DB me check karta hai: <em>"Kya sess_123 active hai?"</em> Agar haan, tabhi user authenticate hota hai! Agar server DB se session delete kar de ➔ User instant Logout ho jata hai!
+        </p>
+
+        <div style="background: rgba(168, 85, 247, 0.1); border: 1px dashed var(--purple-color); padding: 1rem; border-radius: var(--radius-sm); font-size: 0.9rem;">
+          <strong style="color: var(--purple-color); display: block; margin-bottom: 0.5rem;">🔥 Session Store Golden Pattern:</strong>
+          <ul style="padding-left: 1.2rem; line-height: 1.8; color: var(--text-main);">
+            <li><strong>1. Store sessionId in Cookie 🍪</strong> ➔ Never store raw userId in client cookies.</li>
+            <li><strong>2. MongoDB TTL Index 🕒</strong> ➔ Set <code>expires: 3600 * 24 * 7</code> on Session schema for automatic DB cleanup.</li>
+            <li><strong>3. 2-Step Verification 🔍</strong> ➔ Cookie ➔ Session Lookup ➔ User Lookup.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Next.js Session-Based Login Guide &bull; Section 9 Lesson 07
+    </footer>
+  </div>
+
+  <script>
+    let activeSession = null;
+    function runSim(type) {
+      const consoleBox = document.getElementById('sim-console');
+      if (type === 'login') {
+        activeSession = "sess_998877";
+        consoleBox.innerHTML = `
+          <span style="color: var(--purple-color)">[LOGIN SUCCESS] Creating MongoDB Session document...</span><br>
+          <span style="color: var(--server-color)">[DB INSERT] Session.create({ userId: "65b1a..." }) ➔ Inserted _id: "sess_998877"</span><br>
+          <span style="color: var(--client-color)">[SET-COOKIE] userId = signCookie("sess_998877")</span>
+        `;
+      } else {
+        if (activeSession) {
+          consoleBox.innerHTML = `
+            <span style="color: var(--client-color)">[GET /api/todos] Cookie: "sess_998877.a7f9b..."</span><br>
+            <span style="color: var(--purple-color)">[STEP 1] Session.findById("sess_998877") ➔ FOUND! (userId: "65b1a...")</span><br>
+            <span style="color: var(--server-color)">[STEP 2] User.findById("65b1a...") ➔ FOUND! Authenticated as Rahul. ✅</span>
+          `;
+        } else {
+          consoleBox.innerHTML = `
+            <span style="color: var(--warning-color)">[VERIFY FAIL] No active session created yet! Click 'Create Session' first.</span>
+          `;
+        }
+      }
+    }
+
+    function checkAnswer(element, isCorrect) {
+      const parent = element.parentElement;
+      parent.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('correct', 'incorrect'));
+      if (isCorrect) element.classList.add('correct');
+      else element.classList.add('incorrect');
+    }
+  </script>
+</body>
+</html>

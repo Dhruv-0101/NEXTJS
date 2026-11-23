@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Next.js Guide: Using ESLint as a Code Formatter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #070a11;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border-color: #334155;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --server-color: #10b981;
+      --server-bg: rgba(16, 185, 129, 0.12);
+      
+      --client-color: #38bdf8;
+      --client-bg: rgba(56, 189, 248, 0.12);
+
+      --danger-color: #f43f5e;
+      --danger-bg: rgba(244, 63, 94, 0.15);
+      --danger-border: rgba(244, 63, 94, 0.4);
+      
+      --warning-color: #fbbf24;
+      --warning-bg: rgba(251, 191, 36, 0.12);
+      
+      --purple-color: #a855f7;
+      --purple-bg: rgba(168, 85, 247, 0.12);
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+    }
+
+    .container { max-width: 1150px; margin: 0 auto; }
+
+    /* HERO HEADER */
+    header.hero {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      background: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.15) 0%, rgba(7, 10, 17, 0) 70%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 2.5rem;
+    }
+
+    .badge-group {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+    }
+
+    .badge-server { background: var(--server-bg); color: var(--server-color); border-color: rgba(16, 185, 129, 0.4); }
+    .badge-client { background: var(--client-bg); color: var(--client-color); border-color: rgba(56, 189, 248, 0.4); }
+    .badge-purple { background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4); }
+
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #ffffff 40%, #10b981 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .badge-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+      background: var(--server-bg);
+      color: var(--server-color);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+
+    /* ARCHITECTURE GRID */
+    .arch-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 768px) { .arch-grid { grid-template-columns: 1fr; } }
+
+    .arch-box {
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      background: rgba(30, 41, 59, 0.4);
+    }
+
+    .arch-box.linting { border-color: var(--client-color); background: var(--client-bg); }
+    .arch-box.formatting { border-color: rgba(16, 185, 129, 0.4); background: var(--server-bg); }
+
+    .arch-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* SIMULATOR */
+    .simulator-container {
+      background: #030712;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    .sim-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      max-width: 550px;
+      margin: 0 auto 1.5rem auto;
+      background: #0b0f19;
+      padding: 1.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+    }
+
+    .sim-btn-submit {
+      padding: 0.75rem 1.5rem;
+      border-radius: 9999px;
+      border: none;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      background: linear-gradient(135deg, #10b981 0%, #38bdf8 100%);
+      color: #000;
+      transition: all 0.2s ease;
+    }
+
+    .mock-console {
+      background: #020617;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      font-family: 'Fira Code', monospace;
+      padding: 1rem;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+
+    /* CODE COMPARISON */
+    .code-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    @media (max-width: 850px) { .code-grid { grid-template-columns: 1fr; } }
+
+    .code-panel {
+      background: #050811;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .code-panel-header {
+      padding: 0.65rem 1rem;
+      background: #0d1322;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .code-content {
+      padding: 1.25rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      white-space: pre;
+      overflow-x: auto;
+      line-height: 1.6;
+    }
+
+    .hl-kw { color: #f472b6; }
+    .hl-imp { color: #38bdf8; }
+    .hl-str { color: #a3e635; }
+    .hl-func { color: #fbbf24; }
+    .hl-comment { color: var(--text-dim); font-style: italic; }
+    .hl-tag { color: #818cf8; }
+    .hl-purple { color: #a855f7; font-weight: bold; }
+    .hl-danger { color: #f43f5e; font-weight: bold; }
+    .hl-green { color: #10b981; font-weight: bold; }
+
+    /* QUIZ */
+    .quiz-option {
+      background: var(--bg-card-hover);
+      border: 1px solid var(--border-color);
+      padding: 1rem;
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .quiz-option.correct { background: var(--server-bg) !important; border-color: var(--server-color) !important; color: var(--server-color); }
+    .quiz-option.incorrect { background: var(--danger-bg) !important; border-color: var(--danger-color) !important; color: var(--danger-color); }
+    .radio-circle { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--text-dim); }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--text-dim);
+      font-size: 0.875rem;
+      border-top: 1px solid var(--border-color);
+      margin-top: 3rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- HERO -->
+    <header class="hero">
+      <div class="badge-group">
+        <span class="badge badge-server">ESLint Auto-Formatter</span>
+        <span class="badge badge-purple">codeActionsOnSave</span>
+        <span class="badge badge-client">--fix CLI Flag</span>
+      </div>
+      <h1>Using ESLint as a Code Formatter</h1>
+      <p class="hero-subtitle">
+        Understand how ESLint can enforce code style rules (quotes, semicolons, indentation) and automatically format your codebase on save using VS Code integration.
+      </p>
+    </header>
+
+    <!-- SECTION 1: LINTING VS FORMATTING -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">⚙️</div>
+        <h2>1. Linting (Code Quality) vs. Formatting (Code Style)</h2>
+      </div>
+
+      <div class="arch-grid">
+        <div class="arch-box linting">
+          <div class="arch-title">
+            <span>🔍 Code Quality (Linting)</span>
+          </div>
+          <p style="font-size: 0.9rem; color: var(--text-muted);">
+            • <strong>Focus:</strong> Logic bugs, undefined variables, broken React hooks dependencies.<br>
+            • <strong>Examples:</strong> <code>no-unused-vars</code>, <code>react-hooks/exhaustive-deps</code>.<br>
+            • <strong>Fix:</strong> Often requires developer decision &amp; refactoring.
+          </p>
+        </div>
+
+        <div class="arch-box formatting">
+          <div class="arch-title">
+            <span>🎨 Code Style (Formatting)</span>
+          </div>
+          <p style="font-size: 0.9rem; color: var(--text-muted);">
+            • <strong>Focus:</strong> Visual layout, quotes consistency, semicolons, 2-space indentation.<br>
+            • <strong>Examples:</strong> <code>semi</code>, <code>quotes</code>, <code>indent</code>, <code>comma-dangle</code>.<br>
+            • <strong>Fix:</strong> 100% <strong>auto-fixable</strong> via <code>--fix</code> or Save!
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: CONFIGURATION -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4);">📜</div>
+        <h2>2. Configuring Formatting Rules &amp; VS Code Auto-Save</h2>
+      </div>
+
+      <div style="font-family: 'Fira Code', monospace; background: #020617; padding: 1.25rem; border-radius: var(--radius-sm); font-size: 0.85rem; border-left: 4px solid var(--purple-color); margin-bottom: 1rem;">
+        // eslint.config.mjs<br>
+        const eslintConfig = [<br>
+        &nbsp;&nbsp;...compat.config({<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;extends: ["next/core-web-vitals", "next/typescript"],<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #a7f3d0;">rules: {</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #a7f3d0;">semi: ["error", "always"],</span> // 👈 Mandatory semicolons<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #a7f3d0;">quotes: ["error", "single"],</span> // 👈 Enforce single quotes<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #a7f3d0;">indent: ["error", 2],</span> // 👈 2 spaces indent<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #a7f3d0;">}</span><br>
+        &nbsp;&nbsp;})<br>
+        ];
+      </div>
+
+      <div style="font-family: 'Fira Code', monospace; background: #0b0f19; padding: 1.25rem; border-radius: var(--radius-sm); font-size: 0.85rem; border-left: 4px solid var(--client-color);">
+        // .vscode/settings.json (Auto-Fix on Save)<br>
+        {<br>
+        &nbsp;&nbsp;<span style="color: #38bdf8;">"editor.codeActionsOnSave": {</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #38bdf8;">"source.fixAll.eslint": "always"</span> // 👈 Automatically format on Ctrl+S / Cmd+S!<br>
+        &nbsp;&nbsp;<span style="color: #38bdf8;">}</span><br>
+        }
+      </div>
+    </div>
+
+    <!-- SECTION 3: LIVE SIMULATOR -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🎮</div>
+        <h2>3. Live Interactive Auto-Fix Formatter Simulator</h2>
+      </div>
+
+      <div class="simulator-container">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+          <div>
+            <label style="font-size: 0.8rem; font-weight: 700; color: var(--danger-color);">Before Save (Unformatted Code):</label>
+            <div style="font-family: 'Fira Code', monospace; background: #020617; padding: 1rem; border-radius: 6px; font-size: 0.82rem; color: #fca5a5; margin-top: 0.4rem;">
+              function test( ) {<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;const name = "ProCodrr"<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;console.log( name )<br>
+              }
+            </div>
+          </div>
+
+          <div>
+            <label style="font-size: 0.8rem; font-weight: 700; color: var(--server-color);">After Ctrl+S / Cmd+S (Formatted):</label>
+            <div id="sim-formatted-box" style="font-family: 'Fira Code', monospace; background: #020617; padding: 1rem; border-radius: 6px; font-size: 0.82rem; color: var(--text-dim); margin-top: 0.4rem;">
+              // Click button below to format!
+            </div>
+          </div>
+        </div>
+
+        <div class="sim-form">
+          <button class="sim-btn-submit" onclick="simulateFormatterFix()">
+            ⚡ Trigger Auto-Fix on Save (`npx eslint . --fix`)
+          </button>
+        </div>
+
+        <div id="sim-console" class="mock-console">
+          Console Log: Click Trigger Auto-Fix to simulate ESLint auto-formatting.
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: CODE BREAKDOWN -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🔍</div>
+        <h2>4. Side-by-Side Code Breakdown</h2>
+      </div>
+
+      <div class="code-grid">
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span style="color: var(--danger-color);">eslint.config.mjs (Formatting Rules)</span>
+          </div>
+          <div class="code-content"><span class="hl-kw">const</span> eslintConfig = [
+  ...compat.<span class="hl-func">config</span>({
+    extends: [<span class="hl-str">"next/core-web-vitals"</span>],
+    <span class="hl-purple">rules</span>: {
+      <span class="hl-str">"semi"</span>: [<span class="hl-str">"error"</span>, <span class="hl-str">"always"</span>],
+      <span class="hl-str">"quotes"</span>: [<span class="hl-str">"error"</span>, <span class="hl-str">"single"</span>],
+      <span class="hl-str">"indent"</span>: [<span class="hl-str">"error"</span>, 2]
+    }
+  }),
+];</div>
+        </div>
+
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span style="color: var(--client-color);">.vscode/settings.json</span>
+          </div>
+          <div class="code-content">{
+  <span class="hl-purple">"editor.codeActionsOnSave"</span>: {
+    <span class="hl-str">"source.fixAll.eslint"</span>: <span class="hl-str">"always"</span>
+  }
+}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 5: KNOWLEDGE CHECK -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">❓</div>
+        <h2>5. Quick Knowledge Check</h2>
+      </div>
+
+      <div>
+        <h4 style="margin-bottom: 0.75rem;">Q1: What VS Code setting automatically runs ESLint's auto-fix engine every time you save a file?</h4>
+        <div class="quiz-option" onclick="checkAnswer(this, true)">
+          <span class="radio-circle"></span>
+          <span>A) "editor.codeActionsOnSave": { "source.fixAll.eslint": "always" }</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>B) "editor.tabSize": 4</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>C) "next.config.js": { "eslint": true }</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 6: POORA SAAR / HINGLISH GOLDEN RULE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4);">💡</div>
+        <h2>6. Poora Saar &amp; Golden Master Rule (Hinglish)</h2>
+      </div>
+
+      <div style="padding: 1.5rem; background: #020617; border-left: 5px solid var(--purple-color); border-radius: var(--radius-md);">
+        <h3 style="color: var(--purple-color); margin-bottom: 0.75rem; font-size: 1.15rem;">💡 Using ESLint as a Formatter Ka Poora Saar:</h3>
+
+        <p style="font-size: 0.98rem; color: var(--text-main); line-height: 1.8; margin-bottom: 1rem;">
+          ESLint na sirf code ke bugs dhundta hai, balki code ko <strong>Auto-Format</strong> karke pooray team ke code style ko uniform bhi rakhta hai!
+        </p>
+
+        <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 1.25rem;">
+          1. <strong>Formatting Rules 🎨</strong> ➔ `eslint.config.mjs` me `semi: ['error', 'always']`, `quotes: ['error', 'single']`, `indent: ['error', 2]` rules add karke code style enforce kiya jata hai.
+          <br>2. <strong>Auto-Fix on Save (`.vscode/settings.json`) ⚡</strong> ➔ `"editor.codeActionsOnSave": { "source.fixAll.eslint": "always" }` add karne par jaise hi developer `Ctrl + S` dabata hai, VS Code automatic sabhi quotes, spaces aur semicolons ko format kar deta hai!
+          <br>3. <strong>CLI Auto-Fix (`npx eslint . --fix`) 🚀</strong> ➔ Terminal command se poore project ki formatting ek click me fix ho jaati hai!
+        </p>
+
+        <div style="background: rgba(168, 85, 247, 0.1); border: 1px dashed var(--purple-color); padding: 1rem; border-radius: var(--radius-sm); font-size: 0.9rem;">
+          <strong style="color: var(--purple-color); display: block; margin-bottom: 0.5rem;">🔥 Formatter Golden Rules:</strong>
+          <ul style="padding-left: 1.2rem; line-height: 1.8; color: var(--text-main);">
+            <li><strong>1. Auto-Fix on Save ⚡</strong> ➔ Always configure `source.fixAll.eslint: always` in `.vscode/settings.json`.</li>
+            <li><strong>2. Single Quote &amp; Semi Rules 🎨</strong> ➔ Set explicit formatting rules in `eslint.config.mjs`.</li>
+            <li><strong>3. CLI --fix Flag 🚀</strong> ➔ Run `npx eslint . --fix` before committing code to format the entire codebase.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Next.js Using ESLint as a Formatter Guide &bull; Section 13 Lesson 02
+    </footer>
+  </div>
+
+  <script>
+    function simulateFormatterFix() {
+      const formattedBox = document.getElementById('sim-formatted-box');
+      const consoleBox = document.getElementById('sim-console');
+
+      formattedBox.style.color = "#a7f3d0";
+      formattedBox.innerHTML = `
+        function test() {<br>
+        &nbsp;&nbsp;const name = 'ProCodrr';<br>
+        &nbsp;&nbsp;console.log(name);<br>
+        }
+      `;
+
+      consoleBox.innerHTML = `
+        <span style="color: var(--purple-color)">[VS CODE SAVE EVENT] Triggered "source.fixAll.eslint": "always"</span><br>
+        <span style="color: var(--server-color)">➔ Fixed double quotes to single quotes ('ProCodrr') ✅</span><br>
+        <span style="color: var(--server-color)">➔ Inserted mandatory semicolons (;) ✅</span><br>
+        <span style="color: var(--server-color)">➔ Re-indented 4 spaces to 2 spaces ✅</span><br>
+        <span style="color: var(--server-color)">✔ Code formatted instantly on save!</span>
+      `;
+    }
+
+    function checkAnswer(element, isCorrect) {
+      const parent = element.parentElement;
+      parent.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('correct', 'incorrect'));
+      if (isCorrect) element.classList.add('correct');
+      else element.classList.add('incorrect');
+    }
+  </script>
+</body>
+</html>

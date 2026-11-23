@@ -7,7 +7,7 @@ const Blog = async ({ params }) => {
 
   const randomNumber = Math.random();
   console.log(randomNumber);
-  
+
   if (randomNumber > 0.5) {
     throw new Error("Error occurred");
   }
@@ -23,3 +23,6 @@ const Blog = async ({ params }) => {
 };
 
 export default Blog;
+//npm start > server.log       for standard output
+//npm start > server.log 2>&1  for error
+//npm start >> server.log 2>&1 for persistent error in log

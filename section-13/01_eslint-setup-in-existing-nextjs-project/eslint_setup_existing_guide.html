@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Next.js Guide: ESLint Setup in Existing Next.js Project</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #070a11;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border-color: #334155;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --server-color: #10b981;
+      --server-bg: rgba(16, 185, 129, 0.12);
+      
+      --client-color: #38bdf8;
+      --client-bg: rgba(56, 189, 248, 0.12);
+
+      --danger-color: #f43f5e;
+      --danger-bg: rgba(244, 63, 94, 0.15);
+      --danger-border: rgba(244, 63, 94, 0.4);
+      
+      --warning-color: #fbbf24;
+      --warning-bg: rgba(251, 191, 36, 0.12);
+      
+      --purple-color: #a855f7;
+      --purple-bg: rgba(168, 85, 247, 0.12);
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+    }
+
+    .container { max-width: 1150px; margin: 0 auto; }
+
+    /* HERO HEADER */
+    header.hero {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      background: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.15) 0%, rgba(7, 10, 17, 0) 70%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 2.5rem;
+    }
+
+    .badge-group {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+    }
+
+    .badge-client { background: var(--client-bg); color: var(--client-color); border-color: rgba(56, 189, 248, 0.4); }
+    .badge-server { background: var(--server-bg); color: var(--server-color); border-color: rgba(16, 185, 129, 0.4); }
+    .badge-purple { background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4); }
+
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #ffffff 40%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .badge-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+      background: var(--client-bg);
+      color: var(--client-color);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+
+    /* PIPELINE GRID */
+    .pipeline-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    @media (max-width: 900px) { .pipeline-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 550px) { .pipeline-grid { grid-template-columns: 1fr; } }
+
+    .pipe-step {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+    }
+
+    .pipe-step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--client-bg);
+      color: var(--client-color);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.85rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .pipe-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+      color: var(--text-main);
+    }
+
+    .pipe-desc {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* SIMULATOR */
+    .simulator-container {
+      background: #030712;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    .sim-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      max-width: 550px;
+      margin: 0 auto 1.5rem auto;
+      background: #0b0f19;
+      padding: 1.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+    }
+
+    .sim-btn-submit {
+      padding: 0.75rem 1.5rem;
+      border-radius: 9999px;
+      border: none;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      background: linear-gradient(135deg, #38bdf8 0%, #10b981 100%);
+      color: #000;
+      transition: all 0.2s ease;
+    }
+
+    .mock-console {
+      background: #020617;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      font-family: 'Fira Code', monospace;
+      padding: 1rem;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+
+    /* CODE COMPARISON */
+    .code-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    @media (max-width: 850px) { .code-grid { grid-template-columns: 1fr; } }
+
+    .code-panel {
+      background: #050811;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .code-panel-header {
+      padding: 0.65rem 1rem;
+      background: #0d1322;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .code-content {
+      padding: 1.25rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      white-space: pre;
+      overflow-x: auto;
+      line-height: 1.6;
+    }
+
+    .hl-kw { color: #f472b6; }
+    .hl-imp { color: #38bdf8; }
+    .hl-str { color: #a3e635; }
+    .hl-func { color: #fbbf24; }
+    .hl-comment { color: var(--text-dim); font-style: italic; }
+    .hl-tag { color: #818cf8; }
+    .hl-purple { color: #a855f7; font-weight: bold; }
+    .hl-danger { color: #f43f5e; font-weight: bold; }
+    .hl-green { color: #10b981; font-weight: bold; }
+
+    /* QUIZ */
+    .quiz-option {
+      background: var(--bg-card-hover);
+      border: 1px solid var(--border-color);
+      padding: 1rem;
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .quiz-option.correct { background: var(--server-bg) !important; border-color: var(--server-color) !important; color: var(--server-color); }
+    .quiz-option.incorrect { background: var(--danger-bg) !important; border-color: var(--danger-color) !important; color: var(--danger-color); }
+    .radio-circle { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--text-dim); }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--text-dim);
+      font-size: 0.875rem;
+      border-top: 1px solid var(--border-color);
+      margin-top: 3rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- HERO -->
+    <header class="hero">
+      <div class="badge-group">
+        <span class="badge badge-client">Existing Codebase Migration</span>
+        <span class="badge badge-purple">Rule Overrides</span>
+        <span class="badge badge-server">@typescript-eslint/no-unused-vars</span>
+      </div>
+      <h1>ESLint Setup in Existing Next.js Project</h1>
+      <p class="hero-subtitle">
+        Learn how to integrate and customize ESLint v9 Flat Config in an existing Next.js project, overriding strict rules to match your codebase needs without breaking legacy code.
+      </p>
+    </header>
+
+    <!-- SECTION 1: ARCHITECTURE PIPELINE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">⚙️</div>
+        <h2>1. Integrating ESLint in Existing Codebases</h2>
+      </div>
+
+      <div class="pipeline-grid">
+        <div class="pipe-step">
+          <div class="pipe-step-num">1</div>
+          <div class="pipe-title">Install Packages</div>
+          <div class="pipe-desc">
+            Install <code>eslint</code> (v9+) &amp; <code>eslint-config-next</code> as devDependencies.
+          </div>
+        </div>
+
+        <div class="pipe-step">
+          <div class="pipe-step-num">2</div>
+          <div class="pipe-title">Create eslint.config.mjs</div>
+          <div class="pipe-desc">
+            Initialize <code>FlatCompat</code> to import Next.js Core Web Vitals &amp; TypeScript presets.
+          </div>
+        </div>
+
+        <div class="pipe-step">
+          <div class="pipe-step-num">3</div>
+          <div class="pipe-title">Configure Overrides</div>
+          <div class="pipe-desc">
+            Tune specific rules in <code>rules: { ... }</code> (e.g. set unused vars to <code>"warn"</code> or turn off <code>no-img-element</code>).
+          </div>
+        </div>
+
+        <div class="pipe-step">
+          <div class="pipe-step-num">4</div>
+          <div class="pipe-title">Add package.json Script</div>
+          <div class="pipe-desc">
+            Add <code>"lint": "next lint"</code> script for quick CLI invocation.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: CUSTOM RULES BREAKDOWN -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4);">⚙️</div>
+        <h2>2. Customizing Rules in `eslint.config.mjs`</h2>
+      </div>
+
+      <div style="font-family: 'Fira Code', monospace; background: #020617; padding: 1.25rem; border-radius: var(--radius-sm); font-size: 0.85rem; border-left: 4px solid var(--purple-color);">
+        import { FlatCompat } from "@eslint/eslintrc";<br><br>
+        const compat = new FlatCompat({<br>
+        &nbsp;&nbsp;baseDirectory: import.meta.dirname,<br>
+        });<br><br>
+        const eslintConfig = [<br>
+        &nbsp;&nbsp;...compat.config({<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;extends: ["next/core-web-vitals", "next/typescript"],<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #a7f3d0;">rules: {</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #a7f3d0;">"@typescript-eslint/no-unused-vars": "warn",</span> // 🟡 Downgrade error to warning<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #a7f3d0;">"@next/next/no-img-element": "off",</span> // 🟢 Allow standard &lt;img&gt; tags<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #a7f3d0;">"@next/next/no-sync-scripts": "off",</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #a7f3d0;">}</span><br>
+        &nbsp;&nbsp;}),<br>
+        ];<br><br>
+        export default eslintConfig;
+      </div>
+    </div>
+
+    <!-- SECTION 3: LIVE SIMULATOR -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🎮</div>
+        <h2>3. Live Interactive Existing Project Linter Simulator</h2>
+      </div>
+
+      <div class="simulator-container">
+        <div class="sim-form">
+          <button class="sim-btn-submit" onclick="simulateLinterOverridden()">
+            ⚡ Run `npm run lint` with Custom Overrides
+          </button>
+        </div>
+
+        <div id="sim-console" class="mock-console">
+          Console Log: Click button above to simulate linting with rule overrides.
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: CODE BREAKDOWN -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🔍</div>
+        <h2>4. Side-by-Side Code Breakdown: package.json Script</h2>
+      </div>
+
+      <div class="code-grid">
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span style="color: var(--client-color);">package.json</span>
+            <span>CLI Script</span>
+          </div>
+          <div class="code-content">{
+  <span class="hl-str">"name"</span>: <span class="hl-str">"existing-nextjs-app"</span>,
+  <span class="hl-str">"scripts"</span>: {
+    <span class="hl-str">"dev"</span>: <span class="hl-str">"next dev"</span>,
+    <span class="hl-str">"build"</span>: <span class="hl-str">"next build"</span>,
+    <span class="hl-purple">"lint": "next lint"</span> // 👈 CLI entry point
+  }
+}</div>
+        </div>
+
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span style="color: var(--server-color);">eslint.config.mjs</span>
+            <span>Rule Customizations</span>
+          </div>
+          <div class="code-content"><span class="hl-kw">const</span> eslintConfig = [
+  ...compat.<span class="hl-func">config</span>({
+    extends: [<span class="hl-str">"next/core-web-vitals"</span>],
+    <span class="hl-purple">rules</span>: {
+      <span class="hl-str">"@next/next/no-img-element"</span>: <span class="hl-str">"off"</span>
+    }
+  }),
+];</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 5: KNOWLEDGE CHECK -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">❓</div>
+        <h2>5. Quick Knowledge Check</h2>
+      </div>
+
+      <div>
+        <h4 style="margin-bottom: 0.75rem;">Q1: How can you turn off a specific strict ESLint rule like `@next/next/no-img-element` in eslint.config.mjs?</h4>
+        <div class="quiz-option" onclick="checkAnswer(this, true)">
+          <span class="radio-circle"></span>
+          <span>A) By adding `"@next/next/no-img-element": "off"` inside the rules object of compat.config().</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>B) By deleting next.config.ts.</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>C) ESLint rules cannot be turned off.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 6: POORA SAAR / HINGLISH GOLDEN RULE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4);">💡</div>
+        <h2>6. Poora Saar &amp; Golden Master Rule (Hinglish)</h2>
+      </div>
+
+      <div style="padding: 1.5rem; background: #020617; border-left: 5px solid var(--purple-color); border-radius: var(--radius-md);">
+        <h3 style="color: var(--purple-color); margin-bottom: 0.75rem; font-size: 1.15rem;">💡 ESLint Setup in Existing Projects Ka Poora Saar:</h3>
+
+        <p style="font-size: 0.98rem; color: var(--text-main); line-height: 1.8; margin-bottom: 1rem;">
+          Puraane existing Next.js codebase me ESLint setup karte waqt strict rules kabhi kabhi legacy code par hazaaron errors de dete hain!
+        </p>
+
+        <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 1.25rem;">
+          1. <strong>Rule Customization (`rules: { ... }`) ⚙️</strong> ➔ `eslint.config.mjs` me `rules` object ke andar specific strict rules ko `"warn"` (warning) ya `"off"` (disable) karke legacy project build ko fix kar sakte hain.
+          <br>2. <strong>Example Rule Overrides 🛠️</strong>:
+          <br>&nbsp;&nbsp;• <code>"@typescript-eslint/no-unused-vars": "warn"</code> ➔ Unused variables par build crash hone ki jagah warning dikhayega.
+          <br>&nbsp;&nbsp;• <code>"@next/next/no-img-element": "off"</code> ➔ Standard HTML <code>&lt;img&gt;</code> tags par error aana band ho jayega.
+          <br>3. <strong>Package Script 📜</strong> ➔ `package.json` me `"lint": "next lint"` add karke terminal par single command se pooray codebase ki health check karo!
+        </p>
+
+        <div style="background: rgba(168, 85, 247, 0.1); border: 1px dashed var(--purple-color); padding: 1rem; border-radius: var(--radius-sm); font-size: 0.9rem;">
+          <strong style="color: var(--purple-color); display: block; margin-bottom: 0.5rem;">🔥 Existing Project Migration Golden Rules:</strong>
+          <ul style="padding-left: 1.2rem; line-height: 1.8; color: var(--text-main);">
+            <li><strong>1. Gradual Migration ⚙️</strong> ➔ Downgrade strict rules to `"warn"` first so builds don't fail immediately.</li>
+            <li><strong>2. Use "off" Wisely 🛠️</strong> ➔ Disable specific rules like `no-img-element` if legacy code heavily relies on HTML tags.</li>
+            <li><strong>3. Run next lint ⚡</strong> ➔ Test migration using `npm run lint` before committing to Git repository.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Next.js ESLint Existing Project Setup Guide &bull; Section 13 Lesson 01
+    </footer>
+  </div>
+
+  <script>
+    function simulateLinterOverridden() {
+      const consoleBox = document.getElementById('sim-console');
+
+      consoleBox.innerHTML = `
+        <span style="color: var(--purple-color)">$ npm run lint (npx next lint)</span><br>
+        <span style="color: var(--client-color)">[ESLint v9 Flat Config] Applied rule overrides:</span><br>
+        <span style="color: var(--warning-color)">➔ @typescript-eslint/no-unused-vars: "warn" (1 Warning: 'user' is defined but never used)</span><br>
+        <span style="color: var(--server-color)">➔ @next/next/no-img-element: "off" (Allowed <img> tag)</span><br>
+        <span style="color: var(--server-color)">✔ Build passed with 0 errors and 1 warning! ✅</span>
+      `;
+    }
+
+    function checkAnswer(element, isCorrect) {
+      const parent = element.parentElement;
+      parent.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('correct', 'incorrect'));
+      if (isCorrect) element.classList.add('correct');
+      else element.classList.add('incorrect');
+    }
+  </script>
+</body>
+</html>

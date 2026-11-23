@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding Rendering Paradigms - React.js vs Next.js (Dev & Prod)</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-dark: #07090e;
+            --bg-card: #111622;
+            --bg-card-hover: #182030;
+            --bg-code: #0b0e17;
+            --border-color: #1e293b;
+            --border-glow: #38bdf8;
+            
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-accent: #38bdf8;
+            
+            --react-blue: #61dafb;
+            --next-purple: #c084fc;
+            --next-black: #ffffff;
+            --accent-green: #34d399;
+            --accent-amber: #fbbf24;
+            --accent-rose: #f43f5e;
+            --accent-cyan: #22d3ee;
+            
+            --gradient-hero: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #07090e 100%);
+            --gradient-react: linear-gradient(135deg, #00b4db 0%, #0083b0 100%);
+            --gradient-next: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+            --gradient-card-border: linear-gradient(135deg, rgba(56, 189, 248, 0.3), rgba(192, 132, 252, 0.3));
+            
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --radius-sm: 6px;
+            
+            --shadow-glow: 0 10px 30px -10px rgba(56, 189, 248, 0.2);
+            --shadow-purple: 0 10px 30px -10px rgba(192, 132, 252, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 5px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+
+        /* Header Navigation */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(7, 9, 14, 0.85);
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(90deg, var(--react-blue), var(--next-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--react-blue);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: var(--gradient-hero);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 3.5rem 2.5rem;
+            margin-top: 1rem;
+            margin-bottom: 3rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -40%;
+            right: -10%;
+            width: 450px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(97, 218, 251, 0.12) 0%, rgba(0, 0, 0, 0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .hero-badges {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.25rem;
+        }
+
+        .badge {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 0.35rem 0.85rem;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .badge.csr { color: var(--react-blue); border-color: rgba(97, 218, 251, 0.3); }
+        .badge.ssr { color: var(--next-purple); border-color: rgba(192, 132, 252, 0.3); }
+        .badge.ssg { color: var(--accent-green); border-color: rgba(52, 211, 153, 0.3); }
+        .badge.isr { color: var(--accent-amber); border-color: rgba(251, 191, 36, 0.3); }
+
+        .hero h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.8rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        .hero h1 span.highlight {
+            background: linear-gradient(90deg, var(--react-blue), var(--next-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            max-width: 850px;
+            margin-bottom: 2rem;
+        }
+
+        .core-question-box {
+            background: rgba(56, 189, 248, 0.08);
+            border-left: 4px solid var(--react-blue);
+            padding: 1.25rem 1.5rem;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            font-size: 1.05rem;
+            color: #e0f2fe;
+        }
+
+        /* Section Title Header */
+        .section-header {
+            margin-bottom: 2rem;
+            margin-top: 1rem;
+        }
+
+        .section-header h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-header p {
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            font-size: 1rem;
+        }
+
+        /* Cards Layout */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.75rem;
+            transition: all 0.25s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(56, 189, 248, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        /* Handwritten Note Visual Feature */
+        .handwritten-card {
+            background: linear-gradient(145deg, #151c2c 0%, #0d121d 100%);
+            border: 1px dashed rgba(192, 132, 252, 0.4);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .handwritten-card h3 {
+            font-family: 'Outfit', sans-serif;
+            color: var(--next-purple);
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .note-diagram-tree {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .tree-node {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            flex: 1;
+            min-width: 260px;
+            text-align: center;
+        }
+
+        .tree-node h4 {
+            color: var(--text-accent);
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Flow Diagrams */
+        .flow-container {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            margin: 1.25rem 0;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            color: #cbd5e1;
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 0.75rem;
+        }
+
+        .flow-step:last-child {
+            margin-bottom: 0;
+        }
+
+        .flow-number {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: rgba(56, 189, 248, 0.2);
+            color: var(--react-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+
+        .flow-arrow {
+            color: var(--text-muted);
+        }
+
+        /* Master Comparison Table */
+        .table-wrapper {
+            overflow-x: auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            margin-bottom: 3rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 1.1rem 1.4rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.92rem;
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.03);
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            white-space: nowrap;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.015);
+        }
+
+        .col-react-dev { color: #93c5fd; }
+        .col-react-prod { color: var(--react-blue); }
+        .col-next-dev { color: #e9d5ff; }
+        .col-next-prod { color: var(--next-purple); }
+
+        /* Cooking Analogy Interactive Box */
+        .food-analogy-box {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.08) 0%, rgba(17, 22, 34, 1) 100%);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: var(--radius-lg);
+            padding: 2.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .food-analogy-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .food-analogy-grid { grid-template-columns: 1fr; }
+        }
+
+        .food-card {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+        }
+
+        .food-card h4 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.2rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Toggle Buttons for Dev vs Prod */
+        .mode-toggle-container {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 0.4rem;
+            border-radius: var(--radius-md);
+            width: fit-content;
+            border: 1px solid var(--border-color);
+        }
+
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.5rem 1.25rem;
+            font-weight: 600;
+            font-size: 0.88rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .toggle-btn.active {
+            background: var(--react-blue);
+            color: #07090e;
+        }
+
+        .toggle-btn.active.next-mode {
+            background: var(--next-purple);
+            color: #ffffff;
+        }
+
+        /* Code snippets */
+        .code-block {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            color: #e2e8f0;
+            overflow-x: auto;
+            margin: 1rem 0;
+            line-height: 1.5;
+        }
+
+        .code-kw { color: #f472b6; }
+        .code-str { color: #34d399; }
+        .code-cm { color: #64748b; font-style: italic; }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border-color);
+            padding: 2.5rem 0;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 4rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sticky Navigation -->
+    <nav>
+        <div class="nav-logo">
+            <i class="fa-solid fa-cubes"></i> Web Rendering Paradigms
+        </div>
+        <ul class="nav-links">
+            <li><a href="#core-question"><i class="fa-solid fa-circle-question"></i> The Core Question</a></li>
+            <li><a href="#react-csr"><i class="fa-brands fa-react"></i> React (CSR)</a></li>
+            <li><a href="#next-paradigms"><i class="fa-solid fa-n"></i> Next.js (SSR/SSG/ISR)</a></li>
+            <li><a href="#master-table"><i class="fa-solid fa-table"></i> Comparison Matrix</a></li>
+            <li><a href="#cooking-analogy"><i class="fa-solid fa-utensils"></i> Cooking Analogy</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-badges">
+                <span class="badge csr"><i class="fa-brands fa-react"></i> CSR (Client-Side)</span>
+                <span class="badge ssr"><i class="fa-solid fa-server"></i> SSR (Server-Side)</span>
+                <span class="badge ssg"><i class="fa-solid fa-bolt"></i> SSG (Static)</span>
+                <span class="badge isr"><i class="fa-solid fa-rotate"></i> ISR (Regeneration)</span>
+            </div>
+            <h1>Understanding <span class="highlight">Rendering Paradigms</span><br>React.js vs Next.js in Dev & Production</h1>
+            <p>
+                A complete breakdown of where and how HTML is generated, how JavaScript executes across Development and Production modes, and how React Server Components (RSC) & Hydration work behind the scenes.
+            </p>
+
+            <div class="core-question-box" id="core-question">
+                ❓ <strong>The Fundamental Question:</strong> <em>"Where is the HTML of our Web Application generated?"</em><br>
+                • <strong>Server:</strong> Server-Side Rendering (SSR), Static Site Generation (SSG), Incremental Static Regeneration (ISR)<br>
+                • <strong>Client:</strong> Client-Side Rendering (CSR)
+            </div>
+        </section>
+
+        <!-- Section 1: Notes Breakdown (Handwritten Notes Analysis) -->
+        <section>
+            <div class="section-header">
+                <h2><i class="fa-solid fa-book-open" style="color: var(--next-purple);"></i> Notes Analysis: Where Code Runs</h2>
+                <p>Derived directly from course notes on rendering execution per page.</p>
+            </div>
+
+            <div class="handwritten-card">
+                <h3><i class="fa-solid fa-pen-nib"></i> Key Concept: HTML Generation per Page</h3>
+                <p style="color: #cbd5e1; font-size: 0.98rem; line-height: 1.7;">
+                    In React, every page receives the <strong>same single HTML file</strong> containing empty <code>&lt;div id="root"&gt;&lt;/div&gt;</code>, and rendering is handled 100% inside the client browser. In Next.js, rendering decisions are made <strong>per route/page</strong> using React Server Components (RSC) & Server Rendering.
+                </p>
+
+                <div class="note-diagram-tree">
+                    <div class="tree-node" style="border-top: 3px solid var(--react-blue);">
+                        <h4><i class="fa-brands fa-react"></i> React.js Rendering</h4>
+                        <p style="font-size: 0.88rem; color: var(--text-muted); text-align: left; margin-top: 0.5rem;">
+                            • Same single <code>index.html</code> for all pages<br>
+                            • Single JS bundle handles all UI routes<br>
+                            • Pure Client-Side Rendering (CSR)
+                        </p>
+                    </div>
+
+                    <div class="tree-node" style="border-top: 3px solid var(--next-purple);">
+                        <h4><i class="fa-solid fa-n"></i> Next.js RSC & Page Navigation</h4>
+                        <p style="font-size: 0.88rem; color: var(--text-muted); text-align: left; margin-top: 0.5rem;">
+                            • Initial page (e.g., <code>/home</code>) pre-renders full HTML on server<br>
+                            • Navigation to other routes (e.g., <code>/about</code>) sends lightweight RSC Virtual DOM payloads<br>
+                            • Client-side transitions preserve state without full page reloads!
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 2: Part 1 - React.js (Pure CSR) in Dev & Prod -->
+        <section id="react-csr">
+            <div class="section-header">
+                <h2><i class="fa-brands fa-react" style="color: var(--react-blue);"></i> Part 1: React.js (Pure CSR)</h2>
+                <p>How React renders in Development mode vs Production build.</p>
+            </div>
+
+            <div class="card" style="margin-bottom: 2rem;">
+                <div class="mode-toggle-container">
+                    <button class="toggle-btn active" onclick="switchReactTab('react-dev')"><i class="fa-solid fa-code"></i> Dev Mode (Vite / CRA)</button>
+                    <button class="toggle-btn" onclick="switchReactTab('react-prod')"><i class="fa-solid fa-rocket"></i> Production Mode (npm run build)</button>
+                </div>
+
+                <div id="react-dev" class="mode-content">
+                    <h3 style="color: var(--react-blue); margin-bottom: 0.75rem;">🛠️ Dev Mode: What Happens When You Run `npm start` / `npm run dev`</h3>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.95rem; color: #cbd5e1;">
+                        <li><i class="fa-solid fa-check" style="color: var(--accent-green);"></i> <strong>Dev Server Starts:</strong> Vite or CRA starts a local web server (e.g., <code>http://localhost:5173</code>).</li>
+                        <li><i class="fa-solid fa-check" style="color: var(--accent-green);"></i> <strong>Empty HTML Payload:</strong> Browser requests page and downloads a single <code>index.html</code> containing only <code>&lt;div id="root"&gt;&lt;/div&gt;</code>.</li>
+                        <li><i class="fa-solid fa-check" style="color: var(--accent-green);"></i> <strong>Unminified JS Bundle:</strong> Loads <code>main.jsx</code> / <code>bundle.js</code>. React runs <code>ReactDOM.createRoot().render()</code> inside the browser to inject HTML into DOM.</li>
+                        <li><i class="fa-solid fa-check" style="color: var(--accent-green);"></i> <strong>Dev Extra Features:</strong>
+                            <div class="flow-container">
+                                🔹 <strong>Source Maps Enabled:</strong> Browser console shows exact original file & line numbers.<br>
+                                🔹 <strong>Hot Module Replacement (HMR):</strong> Modifying code updates UI instantly without full refresh.<br>
+                                🔹 <strong>Strict Mode Validations:</strong> Extra double-invocations of effects to catch memory leaks & bugs.<br>
+                                🔹 <strong>Slow Performance:</strong> Unoptimized bundle with active warning checkers.
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div id="react-prod" class="mode-content" style="display: none;">
+                    <h3 style="color: var(--accent-green); margin-bottom: 0.75rem;">🚀 Production Mode: What Happens When You Run `npm run build`</h3>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.95rem; color: #cbd5e1;">
+                        <li><i class="fa-solid fa-check" style="color: var(--accent-green);"></i> <strong>Build Step:</strong> React compiler optimizes code, strips warnings, minifies JS files, performs tree-shaking & code-splitting.</li>
+                        <li><i class="fa-solid fa-check" style="color: var(--accent-green);"></i> <strong>Production Browser Execution:</strong>
+                            <div class="flow-container">
+                                <div class="flow-step">
+                                    <span class="flow-number">1</span>
+                                    <span>Browser requests <code>index.html</code></span>
+                                </div>
+                                <div class="flow-step">
+                                    <span class="flow-number">2</span>
+                                    <span>Loads compact minified JS bundle</span>
+                                </div>
+                                <div class="flow-step">
+                                    <span class="flow-number">3</span>
+                                    <span>React executes client-side rendering</span>
+                                </div>
+                                <div class="flow-step">
+                                    <span class="flow-number">4</span>
+                                    <span>DOM painted & page becomes interactive</span>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 3: Part 2 - Next.js (CSR + SSR + SSG + ISR) -->
+        <section id="next-paradigms">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-n" style="color: var(--next-purple);"></i> Part 2: Next.js (Full-Stack Hybrid Rendering)</h2>
+                <p>Understanding how Node.js server and browser work together in Dev & Production.</p>
+            </div>
+
+            <div class="card" style="margin-bottom: 2.5rem;">
+                <div class="mode-toggle-container">
+                    <button class="toggle-btn active next-mode" onclick="switchNextTab('next-dev')"><i class="fa-solid fa-server"></i> Next.js Dev Mode (npm run dev)</button>
+                    <button class="toggle-btn next-mode" onclick="switchNextTab('next-prod')"><i class="fa-solid fa-cloud"></i> Next.js Production (next build)</button>
+                </div>
+
+                <div id="next-dev" class="next-mode-content">
+                    <h3 style="color: var(--next-purple); margin-bottom: 0.75rem;">⚡ Dev Mode: Node.js Server + Browser Pipeline</h3>
+                    <p style="color: var(--text-muted); margin-bottom: 1rem;">
+                        When you run <code>npm run dev</code>, Next.js starts an internal Node.js development server. Pages are compiled <strong>on-demand</strong> on the server when requested!
+                    </p>
+
+                    <div class="flow-container">
+                        <div class="flow-step">
+                            <span class="flow-number" style="background: rgba(192, 132, 252, 0.2); color: var(--next-purple);">1</span>
+                            <span>Browser Request ➔ Sent to Next.js Dev Server (Node.js)</span>
+                        </div>
+                        <div class="flow-step">
+                            <span class="flow-number" style="background: rgba(192, 132, 252, 0.2); color: var(--next-purple);">2</span>
+                            <span>Server executes React components ➔ Pre-generates HTML string</span>
+                        </div>
+                        <div class="flow-step">
+                            <span class="flow-number" style="background: rgba(192, 132, 252, 0.2); color: var(--next-purple);">3</span>
+                            <span>Server sends pre-rendered HTML to Browser</span>
+                        </div>
+                        <div class="flow-step">
+                            <span class="flow-number" style="background: rgba(192, 132, 252, 0.2); color: var(--next-purple);">4</span>
+                            <span>Browser paints HTML instantly ➔ Downloads JS ➔ Hydrates DOM (attaches listeners)</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 1rem; background: rgba(0, 0, 0, 0.3); padding: 1rem; border-radius: var(--radius-md);">
+                        <strong style="color: var(--text-accent);">💡 Key Takeaway:</strong> In Next.js, JavaScript executes in <strong>TWO places</strong>:
+                        <br>1. <strong>Server-side (Node.js environment):</strong> To generate the initial HTML markup.
+                        <br>2. <strong>Client-side (Browser environment):</strong> To hydrate the page and handle interactive state.
+                    </div>
+                </div>
+
+                <div id="next-prod" class="next-mode-content" style="display: none;">
+                    <h3 style="color: var(--accent-green); margin-bottom: 0.75rem;">📦 Production Mode: Build-Time Optimization & Server Modes</h3>
+                    <p style="color: var(--text-muted); margin-bottom: 1rem;">
+                        Running <code>next build</code> pre-compiles optimized bundles for every route depending on its rendering paradigm:
+                    </p>
+
+                    <div class="grid-3" style="margin-bottom: 1rem;">
+                        <div style="background: rgba(0, 0, 0, 0.4); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                            <h4 style="color: var(--next-purple);"><i class="fa-solid fa-arrows-rotate"></i> SSR (Server-Side Rendering)</h4>
+                            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">
+                                Server renders HTML dynamically on <strong>every HTTP request</strong>. Always fresh data.
+                            </p>
+                        </div>
+
+                        <div style="background: rgba(0, 0, 0, 0.4); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                            <h4 style="color: var(--accent-green);"><i class="fa-solid fa-file-code"></i> SSG (Static Site Generation)</h4>
+                            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">
+                                HTML is generated <strong>ONCE at build time</strong>. Served super fast via CDN.
+                            </p>
+                        </div>
+
+                        <div style="background: rgba(0, 0, 0, 0.4); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                            <h4 style="color: var(--accent-amber);"><i class="fa-solid fa-clock-rotate-left"></i> ISR (Incremental Static Regeneration)</h4>
+                            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">
+                                Pre-built static HTML is regenerated in the background after <code>revalidate</code> seconds.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 4: Master Comparison Table -->
+        <section id="master-table">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-table" style="color: var(--react-blue);"></i> Master Comparison Table (Dev vs Prod)</h2>
+                <p>Complete feature-by-feature matrix across React.js and Next.js in Development & Production modes.</p>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th class="col-react-dev"><i class="fa-brands fa-react"></i> React.js Dev</th>
+                            <th class="col-react-prod"><i class="fa-brands fa-react"></i> React.js Prod</th>
+                            <th class="col-next-dev"><i class="fa-solid fa-n"></i> Next.js Dev</th>
+                            <th class="col-next-prod"><i class="fa-solid fa-n"></i> Next.js Prod</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Rendering Paradigm</strong></td>
+                            <td class="col-react-dev">CSR (Client-Side)</td>
+                            <td class="col-react-prod">CSR (Client-Side)</td>
+                            <td class="col-next-dev">SSR / CSR (On-demand)</td>
+                            <td class="col-next-prod">SSR / SSG / ISR / CSR</td>
+                        </tr>
+                        <tr>
+                            <td><strong>HTML Source Payload</strong></td>
+                            <td class="col-react-dev">Empty <code>&lt;div id="root"&gt;</code></td>
+                            <td class="col-react-prod">Empty <code>&lt;div id="root"&gt;</code></td>
+                            <td class="col-next-dev">Full Pre-rendered HTML</td>
+                            <td class="col-next-prod">Full/Static Pre-rendered HTML</td>
+                        </tr>
+                        <tr>
+                            <td><strong>JS Execution Location</strong></td>
+                            <td class="col-react-dev">Browser Only</td>
+                            <td class="col-react-prod">Browser Only</td>
+                            <td class="col-next-dev">Server + Browser</td>
+                            <td class="col-next-prod">Server + Browser</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Hydration Stage</strong></td>
+                            <td class="col-react-dev">N/A (Render from scratch)</td>
+                            <td class="col-react-prod">N/A (Render from scratch)</td>
+                            <td class="col-next-dev">Yes (After SSR)</td>
+                            <td class="col-next-prod">Yes (After SSR / SSG)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SEO Capabilities</strong></td>
+                            <td class="col-react-dev">Weak</td>
+                            <td class="col-react-prod">Weak</td>
+                            <td class="col-next-dev">Strong</td>
+                            <td class="col-next-prod">Strong (Pre-indexed HTML)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>JS Bundle Size</strong></td>
+                            <td class="col-react-dev">Large (Unminified)</td>
+                            <td class="col-react-prod">Minified / Compact</td>
+                            <td class="col-next-dev">Large (Unminified + Source Maps)</td>
+                            <td class="col-next-prod">Minified + Automatic Code Split</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Initial Page Load Speed</strong></td>
+                            <td class="col-react-dev">Slow (White screen delay)</td>
+                            <td class="col-react-prod">Fast (Once JS executes)</td>
+                            <td class="col-next-dev">Slower (On-demand compilation)</td>
+                            <td class="col-next-prod">Blazing Fast (CDN Ready)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Code Splitting</strong></td>
+                            <td class="col-react-dev">Manual (via <code>React.lazy</code>)</td>
+                            <td class="col-react-prod">Manual</td>
+                            <td class="col-next-dev">Automatic per Route</td>
+                            <td class="col-next-prod">Automatic per Route</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Hot Module Replacement (HMR)</strong></td>
+                            <td class="col-react-dev">Yes</td>
+                            <td class="col-react-prod">Disabled</td>
+                            <td class="col-next-dev">Yes (Fast Refresh)</td>
+                            <td class="col-next-prod">Disabled</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Debugging Ease</strong></td>
+                            <td class="col-react-dev">Easy (Source Maps + Warnings)</td>
+                            <td class="col-react-prod">Hard (Minified stack traces)</td>
+                            <td class="col-next-dev">Easy (React Error Overlay)</td>
+                            <td class="col-next-prod">Hard (Production logs required)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+
+        <!-- Section 5: The Cooking Analogy -->
+        <section id="cooking-analogy">
+            <div class="food-analogy-box">
+                <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.8rem; color: #ffffff; margin-bottom: 1rem; display: flex; align-items: center; gap: 12px;">
+                    💡 The Master Cooking Analogy (From Notes Page 8)
+                </h3>
+                <p style="color: #cbd5e1; font-size: 1.05rem;">
+                    To permanently remember the difference between React.js (CSR) and Next.js (SSR/SSG), imagine ordering food!
+                </p>
+
+                <div class="food-analogy-grid">
+                    <div class="food-card" style="border-top: 3px solid var(--react-blue);">
+                        <h4 style="color: var(--react-blue);"><i class="fa-solid fa-basket-shopping"></i> React.js (CSR)</h4>
+                        <p style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.6;">
+                            <strong>Raw Ingredients Delivered to Home:</strong><br>
+                            The server sends raw ingredients (empty HTML + JavaScript files). You have to chop, cook, and assemble the meal yourself inside your home kitchen (the browser). <br><br>
+                            <em>Result: Takes time to start eating, but you have full control over the cooking process.</em>
+                        </p>
+                    </div>
+
+                    <div class="food-card" style="border-top: 3px solid var(--next-purple);">
+                        <h4 style="color: var(--next-purple);"><i class="fa-solid fa-bell-concierge"></i> Next.js (SSR / SSG)</h4>
+                        <p style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.6;">
+                            <strong>Hot Cooked Meal Delivered from Restaurant:</strong><br>
+                            The server cooks the complete meal (pre-rendered HTML page) and delivers it hot to your table. You can start seeing and eating the meal immediately! Your browser just sets up the fork and spoon (Hydration).<br><br>
+                            <em>Result: Super fast initial load and great for search engine crawlers (SEO)!</em>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <p>Understanding Web Rendering Paradigms • React.js vs Next.js Technical Guide</p>
+        </footer>
+
+    </div>
+
+    <!-- Scripts for Tab Toggles -->
+    <script>
+        function switchReactTab(tabId) {
+            const contents = document.getElementsByClassName('mode-content');
+            for (let i = 0; i < contents.length; i++) {
+                contents[i].style.display = 'none';
+            }
+            const btns = document.querySelectorAll('#react-csr .toggle-btn');
+            btns.forEach(btn => btn.classList.remove('active'));
+
+            document.getElementById(tabId).style.display = 'block';
+            event.currentTarget.classList.add('active');
+        }
+
+        function switchNextTab(tabId) {
+            const contents = document.getElementsByClassName('next-mode-content');
+            for (let i = 0; i < contents.length; i++) {
+                contents[i].style.display = 'none';
+            }
+            const btns = document.querySelectorAll('#next-paradigms .toggle-btn');
+            btns.forEach(btn => btn.classList.remove('active'));
+
+            document.getElementById(tabId).style.display = 'block';
+            event.currentTarget.classList.add('active');
+        }
+    </script>
+</body>
+</html>

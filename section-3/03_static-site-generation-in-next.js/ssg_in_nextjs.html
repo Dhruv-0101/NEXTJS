@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Static Site Generation (SSG) in Next.js - generateStaticParams Guide</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-dark: #07090e;
+            --bg-card: #111622;
+            --bg-card-hover: #182030;
+            --bg-code: #0b0e17;
+            --border-color: #1e293b;
+            
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-accent: #38bdf8;
+            
+            --static-green: #10b981;
+            --ssg-purple: #c084fc;
+            --dynamic-rose: #f43f5e;
+            --accent-amber: #fbbf24;
+            --accent-cyan: #22d3ee;
+            
+            --gradient-hero: linear-gradient(135deg, #3b0764 0%, #0f172a 50%, #064e3b 100%);
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --radius-sm: 6px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 5px;
+        }
+
+        /* Sticky Navigation */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(7, 9, 14, 0.85);
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(90deg, var(--ssg-purple), var(--static-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.25rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--ssg-purple);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: var(--gradient-hero);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 3.5rem 2.5rem;
+            margin-top: 1rem;
+            margin-bottom: 3rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .hero-badges {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.25rem;
+        }
+
+        .badge {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 0.35rem 0.85rem;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .badge.ssg { color: var(--ssg-purple); border-color: rgba(192, 132, 252, 0.4); }
+        .badge.static { color: var(--static-green); border-color: rgba(16, 185, 129, 0.4); }
+
+        .hero h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.8rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        .hero p {
+            font-size: 1.15rem;
+            color: #cbd5e1;
+            max-width: 850px;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-hinglish {
+            background: rgba(0, 0, 0, 0.4);
+            border-left: 4px solid var(--ssg-purple);
+            padding: 1rem 1.25rem;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            font-size: 0.98rem;
+            color: #f3e8ff;
+        }
+
+        /* Section Title Header */
+        .section-header {
+            margin-bottom: 2rem;
+            margin-top: 1rem;
+        }
+
+        .section-header h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-header p {
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            font-size: 1rem;
+        }
+
+        /* Card Component */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.75rem;
+            transition: all 0.25s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(192, 132, 252, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        /* Line by Line Code Table & Box */
+        .line-by-line-container {
+            background: #090d16;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .code-line-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.9rem;
+            border-radius: var(--radius-sm);
+            transition: background 0.2s ease;
+        }
+
+        .code-line-row:hover {
+            background: rgba(255, 255, 255, 0.025);
+        }
+
+        .line-num {
+            font-family: 'Fira Code', monospace;
+            color: #64748b;
+            font-weight: 600;
+            width: 35px;
+            flex-shrink: 0;
+        }
+
+        .code-snippet {
+            font-family: 'Fira Code', monospace;
+            color: #e2e8f0;
+            width: 42%;
+            flex-shrink: 0;
+            overflow-x: auto;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 0.35rem 0.75rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .line-explanation {
+            color: #cbd5e1;
+            flex-grow: 1;
+            line-height: 1.5;
+        }
+
+        .badge-build {
+            background: rgba(192, 132, 252, 0.15);
+            color: var(--ssg-purple);
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-static-cdn {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--static-green);
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Terminal Simulator */
+        .terminal-card {
+            background: #090d16;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.75rem;
+            margin-bottom: 3rem;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        }
+
+        .terminal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .terminal-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot.red { background: #ef4444; }
+        .dot.yellow { background: #f59e0b; }
+        .dot.green { background: #10b981; }
+
+        .terminal-controls {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.25rem;
+        }
+
+        .btn {
+            background: #1e293b;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 0.6rem 1.1rem;
+            border-radius: var(--radius-md);
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background: #334155;
+        }
+
+        .btn-ssg {
+            background: rgba(192, 132, 252, 0.2);
+            color: var(--ssg-purple);
+            border-color: var(--ssg-purple);
+        }
+
+        .btn-cdn {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--static-green);
+            border-color: var(--static-green);
+        }
+
+        .terminal-window {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.88rem;
+            min-height: 240px;
+            max-height: 380px;
+            overflow-y: auto;
+            color: #475569;
+        }
+
+        .terminal-line {
+            margin-bottom: 0.5rem;
+            display: flex;
+            gap: 10px;
+        }
+
+        .line-time { color: #64748b; }
+        .line-ssg { color: var(--ssg-purple); }
+        .line-static { color: var(--static-green); }
+        .line-info { color: var(--text-accent); }
+
+        /* Code Block */
+        .code-block {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            color: #e2e8f0;
+            overflow-x: auto;
+            margin: 1rem 0;
+            line-height: 1.5;
+        }
+
+        .kw { color: #f472b6; }
+        .fn { color: #60a5fa; }
+        .str { color: #34d399; }
+        .cm { color: #64748b; font-style: italic; }
+
+        /* Master Comparison Table */
+        .table-wrapper {
+            overflow-x: auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            margin-bottom: 3rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 1.1rem 1.4rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.92rem;
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.03);
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-main);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.015);
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border-color);
+            padding: 2.5rem 0;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 4rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-logo">
+            <i class="fa-solid fa-bolt"></i> SSG & generateStaticParams Guide
+        </div>
+        <ul class="nav-links">
+            <li><a href="#overview"><i class="fa-solid fa-layer-group"></i> Overview</a></li>
+            <li><a href="#how-it-works"><i class="fa-solid fa-gear"></i> How it Works</a></li>
+            <li><a href="#codebase"><i class="fa-solid fa-code"></i> Code Case Study</a></li>
+            <li><a href="#line-by-line"><i class="fa-solid fa-list-check"></i> Line-by-Line</a></li>
+            <li><a href="#simulator"><i class="fa-solid fa-terminal"></i> Build Simulator</a></li>
+            <li><a href="#fallback"><i class="fa-solid fa-shield-halved"></i> Fallback Modes</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+
+        <!-- Hero Section -->
+        <section class="hero" id="overview">
+            <div class="hero-badges">
+                <span class="badge ssg"><i class="fa-solid fa-bolt"></i> SSG (Static Site Generation)</span>
+                <span class="badge static"><i class="fa-solid fa-code"></i> generateStaticParams()</span>
+                <span class="badge ssg"><i class="fa-solid fa-cloud"></i> CDN Caching</span>
+            </div>
+            <h1>Static Site Generation (SSG) in Next.js App Router</h1>
+            <p>
+                Learn how <code>export async function generateStaticParams()</code> transforms dynamic route segments (like <code>app/blogs/[blogID]/page.js</code>) into pre-compiled <strong>Static HTML Pages at Build Time</strong>!
+            </p>
+            <div class="hero-hinglish">
+                🧠 <strong>Hinglish Summary:</strong><br>
+                Next.js App Router me <code>generateStaticParams()</code> ka kaam dynamic routes (jaise <code>[blogID]</code>) ke saare IDs ko build time (`next build`) par fetch karke <strong>pehle se static HTML files bana lena hota hai</strong>. Production me jab user kisi link pe click karta hai, toh server code re-run nahi hota, direct pre-rendered HTML CDN se milti hai!
+            </div>
+        </section>
+
+
+        <!-- Section 1: How generateStaticParams Transforms Dynamic Routes -->
+        <section id="how-it-works">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-gear" style="color: var(--ssg-purple);"></i> How `generateStaticParams()` Works</h2>
+                <p>Converting request-time dynamic routes into build-time pre-rendered static pages.</p>
+            </div>
+
+            <div class="grid-2">
+                <div class="card" style="border-top: 4px solid var(--dynamic-rose);">
+                    <h3 style="color: var(--dynamic-rose); font-family: 'Outfit', sans-serif; font-size: 1.4rem; margin-bottom: 0.75rem;">
+                        ⚡ Without `generateStaticParams()` (Dynamic Route)
+                    </h3>
+                    <p style="font-size: 0.92rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                        Route is classified as <code>ƒ Dynamic</code>.
+                    </p>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.88rem; color: #cbd5e1;">
+                        <li><i class="fa-solid fa-xmark" style="color: var(--dynamic-rose);"></i> Build step creates ZERO blog HTML files.</li>
+                        <li><i class="fa-solid fa-xmark" style="color: var(--dynamic-rose);"></i> Every user request executes <code>Blog()</code> component on Node.js server.</li>
+                        <li><i class="fa-solid fa-xmark" style="color: var(--dynamic-rose);"></i> Server CPU load & database queries on every visit.</li>
+                    </ul>
+                </div>
+
+                <div class="card" style="border-top: 4px solid var(--static-green);">
+                    <h3 style="color: var(--static-green); font-family: 'Outfit', sans-serif; font-size: 1.4rem; margin-bottom: 0.75rem;">
+                        🚀 With `generateStaticParams()` (SSG Route)
+                    </h3>
+                    <p style="font-size: 0.92rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                        Route is classified as <code>● SSG (Prerendered Static)</code>.
+                    </p>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.88rem; color: #cbd5e1;">
+                        <li><i class="fa-solid fa-check" style="color: var(--static-green);"></i> Next.js fetches API data at <code>next build</code> phase.</li>
+                        <li><i class="fa-solid fa-check" style="color: var(--static-green);"></i> Generates <code>/blogs/1.html</code>, <code>/blogs/2.html</code> ... static files.</li>
+                        <li><i class="fa-solid fa-check" style="color: var(--static-green);"></i> User visits get instant 0ms CDN responses!</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 2: Code Base Case Study -->
+        <section id="codebase">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-code" style="color: var(--next-purple);"></i> Project Code Case Study</h2>
+                <p>Examining <code>app/blogs/[blogID]/page.js</code> in project <code>03_static-site-generation-in-next.js</code></p>
+            </div>
+
+            <div class="card" style="margin-bottom: 2.5rem;">
+                <h4 style="color: var(--ssg-purple); font-size: 1.2rem; margin-bottom: 0.5rem;">
+                    📄 File: <code>app/blogs/[blogID]/page.js</code>
+                </h4>
+                <div class="code-block">
+<span class="kw">import</span> Link <span class="kw">from</span> <span class="str">"next/link"</span>;
+
+<span class="cm">// 🟣 Export special function to tell Next.js which paths to pre-render at build time</span>
+<span class="kw">export async function</span> <span class="fn">generateStaticParams</span>() {
+  <span class="kw">const</span> response = <span class="kw">await</span> fetch(<span class="str">"https://jsonplaceholder.typicode.com/todos"</span>);
+  <span class="kw">const</span> data = <span class="kw">await</span> response.json();
+  <span class="kw">return</span> data.map(({ id }) => ({ <span class="kw">blogID</span>: <span class="str">`${id}`</span> }));
+}
+
+<span class="kw">const</span> Blog = <span class="kw">async</span> ({ params }) => {
+  <span class="kw">const</span> { blogID } = <span class="kw">await</span> params;
+  console.log(<span class="str">"blogID: "</span>, blogID);
+  <span class="kw">return</span> (
+    &lt;<span class="fn">div</span>&gt;
+      &lt;<span class="fn">h1</span>&gt;Welcome to Our Blog {blogID}&lt;/<span class="fn">h1</span>&gt;
+      &lt;<span class="fn">p</span>&gt;This is blog {blogID} page.&lt;/<span class="fn">p</span>&gt;
+    &lt;/<span class="fn">div</span>&gt;
+  );
+};
+
+<span class="kw">export default</span> Blog;
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 3: Exact Line-by-Line Code Breakdown -->
+        <section id="line-by-line">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-list-check" style="color: var(--static-green);"></i> Exact Line-by-Line Breakdown</h2>
+                <p>Explaining every line of <code>app/blogs/[blogID]/page.js</code> during Build Time vs User Request Time.</p>
+            </div>
+
+            <div class="line-by-line-container" style="border-top: 4px solid var(--ssg-purple);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="font-family: 'Outfit', sans-serif; color: var(--ssg-purple);">File: <code>app/blogs/[blogID]/page.js</code></h3>
+                    <span class="badge-build">Executes during `next build`</span>
+                </div>
+
+                <div class="code-line-row">
+                    <div class="line-num">L1</div>
+                    <div class="code-snippet"><span class="kw">import</span> Link <span class="kw">from</span> <span class="str">"next/link"</span>;</div>
+                    <div class="line-explanation">
+                        <strong>Imports Next.js Link Component:</strong> Enables client-side soft router transitions between blog pages.
+                    </div>
+                </div>
+
+                <div class="code-line-row">
+                    <div class="line-num">L3</div>
+                    <div class="code-snippet"><span class="kw">export async function</span> generateStaticParams()</div>
+                    <div class="line-explanation">
+                        <span class="badge-build">SPECIAL NEXT.JS SSG FUNCTION</span><br>
+                        Exporting this exact named function tells Next.js: <em>"Don't wait for user requests! Run this function during `next build` to get all dynamic parameters."</em>
+                    </div>
+                </div>
+
+                <div class="code-line-row">
+                    <div class="line-num">L4-5</div>
+                    <div class="code-snippet"><span class="kw">const</span> res = <span class="kw">await</span> fetch(<span class="str">"https://..."</span>);</div>
+                    <div class="line-explanation">
+                        <strong>Fetches Dynamic Parameter Data at Build Time:</strong> Calls API endpoint during <code>next build</code> to retrieve array of todo items (IDs 1 through 200).
+                    </div>
+                </div>
+
+                <div class="code-line-row">
+                    <div class="line-num">L6</div>
+                    <div class="code-snippet">console.log(data);</div>
+                    <div class="line-explanation">
+                        <strong>Build Terminal Console Log:</strong> Prints the fetched API array into your server terminal <strong>ONCE during `next build`</strong>.
+                    </div>
+                </div>
+
+                <div class="code-line-row">
+                    <div class="line-num">L7</div>
+                    <div class="code-snippet"><span class="kw">return</span> data.map(({ id }) =&gt; ({ blogID: <span class="str">`${id}`</span> }));</div>
+                    <div class="line-explanation">
+                        <strong>Maps Params Array:</strong> Returns array of objects matching folder dynamic segment name <code>blogID</code>:<br>
+                        <code>[{ blogID: "1" }, { blogID: "2" }, { blogID: "3" }, ...]</code>.
+                    </div>
+                </div>
+
+                <div class="code-line-row">
+                    <div class="line-num">L17</div>
+                    <div class="code-snippet"><span class="kw">const</span> Blog = <span class="kw">async</span> ({ params }) =&gt; {</div>
+                    <div class="line-explanation">
+                        <strong>Asynchronous Page Component:</strong> Receives pre-built parameter objects generated by <code>generateStaticParams()</code>.
+                    </div>
+                </div>
+
+                <div class="code-line-row">
+                    <div class="line-num">L18-19</div>
+                    <div class="code-snippet">console.log(<span class="str">"blogID: "</span>, blogID);</div>
+                    <div class="line-explanation">
+                        <span class="badge-build">BUILD TIME EXECUTION FOR ALL IDs</span><br>
+                        • Next.js loops over every object returned by <code>generateStaticParams()</code> and calls <code>Blog()</code> 200 times during build!<br>
+                        • You will see <code>blogID: 1</code>, <code>blogID: 2</code>... logged in build terminal.<br>
+                        • <span class="badge-static-cdn">IN PRODUCTION (USER VISIT)</span>: When users visit <code>/blogs/1</code>, line 19 does <strong>NOT</strong> execute again. Cached HTML is served instantly from CDN!
+                    </div>
+                </div>
+
+                <div class="code-line-row">
+                    <div class="line-num">L20-51</div>
+                    <div class="code-snippet">&lt;<span class="fn">h1</span>&gt;Welcome to Our Blog {blogID}&lt;/<span class="fn">h1</span>&gt;</div>
+                    <div class="line-explanation">
+                        <strong>JSX Markup:</strong> Pre-rendered into 200 separate static HTML files stored in the <code>.next/server/app/blogs/</code> build directory.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 4: Build Simulator -->
+        <section id="simulator">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-terminal" style="color: var(--accent-amber);"></i> Interactive SSG Build & Request Simulator</h2>
+                <p>Simulate `next build` pre-rendering vs User CDN visits live!</p>
+            </div>
+
+            <div class="terminal-card">
+                <div class="terminal-header">
+                    <div class="terminal-dots">
+                        <div class="dot red"></div>
+                        <div class="dot yellow"></div>
+                        <div class="dot green"></div>
+                    </div>
+                    <span style="font-family: 'Fira Code', monospace; font-size: 0.85rem; color: var(--text-muted);">Node.js Server Terminal (SSG Execution)</span>
+                </div>
+
+                <div class="terminal-controls">
+                    <button class="btn btn-ssg" onclick="simSSGBuild()">
+                        <i class="fa-solid fa-hammer"></i> 1. Run `next build` (Execute generateStaticParams)
+                    </button>
+                    <button class="btn btn-cdn" onclick="simVisitPreRendered(1)">
+                        <i class="fa-solid fa-cloud-arrow-down"></i> 2. User Visits Pre-rendered `/blogs/1`
+                    </button>
+                    <button class="btn btn-cdn" onclick="simVisitPreRendered(50)">
+                        <i class="fa-solid fa-cloud-arrow-down"></i> 3. User Visits Pre-rendered `/blogs/50`
+                    </button>
+                    <button class="btn" onclick="simVisitFallback(999)">
+                        <i class="fa-solid fa-bolt"></i> 4. User Visits Un-rendered `/blogs/999` (Fallback)
+                    </button>
+                    <button class="btn" onclick="clearTerminal()">
+                        <i class="fa-solid fa-trash-can"></i> Clear
+                    </button>
+                </div>
+
+                <div class="terminal-window" id="term-output">
+                    <div class="terminal-line"><span class="line-time">[SYSTEM]</span> Ready. Click "Run next build" to test SSG generation behavior.</div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 5: Dynamic Fallback Modes -->
+        <section id="fallback">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-shield-halved" style="color: var(--accent-cyan);"></i> Dynamic Fallback Modes (`dynamicParams`)</h2>
+                <p>What happens when a user visits a dynamic route ID that was NOT returned by <code>generateStaticParams()</code>?</p>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <h4 style="color: var(--static-green); margin-bottom: 0.5rem;">
+                        1. `export const dynamicParams = true` (Default)
+                    </h4>
+                    <p style="font-size: 0.9rem; color: #cbd5e1; line-height: 1.6;">
+                        If a user requests an un-generated path (e.g. <code>/blogs/999</code>):<br>
+                        • Next.js renders the page <strong>On-Demand dynamically on the server for the first user</strong>.<br>
+                        • It saves/caches the resulting HTML statically so future users get 0ms CDN responses!
+                    </p>
+                </div>
+
+                <div class="card">
+                    <h4 style="color: var(--dynamic-rose); margin-bottom: 0.5rem;">
+                        2. `export const dynamicParams = false`
+                    </h4>
+                    <p style="font-size: 0.9rem; color: #cbd5e1; line-height: 1.6;">
+                        Strict mode: If a path was NOT included in <code>generateStaticParams()</code>:<br>
+                        • Next.js immediately returns a <strong>404 Not Found</strong> page without rendering on-demand.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <p>Next.js SSG & generateStaticParams Master Guide</p>
+        </footer>
+
+    </div>
+
+    <!-- Simulator Script -->
+    <script>
+        const term = document.getElementById('term-output');
+
+        function getTimeStamp() {
+            const now = new Date();
+            return `[${now.toLocaleTimeString()}]`;
+        }
+
+        function appendLog(htmlContent) {
+            const line = document.createElement('div');
+            line.className = 'terminal-line';
+            line.innerHTML = `<span class="line-time">${getTimeStamp()}</span> ${htmlContent}`;
+            term.appendChild(line);
+            term.scrollTop = term.scrollHeight;
+        }
+
+        function simSSGBuild() {
+            appendLog('<span class="line-info">Running "next build"...</span>');
+            setTimeout(() => {
+                appendLog('<span class="line-ssg">🟣 Executing generateStaticParams() in app/blogs/[blogID]/page.js...</span>');
+                appendLog('<span class="line-info">Fetching https://jsonplaceholder.typicode.com/todos ...</span>');
+                appendLog('<span class="line-ssg">✓ Received 200 items. Mapping parameters [{ blogID: "1" }, { blogID: "2" } ...]</span>');
+                appendLog('<span class="line-ssg">[BUILD LOG] Loop 1: Pre-rendering /blogs/1 (blogID: 1)</span>');
+                appendLog('<span class="line-ssg">[BUILD LOG] Loop 2: Pre-rendering /blogs/2 (blogID: 2)</span>');
+                appendLog('<span class="line-ssg">[BUILD LOG] Loop 50: Pre-rendering /blogs/50 (blogID: 50) ...</span>');
+                appendLog('<span class="line-static">✓ Compiled 200 Static HTML pages to CDN cache directory (.next/server/app/blogs/).</span>');
+            }, 600);
+        }
+
+        function simVisitPreRendered(id) {
+            appendLog(`<span class="line-info">GET /blogs/${id} HTTP/1.1</span>`);
+            appendLog(`<span class="line-static">⚡ Pre-rendered static HTML found in CDN cache! Served instantly (0ms). Blog component did NOT execute on server.</span>`);
+        }
+
+        function simVisitFallback(id) {
+            appendLog(`<span class="line-info">GET /blogs/${id} HTTP/1.1</span>`);
+            appendLog(`<span class="line-ssg">⚠️ /blogs/${id} was not in generateStaticParams list! Triggering dynamic fallback render...</span>`);
+            appendLog(`<span class="line-ssg">[SERVER LOG] blogID: ${id} executed on server.</span>`);
+            appendLog(`<span class="line-static">✓ Rendered HTML and cached statically for future visitors!</span>`);
+        }
+
+        function clearTerminal() {
+            term.innerHTML = '<div class="terminal-line"><span class="line-time">[SYSTEM]</span> Terminal cleared.</div>';
+        }
+    </script>
+</body>
+</html>

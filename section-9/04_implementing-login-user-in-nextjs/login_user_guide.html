@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Next.js Auth: Implementing User Login API</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #070a11;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border-color: #334155;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --server-color: #10b981;
+      --server-bg: rgba(16, 185, 129, 0.12);
+      
+      --client-color: #38bdf8;
+      --client-bg: rgba(56, 189, 248, 0.12);
+
+      --danger-color: #f43f5e;
+      --danger-bg: rgba(244, 63, 94, 0.15);
+      
+      --warning-color: #fbbf24;
+      --warning-bg: rgba(251, 191, 36, 0.12);
+      
+      --purple-color: #a855f7;
+      --purple-bg: rgba(168, 85, 247, 0.12);
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+    }
+
+    .container { max-width: 1150px; margin: 0 auto; }
+
+    header.hero {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      background: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.15) 0%, rgba(7, 10, 17, 0) 70%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 2.5rem;
+    }
+
+    .badge-group { display: flex; justify-content: center; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .badge { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.35rem 0.85rem; border-radius: 9999px; border: 1px solid var(--border-color); }
+    .badge-server { background: var(--server-bg); color: var(--server-color); border-color: rgba(16, 185, 129, 0.4); }
+    .badge-client { background: var(--client-bg); color: var(--client-color); border-color: rgba(56, 189, 248, 0.4); }
+    .badge-danger { background: var(--danger-bg); color: var(--danger-color); }
+
+    h1 { font-size: 2.4rem; font-weight: 800; margin-bottom: 0.75rem; background: linear-gradient(135deg, #ffffff 40%, #10b981 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero-subtitle { font-size: 1.1rem; color: var(--text-muted); max-width: 800px; margin: 0 auto; }
+
+    .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 2rem; margin-bottom: 2.5rem; box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5); }
+    .card-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; }
+    .badge-icon { width: 40px; height: 40px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold; background: var(--server-bg); color: var(--server-color); border: 1px solid rgba(16, 185, 129, 0.4); }
+
+    .arch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 768px) { .arch-grid { grid-template-columns: 1fr; } }
+    .arch-box { border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.5rem; background: rgba(30, 41, 59, 0.4); }
+
+    .simulator-container { background: #030712; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.5rem; margin-top: 1rem; }
+    .sim-controls { display: flex; gap: 1rem; justify-content: center; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .sim-btn { padding: 0.75rem 1.5rem; border-radius: 9999px; border: none; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: all 0.2s ease; }
+    .sim-btn-login { background: #10b981; color: #000; }
+    .sim-btn-invalid { background: #f43f5e; color: #fff; }
+
+    .mock-console { background: #020617; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-family: 'Fira Code', monospace; padding: 1rem; margin-top: 1rem; font-size: 0.85rem; line-height: 1.6; }
+
+    .code-panel { background: #050811; border: 1px solid var(--border-color); border-radius: var(--radius-md); overflow: hidden; }
+    .code-panel-header { padding: 0.65rem 1rem; background: #0d1322; border-bottom: 1px solid var(--border-color); font-size: 0.8rem; font-weight: 700; display: flex; justify-content: space-between; }
+    .code-content { padding: 1.25rem; font-family: 'Fira Code', monospace; font-size: 0.85rem; white-space: pre; overflow-x: auto; line-height: 1.6; }
+
+    .hl-kw { color: #f472b6; }
+    .hl-imp { color: #38bdf8; }
+    .hl-str { color: #a3e635; }
+    .hl-func { color: #fbbf24; }
+    .hl-comment { color: var(--text-dim); font-style: italic; }
+
+    .quiz-option { background: var(--bg-card-hover); border: 1px solid var(--border-color); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 0.75rem; }
+    .quiz-option.correct { background: var(--server-bg) !important; border-color: var(--server-color) !important; color: var(--server-color); }
+    .quiz-option.incorrect { background: var(--danger-bg) !important; border-color: var(--danger-color) !important; color: var(--danger-color); }
+    .radio-circle { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--text-dim); }
+
+    footer { text-align: center; padding: 2rem 0; color: var(--text-dim); font-size: 0.875rem; border-top: 1px solid var(--border-color); margin-top: 3rem; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- HERO -->
+    <header class="hero">
+      <div class="badge-group">
+        <span class="badge badge-server">POST /api/login</span>
+        <span class="badge badge-client">User.findOne({ email })</span>
+        <span class="badge badge-server">cookieStore.set('userId')</span>
+      </div>
+      <h1>Implementing User Login API in Next.js</h1>
+      <p class="hero-subtitle">
+        Understand how Next.js handles credential validation, checks database user records, and issues HTTP-Only authentication cookies upon successful login.
+      </p>
+    </header>
+
+    <!-- SECTION 1: TECHNICAL ARCHITECTURE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">⚙️</div>
+        <h2>1. User Login Execution Flow</h2>
+      </div>
+
+      <div class="arch-grid">
+        <div class="arch-box">
+          <h3 style="color: var(--server-color); margin-bottom: 0.5rem;">🔑 Credential Validation</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted);">
+            1. Handler receives <code>{ email, password }</code> via POST request.<br>
+            2. Searches database: <code>User.findOne({ email })</code>.<br>
+            3. If user doesn't exist OR password doesn't match ➔ Returns <code>400 Bad Request</code> ("Invalid Credentials!").
+          </p>
+        </div>
+
+        <div class="arch-box">
+          <h3 style="color: var(--client-color); margin-bottom: 0.5rem;">🍪 Cookie Issuance</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted);">
+            If credentials match, the handler sets an HTTP-Only cookie:<br>
+            <code>cookieStore.set("userId", user.id, { httpOnly: true, maxAge: 86400 })</code>.<br>
+            Subsequent requests automatically send this cookie for authenticated routes!
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: LIVE SIMULATOR -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">⚡</div>
+        <h2>2. Interactive Login API Simulator</h2>
+      </div>
+
+      <div class="simulator-container">
+        <div class="sim-controls">
+          <button class="sim-btn sim-btn-login" onclick="runSim('valid')">
+            ✅ Valid Login (user@test.com / 123456)
+          </button>
+          <button class="sim-btn sim-btn-invalid" onclick="runSim('invalid')">
+            💥 Invalid Credentials (wrong@test.com)
+          </button>
+        </div>
+
+        <div id="sim-console" class="mock-console">
+          Console Output: Click a button above to execute login API test.
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: CODE ANATOMY -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🔍</div>
+        <h2>3. Code Breakdown: <code>app/api/login/route.js</code></h2>
+      </div>
+
+      <div class="code-panel">
+        <div class="code-panel-header">
+          <span>app/api/login/route.js</span>
+          <span style="color: var(--server-color);">Next.js Route Handler</span>
+        </div>
+        <div class="code-content"><span class="hl-imp">import</span> { connectDB } <span class="hl-imp">from</span> <span class="hl-str">"@/lib/connectDB"</span>;
+<span class="hl-imp">import</span> User <span class="hl-imp">from</span> <span class="hl-str">"@/models/userModel"</span>;
+<span class="hl-imp">import</span> { cookies } <span class="hl-imp">from</span> <span class="hl-str">"next/headers"</span>;
+
+<span class="hl-kw">export async function</span> <span class="hl-func">POST</span>(request) {
+  <span class="hl-kw">await</span> <span class="hl-func">connectDB</span>();
+  <span class="hl-kw">const</span> cookieStore = <span class="hl-kw">await</span> <span class="hl-func">cookies</span>();
+  <span class="hl-kw">const</span> { email, password } = <span class="hl-kw">await</span> request.<span class="hl-func">json</span>();
+
+  <span class="hl-kw">const</span> user = <span class="hl-kw">await</span> User.<span class="hl-func">findOne</span>({ email });
+
+  <span class="hl-comment">// 1️⃣ Validate user &amp; password match:</span>
+  <span class="hl-kw">if</span> (!user || user.password !== password) {
+    <span class="hl-kw">return</span> Response.<span class="hl-func">json</span>({ <span class="hl-str">error</span>: <span class="hl-str">"Invalid Credentials!"</span> }, { <span class="hl-str">status</span>: <span class="hl-str">400</span> });
+  }
+
+  <span class="hl-comment">// 2️⃣ Set auth cookie:</span>
+  cookieStore.<span class="hl-func">set</span>(<span class="hl-str">"userId"</span>, user.id, {
+    <span class="hl-str">httpOnly</span>: <span class="hl-kw">true</span>,
+    <span class="hl-str">maxAge</span>: <span class="hl-str">60 * 60 * 24</span> <span class="hl-comment">// 24 Hours</span>
+  });
+
+  <span class="hl-kw">return</span> Response.<span class="hl-func">json</span>(user, { <span class="hl-str">status</span>: <span class="hl-str">200</span> });
+}</div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: KNOWLEDGE CHECK -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">❓</div>
+        <h2>4. Quick Knowledge Check</h2>
+      </div>
+
+      <div>
+        <h4 style="margin-bottom: 0.75rem;">Q1: Why should error messages specify generic "Invalid Credentials" instead of "Email not found"?</h4>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>A) It reduces payload size.</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, true)">
+          <span class="radio-circle"></span>
+          <span>B) It prevents user enumeration attacks (attackers testing which emails are registered).</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>C) Next.js does not allow specific error strings.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 5: POORA SAAR / HINGLISH GOLDEN RULE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4);">💡</div>
+        <h2>5. Poora Saar &amp; Golden Master Rule (Hinglish)</h2>
+      </div>
+
+      <div style="padding: 1.5rem; background: #020617; border-left: 5px solid var(--purple-color); border-radius: var(--radius-md);">
+        <h3 style="color: var(--purple-color); margin-bottom: 0.75rem; font-size: 1.15rem;">💡 User Login Ka Poora Saar:</h3>
+
+        <p style="font-size: 0.98rem; color: var(--text-main); line-height: 1.8; margin-bottom: 1rem;">
+          User Login API ka maksad hota hai user ke Identity Credentials verify karna aur success par browser me <strong>Authentication Token / Cookie Set karna</strong>.
+        </p>
+
+        <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 1.25rem;">
+          Handler me <code>User.findOne({ email })</code> chalate hain. Agar user na mile YA password match na kare, toh <code>400 Bad Request</code> return karte hain. 
+          Correct credentials par <code>cookieStore.set("userId", user.id, { httpOnly: true })</code> call hota hai. Iske baad browser har standard request ke saath ye cookie automatically attach karke bhejta hai!
+        </p>
+
+        <div style="background: rgba(168, 85, 247, 0.1); border: 1px dashed var(--purple-color); padding: 1rem; border-radius: var(--radius-sm); font-size: 0.9rem;">
+          <strong style="color: var(--purple-color); display: block; margin-bottom: 0.5rem;">🔥 Login Flow Golden Rules:</strong>
+          <ul style="padding-left: 1.2rem; line-height: 1.8; color: var(--text-main);">
+            <li><strong>1. Generic Error Message 🛡️</strong> ➔ "Email not found" ya "Wrong password" mat bolo; always return "Invalid Credentials!".</li>
+            <li><strong>2. Cookie Persistence 🍪</strong> ➔ Set <code>maxAge</code> so the login stays valid across browser restarts.</li>
+            <li><strong>3. HTTP 200 OK ✅</strong> ➔ Send <code>200</code> status code on successful authentication.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Next.js User Login Guide &bull; Section 9 Lesson 04
+    </footer>
+  </div>
+
+  <script>
+    function runSim(type) {
+      const consoleBox = document.getElementById('sim-console');
+      if (type === 'valid') {
+        consoleBox.innerHTML = `
+          <span style="color: var(--client-color)">[POST /api/login] Payload: { email: "user@test.com", password: "***" }</span><br>
+          <span style="color: var(--server-color)">[DB QUERY] User.findOne({ email }) ➔ Found User (_id: 65b1a...)</span><br>
+          <span style="color: var(--server-color)">[SET-COOKIE] userId=65b1a...; HttpOnly; Max-Age=86400</span><br>
+          <span style="color: var(--server-color)">[RESPONSE 200 OK] { _id: "65b1a...", email: "user@test.com" }</span>
+        `;
+      } else {
+        consoleBox.innerHTML = `
+          <span style="color: var(--client-color)">[POST /api/login] Payload: { email: "wrong@test.com", password: "***" }</span><br>
+          <span style="color: var(--danger-color)">[DB QUERY] User.findOne({ email }) ➔ null</span><br>
+          <span style="color: var(--danger-color)">[RESPONSE 400 Bad Request] { error: "Invalid Credentials!" }</span>
+        `;
+      }
+    }
+
+    function checkAnswer(element, isCorrect) {
+      const parent = element.parentElement;
+      parent.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('correct', 'incorrect'));
+      if (isCorrect) element.classList.add('correct');
+      else element.classList.add('incorrect');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client vs Server Components in Next.js - Master Guide</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-dark: #07090e;
+            --bg-card: #111622;
+            --bg-card-hover: #182030;
+            --bg-code: #0b0e17;
+            --border-color: #1e293b;
+            
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-accent: #38bdf8;
+            
+            --server-blue: #3b82f6;
+            --server-bg: rgba(59, 130, 246, 0.1);
+            
+            --client-emerald: #10b981;
+            --client-bg: rgba(16, 185, 129, 0.1);
+            
+            --next-purple: #c084fc;
+            --dynamic-rose: #f43f5e;
+            --accent-amber: #fbbf24;
+            
+            --gradient-hero: linear-gradient(135deg, #1e3a8a 0%, #0f172a 50%, #064e3b 100%);
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --radius-sm: 6px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 5px;
+        }
+
+        /* Sticky Navigation */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(7, 9, 14, 0.85);
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(90deg, var(--server-blue), var(--client-emerald));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.25rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--server-blue);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: var(--gradient-hero);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 3.5rem 2.5rem;
+            margin-top: 1rem;
+            margin-bottom: 3rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .hero-badges {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.25rem;
+        }
+
+        .badge {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 0.35rem 0.85rem;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .badge.server { color: var(--server-blue); border-color: rgba(59, 130, 246, 0.4); }
+        .badge.client { color: var(--client-emerald); border-color: rgba(16, 185, 129, 0.4); }
+
+        .hero h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.8rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        .hero p {
+            font-size: 1.15rem;
+            color: #cbd5e1;
+            max-width: 850px;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-hinglish {
+            background: rgba(0, 0, 0, 0.4);
+            border-left: 4px solid var(--server-blue);
+            padding: 1rem 1.25rem;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            font-size: 0.98rem;
+            color: #dbeafe;
+        }
+
+        /* Section Title Header */
+        .section-header {
+            margin-bottom: 2rem;
+            margin-top: 1rem;
+        }
+
+        .section-header h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-header p {
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            font-size: 1rem;
+        }
+
+        /* Card Component */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.75rem;
+            transition: all 0.25s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(59, 130, 246, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        /* Interleaving Box */
+        .interleave-card {
+            background: linear-gradient(135deg, rgba(192, 132, 252, 0.1) 0%, rgba(15, 23, 42, 0.95) 100%);
+            border: 2px solid var(--next-purple);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        /* Line by Line Code Table & Box */
+        .line-by-line-container {
+            background: #090d16;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .code-line-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.9rem;
+            border-radius: var(--radius-sm);
+            transition: background 0.2s ease;
+        }
+
+        .code-line-row:hover {
+            background: rgba(255, 255, 255, 0.025);
+        }
+
+        .line-num {
+            font-family: 'Fira Code', monospace;
+            color: #64748b;
+            font-weight: 600;
+            width: 35px;
+            flex-shrink: 0;
+        }
+
+        .code-snippet {
+            font-family: 'Fira Code', monospace;
+            color: #e2e8f0;
+            width: 44%;
+            flex-shrink: 0;
+            overflow-x: auto;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 0.35rem 0.75rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .line-explanation {
+            color: #cbd5e1;
+            flex-grow: 1;
+            line-height: 1.5;
+        }
+
+        .badge-server {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--server-blue);
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-client {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--client-emerald);
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Terminal Simulator */
+        .terminal-card {
+            background: #090d16;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.75rem;
+            margin-bottom: 3rem;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        }
+
+        .terminal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .terminal-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot.red { background: #ef4444; }
+        .dot.yellow { background: #f59e0b; }
+        .dot.green { background: #10b981; }
+
+        .terminal-controls {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.25rem;
+        }
+
+        .btn {
+            background: #1e293b;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 0.6rem 1.1rem;
+            border-radius: var(--radius-md);
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background: #334155;
+        }
+
+        .btn-server {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--server-blue);
+            border-color: var(--server-blue);
+        }
+
+        .btn-client {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--client-emerald);
+            border-color: var(--client-emerald);
+        }
+
+        .terminal-window {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.88rem;
+            min-height: 240px;
+            max-height: 380px;
+            overflow-y: auto;
+            color: #475569;
+        }
+
+        .terminal-line {
+            margin-bottom: 0.5rem;
+            display: flex;
+            gap: 10px;
+        }
+
+        .line-time { color: #64748b; }
+        .line-server { color: var(--server-blue); }
+        .line-client { color: var(--client-emerald); }
+        .line-info { color: var(--text-accent); }
+
+        /* Code Block */
+        .code-block {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            color: #e2e8f0;
+            overflow-x: auto;
+            margin: 1rem 0;
+            line-height: 1.5;
+        }
+
+        .kw { color: #f472b6; }
+        .fn { color: #60a5fa; }
+        .str { color: #34d399; }
+        .cm { color: #64748b; font-style: italic; }
+
+        /* Master Comparison Table */
+        .table-wrapper {
+            overflow-x: auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            margin-bottom: 3rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 1.1rem 1.4rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.92rem;
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.03);
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-main);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.015);
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border-color);
+            padding: 2.5rem 0;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 4rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-logo">
+            <i class="fa-solid fa-cube"></i> Server vs Client Components Master Guide
+        </div>
+        <ul class="nav-links">
+            <li><a href="#overview"><i class="fa-solid fa-layer-group"></i> Overview</a></li>
+            <li><a href="#interleave"><i class="fa-solid fa-sitemap"></i> Best Practice</a></li>
+            <li><a href="#codebase"><i class="fa-solid fa-code"></i> Code Case Study</a></li>
+            <li><a href="#line-by-line"><i class="fa-solid fa-list-check"></i> Line-by-Line</a></li>
+            <li><a href="#simulator"><i class="fa-solid fa-terminal"></i> Log Simulator</a></li>
+            <li><a href="#matrix"><i class="fa-solid fa-table"></i> Feature Matrix</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+
+        <!-- Hero Section -->
+        <section class="hero" id="overview">
+            <div class="hero-badges">
+                <span class="badge server"><i class="fa-solid fa-server"></i> RSC (Server Components Default)</span>
+                <span class="badge client"><i class="fa-solid fa-desktop"></i> "use client" Directive</span>
+                <span class="badge server"><i class="fa-solid fa-box-open"></i> 0KB Client JS Bundle</span>
+            </div>
+            <h1>Server Components vs Client Components in Next.js</h1>
+            <p>
+                Learn how Next.js App Router defaults to <strong>React Server Components (RSC)</strong> for 0KB JavaScript bundle sizes, and when to opt into <strong>Client Components</strong> using <code>"use client"</code>.
+            </p>
+            <div class="hero-hinglish">
+                🧠 <strong>Hinglish Summary:</strong><br>
+                Next.js App Router me saare components <strong>by default Server Components hote hain</strong>. Iska sabse bada fayda ye hai ki inka JS code browser par kabhi bhej nahi jata (0 KB bundle size!). Jab aapko React hooks (`useState`, `useEffect`), event handlers (`onClick`), ya browser APIs (`window`, `localStorage`) ki zarurat padti hai, tabhi aap file ke top par <code>"use client";</code> likhte hain!
+            </div>
+        </section>
+
+
+        <!-- Section 1: Server vs Client Component Cards -->
+        <section>
+            <div class="grid-2">
+                <!-- Server Component Card -->
+                <div class="card" style="border-top: 4px solid var(--server-blue);">
+                    <h3 style="color: var(--server-blue); font-family: 'Outfit', sans-serif; font-size: 1.5rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 10px;">
+                        <i class="fa-solid fa-server"></i> Server Components (Default)
+                    </h3>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1rem;">
+                        Executes <strong>ONLY on the server</strong>. The component code is rendered into HTML/RSC payload and NEVER sent to the client browser bundle.
+                    </p>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.65rem; font-size: 0.9rem; color: #cbd5e1;">
+                        <li><i class="fa-solid fa-check" style="color: var(--server-blue);"></i> <strong>Bundle Impact:</strong> 0 KB JavaScript sent to browser.</li>
+                        <li><i class="fa-solid fa-check" style="color: var(--server-blue);"></i> <strong>Direct Access:</strong> Databases, secret API keys, filesystem (`fs`).</li>
+                        <li><i class="fa-solid fa-check" style="color: var(--server-blue);"></i> <strong>Async Capability:</strong> Can be declared as <code>async function MyComp()</code>.</li>
+                        <li><i class="fa-solid fa-xmark" style="color: var(--dynamic-rose);"></i> <strong>No React Hooks:</strong> Cannot use `useState`, `useEffect`, `useRef`.</li>
+                        <li><i class="fa-solid fa-xmark" style="color: var(--dynamic-rose);"></i> <strong>No Event Listeners:</strong> Cannot attach `onClick`, `onChange`.</li>
+                        <li><i class="fa-solid fa-xmark" style="color: var(--dynamic-rose);"></i> <strong>No Browser APIs:</strong> Cannot access `window` or `localStorage`.</li>
+                    </ul>
+                </div>
+
+                <!-- Client Component Card -->
+                <div class="card" style="border-top: 4px solid var(--client-emerald);">
+                    <h3 style="color: var(--client-emerald); font-family: 'Outfit', sans-serif; font-size: 1.5rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 10px;">
+                        <i class="fa-solid fa-desktop"></i> Client Components (`"use client"`)
+                    </h3>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1rem;">
+                        Pre-rendered on the server into HTML, then <strong>hydrated on the client</strong> where its JS bundle executes to enable interactivity.
+                    </p>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.65rem; font-size: 0.9rem; color: #cbd5e1;">
+                        <li><i class="fa-solid fa-check" style="color: var(--client-emerald);"></i> <strong>React Hooks:</strong> Fully supports `useState`, `useEffect`, `useContext`.</li>
+                        <li><i class="fa-solid fa-check" style="color: var(--client-emerald);"></i> <strong>Interactivity:</strong> Attach `onClick`, `onChange`, `onSubmit` handlers.</li>
+                        <li><i class="fa-solid fa-check" style="color: var(--client-emerald);"></i> <strong>Browser APIs:</strong> Access `window`, `localStorage`, `document`.</li>
+                        <li><i class="fa-solid fa-xmark" style="color: var(--dynamic-rose);"></i> <strong>Bundle Impact:</strong> JavaScript IS included in browser download bundle.</li>
+                        <li><i class="fa-solid fa-xmark" style="color: var(--dynamic-rose);"></i> <strong>No Secrets:</strong> Cannot contain server DB secrets or private keys.</li>
+                        <li><i class="fa-solid fa-xmark" style="color: var(--dynamic-rose);"></i> <strong>No Async Components:</strong> Cannot be `async function MyComp()`.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 2: Best Practice - The Interleaving Pattern -->
+        <section id="interleave">
+            <div class="interleave-card">
+                <h3 style="font-family: 'Outfit', sans-serif; color: var(--next-purple); font-size: 1.6rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 10px;">
+                    💡 Crucial Best Practice: Don't Put `"use client"` at the Page Level!
+                </h3>
+                <p style="font-size: 1.05rem; color: #f3e8ff; line-height: 1.7; margin-bottom: 1rem;">
+                    <em>"Agar aap poore <code>page.js</code> par <code>"use client";</code> likh doge, toh page ke andar jitne bhi child components import honge, unka poora code CLIENT bundle me chala jayega!"</em>
+                </p>
+                <div style="background: rgba(0, 0, 0, 0.4); border-left: 4px solid var(--client-emerald); padding: 1.25rem; border-radius: var(--radius-md);">
+                    <h4 style="color: var(--client-emerald); margin-bottom: 0.5rem;">✅ Solution: Move Client Components down to the Leaf Nodes!</h4>
+                    <p style="font-size: 0.93rem; color: #cbd5e1; line-height: 1.6;">
+                        Main page <code>app/blogs/page.js</code> ko **Server Component (Default)** hi rehne do. <br>
+                        Aur jahan aapko <code>onClick</code> button ya <code>useState</code> ki zarurat ho (jaise <code>Button.js</code> ya <code>Likes.js</code>), sirf **un chhote separate files me `"use client";` lagao** aur parent Server Component me import karo!
+                    </p>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 3: Project Codebase Overview -->
+        <section id="codebase">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-code" style="color: var(--next-purple);"></i> Project Code Case Study</h2>
+                <p>Examining <code>components/Button.js</code>, <code>components/Likes.js</code> & <code>app/blogs/page.js</code></p>
+            </div>
+
+            <div class="grid-2">
+                <!-- Button.js (Client Component) -->
+                <div class="card">
+                    <h4 style="color: var(--client-emerald); font-size: 1.15rem; margin-bottom: 0.5rem;">
+                        🟢 Client Component: <code>components/Button.js</code>
+                    </h4>
+                    <div class="code-block">
+<span class="kw">"use client"</span>;
+
+<span class="kw">export default function</span> <span class="fn">Button</span>() {
+  <span class="kw">return</span> (
+    &lt;<span class="fn">button</span>
+      <span class="kw">onClick</span>={() => {
+        console.log(<span class="str">"Button Clicked"</span>);
+      }}
+    &gt;
+      Click Me
+    &lt;/<span class="fn">button</span>&gt;
+  );
+}
+                    </div>
+                </div>
+
+                <!-- Views.js (Server Component) -->
+                <div class="card">
+                    <h4 style="color: var(--server-blue); font-size: 1.15rem; margin-bottom: 0.5rem;">
+                        🔵 Server Component: <code>components/Views.js</code>
+                    </h4>
+                    <div class="code-block">
+<span class="cm">// No "use client" -> Defaults to Server Component</span>
+
+<span class="kw">export default async function</span> <span class="fn">Views</span>() {
+  <span class="cm">// 🟢 Runs ONLY on Node.js Server! 0KB JS sent to browser.</span>
+  console.log(<span class="str">"Views Component"</span>);
+  <span class="kw">return</span> &lt;<span class="fn">div</span>&gt;10k Views&lt;/<span class="fn">div</span>&gt;;
+}
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 4: Line-by-Line Breakdown -->
+        <section id="line-by-line">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-list-check" style="color: var(--static-green);"></i> Exact Line-by-Line Breakdown</h2>
+                <p>Detailed analysis of <code>components/Button.js</code>, <code>Likes.js</code>, and <code>Views.js</code></p>
+            </div>
+
+            <!-- Button.js Breakdown -->
+            <div class="line-by-line-container" style="border-top: 4px solid var(--client-emerald);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="font-family: 'Outfit', sans-serif; color: var(--client-emerald);">File: <code>components/Button.js</code></h3>
+                    <span class="badge-client">Client Component Directive</span>
+                </div>
+
+                <div class="code-line-row">
+                    <div class="line-num">L1</div>
+                    <div class="code-snippet"><span class="kw">"use client"</span>;</div>
+                    <div class="line-explanation">
+                        <span class="badge-client">CLIENT DIRECTIVE</span><br>
+                        Tells Next.js compiler that this component and its imports belong to the Client Boundary. Its JS bundle will be sent to the browser for hydration.
+                    </div>
+                </div>
+
+                <div class="code-line-row">
+                    <div class="line-num">L6-8</div>
+                    <div class="code-snippet"><span class="kw">onClick</span>={() =&gt; { console.log(<span class="str">"Button Clicked"</span>); }}</div>
+                    <div class="line-explanation">
+                        <strong>Interactive Event Listener:</strong> Can only be attached in Client Components. When the user clicks the button in their browser, <code>"Button Clicked"</code> logs inside the <strong>Browser DevTools Console</strong> (F12).
+                    </div>
+                </div>
+            </div>
+
+            <!-- Likes.js Breakdown -->
+            <div class="line-by-line-container" style="border-top: 4px solid var(--server-blue);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="font-family: 'Outfit', sans-serif; color: var(--server-blue);">File: <code>components/Likes.js</code></h3>
+                    <span class="badge-server">Server Component Notes & State</span>
+                </div>
+
+                <div class="code-line-row">
+                    <div class="line-num">L1-5</div>
+                    <div class="code-snippet"><span class="cm">// window & localstorage server pe kam nahi karta</span></div>
+                    <div class="line-explanation">
+                        <strong>Handwritten PDF Notes Analysis:</strong><br>
+                        • Server components run on Node.js, so global objects like <code>window</code> or <code>localStorage</code> do not exist on the server.<br>
+                        • Attempting to access <code>window</code> without <code>"use client"</code> throws <code>ReferenceError: window is not defined</code>.
+                    </div>
+                </div>
+
+                <div class="code-line-row">
+                    <div class="line-num">L18</div>
+                    <div class="code-snippet"><span class="kw">const</span> [likes, setLikes] = useState(<span class="str">0</span>);</div>
+                    <div class="line-explanation">
+                        <strong>React State Hook:</strong> React hooks like <code>useState</code> can ONLY be used inside Client Components marked with <code>"use client"</code>.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 5: Interactive Terminal & Console Simulator -->
+        <section id="simulator">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-terminal" style="color: var(--accent-amber);"></i> Server Terminal vs Browser Console Simulator</h2>
+                <p>Observe where `console.log()` statements print for Server Components vs Client Components!</p>
+            </div>
+
+            <div class="terminal-card">
+                <div class="terminal-header">
+                    <div class="terminal-dots">
+                        <div class="dot red"></div>
+                        <div class="dot yellow"></div>
+                        <div class="dot green"></div>
+                    </div>
+                    <span style="font-family: 'Fira Code', monospace; font-size: 0.85rem; color: var(--text-muted);">Execution Environment Log Tracker</span>
+                </div>
+
+                <div class="terminal-controls">
+                    <button class="btn btn-server" onclick="simServerComp()">
+                        <i class="fa-solid fa-server"></i> 1. Render Server Component (`Views.js`)
+                    </button>
+                    <button class="btn btn-client" onclick="simClientComp()">
+                        <i class="fa-solid fa-desktop"></i> 2. Render Client Component (`Button.js` SSR + Hydrate)
+                    </button>
+                    <button class="btn btn-client" onclick="simClickButton()">
+                        <i class="fa-solid fa-hand-pointer"></i> 3. User Clicks `Button` in Browser
+                    </button>
+                    <button class="btn" onclick="simWindowError()">
+                        <i class="fa-solid fa-triangle-exclamation"></i> 4. Access `window` in Server Component (Triggers Error!)
+                    </button>
+                    <button class="btn" onclick="clearTerminal()">
+                        <i class="fa-solid fa-trash-can"></i> Clear
+                    </button>
+                </div>
+
+                <div class="terminal-window" id="term-output">
+                    <div class="terminal-line"><span class="line-time">[SYSTEM]</span> Ready. Test log locations for Server vs Client components.</div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 6: Master Feature Comparison Matrix -->
+        <section id="matrix">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-table" style="color: var(--server-blue);"></i> Master Feature Comparison Matrix</h2>
+                <p>Quick lookup table for Server Components vs Client Components capability.</p>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Feature / Capability</th>
+                            <th>Server Component (Default)</th>
+                            <th>Client Component (`"use client"`)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Execution Environment</strong></td>
+                            <td><span style="color: var(--server-blue); font-weight: 600;">Server ONLY (Node.js)</span></td>
+                            <td>Server (SSR HTML) + Client (Browser Hydration)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>JS Bundle Size</strong></td>
+                            <td><strong style="color: var(--static-green);">0 KB (Excluded from bundle)</strong></td>
+                            <td>Included in browser JS download bundle</td>
+                        </tr>
+                        <tr>
+                            <td><strong>React Hooks (`useState`, `useEffect`)</strong></td>
+                            <td>❌ Not Allowed</td>
+                            <td><strong style="color: var(--static-green);">✅ Full Support</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Event Listeners (`onClick`, `onChange`)</strong></td>
+                            <td>❌ Not Allowed</td>
+                            <td><strong style="color: var(--static-green);">✅ Full Support</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Browser APIs (`window`, `localStorage`)</strong></td>
+                            <td>❌ Throws `ReferenceError`</td>
+                            <td><strong style="color: var(--static-green);">✅ Full Support</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Direct DB Queries & Server Secrets</strong></td>
+                            <td><strong style="color: var(--static-green);">✅ Safe & Secure</strong></td>
+                            <td>❌ Security Risk (Exposed to client)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Async Component (`async function`)</strong></td>
+                            <td><strong style="color: var(--static-green);">✅ Supported</strong></td>
+                            <td>❌ Not Supported in Client Components</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <p>Next.js Server Components vs Client Components Master Guide</p>
+        </footer>
+
+    </div>
+
+    <!-- Simulator Script -->
+    <script>
+        const term = document.getElementById('term-output');
+
+        function getTimeStamp() {
+            const now = new Date();
+            return `[${now.toLocaleTimeString()}]`;
+        }
+
+        function appendLog(htmlContent) {
+            const line = document.createElement('div');
+            line.className = 'terminal-line';
+            line.innerHTML = `<span class="line-time">${getTimeStamp()}</span> ${htmlContent}`;
+            term.appendChild(line);
+            term.scrollTop = term.scrollHeight;
+        }
+
+        function simServerComp() {
+            appendLog('<span class="line-server">🖥️ [NODE.JS SERVER LOG] "Views Component" (components/Views.js)</span>');
+            appendLog('<span class="line-info">⚡ Bundle impact: 0 KB JS sent to browser. Pure ready HTML returned!</span>');
+        }
+
+        function simClientComp() {
+            appendLog('<span class="line-server">🖥️ [NODE.JS SERVER LOG] Pre-rendering Button.js HTML shell during SSR...</span>');
+            appendLog('<span class="line-client">🌐 [BROWSER LOG] Button.js JS bundle downloaded & hydrated on client!</span>');
+        }
+
+        function simClickButton() {
+            appendLog('<span class="line-client">💻 [BROWSER DEVTOOLS CONSOLE (F12)] "Button Clicked" (Triggered by user onClick listener)</span>');
+        }
+
+        function simWindowError() {
+            appendLog('<span class="line-info">Attempting console.log(window) inside Server Component...</span>');
+            appendLog('<span style="color: #ef4444; font-weight: 600;">❌ ReferenceError: window is not defined at Views.js (Server Components do not have window object!).</span>');
+        }
+
+        function clearTerminal() {
+            term.innerHTML = '<div class="terminal-line"><span class="line-time">[SYSTEM]</span> Terminal cleared.</div>';
+        }
+    </script>
+</body>
+</html>

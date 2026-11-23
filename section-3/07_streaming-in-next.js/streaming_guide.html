@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streaming in Next.js with React Suspense - Master Guide</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-dark: #07090e;
+            --bg-card: #111622;
+            --bg-card-hover: #182030;
+            --bg-code: #0b0e17;
+            --border-color: #1e293b;
+            
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-accent: #38bdf8;
+            
+            --stream-cyan: #06b6d4;
+            --stream-bg: rgba(6, 182, 212, 0.1);
+            
+            --static-green: #10b981;
+            --next-purple: #c084fc;
+            --dynamic-rose: #f43f5e;
+            --accent-amber: #fbbf24;
+            
+            --gradient-hero: linear-gradient(135deg, #083344 0%, #0f172a 50%, #311042 100%);
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --radius-sm: 6px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 5px;
+        }
+
+        /* Sticky Navigation */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(7, 9, 14, 0.85);
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(90deg, var(--stream-cyan), var(--next-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.25rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--stream-cyan);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: var(--gradient-hero);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 3.5rem 2.5rem;
+            margin-top: 1rem;
+            margin-bottom: 3rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .hero-badges {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.25rem;
+        }
+
+        .badge {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 0.35rem 0.85rem;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .badge.stream { color: var(--stream-cyan); border-color: rgba(6, 182, 212, 0.4); }
+        .badge.purple { color: var(--next-purple); border-color: rgba(192, 132, 252, 0.4); }
+
+        .hero h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.8rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        .hero p {
+            font-size: 1.15rem;
+            color: #cbd5e1;
+            max-width: 850px;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-hinglish {
+            background: rgba(0, 0, 0, 0.4);
+            border-left: 4px solid var(--stream-cyan);
+            padding: 1rem 1.25rem;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            font-size: 0.98rem;
+            color: #cffaff;
+        }
+
+        /* Section Title Header */
+        .section-header {
+            margin-bottom: 2rem;
+            margin-top: 1rem;
+        }
+
+        .section-header h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-header p {
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            font-size: 1rem;
+        }
+
+        /* Card Component */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.75rem;
+            transition: all 0.25s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(6, 182, 212, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        /* Line by Line Code Table & Box */
+        .line-by-line-container {
+            background: #090d16;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .code-line-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.9rem;
+            border-radius: var(--radius-sm);
+            transition: background 0.2s ease;
+        }
+
+        .code-line-row:hover {
+            background: rgba(255, 255, 255, 0.025);
+        }
+
+        .line-num {
+            font-family: 'Fira Code', monospace;
+            color: #64748b;
+            font-weight: 600;
+            width: 35px;
+            flex-shrink: 0;
+        }
+
+        .code-snippet {
+            font-family: 'Fira Code', monospace;
+            color: #e2e8f0;
+            width: 44%;
+            flex-shrink: 0;
+            overflow-x: auto;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 0.35rem 0.75rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .line-explanation {
+            color: #cbd5e1;
+            flex-grow: 1;
+            line-height: 1.5;
+        }
+
+        .badge-stream {
+            background: rgba(6, 182, 212, 0.15);
+            color: var(--stream-cyan);
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Interactive Streaming Simulator Box */
+        .simulator-card {
+            background: #090d16;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin-bottom: 3rem;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        }
+
+        .sim-browser-bar {
+            background: #111622;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md) var(--radius-md) 0 0;
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sim-browser-content {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-top: none;
+            border-radius: 0 0 var(--radius-md) var(--radius-md);
+            padding: 2rem;
+            min-height: 280px;
+        }
+
+        .stream-item {
+            padding: 0.85rem 1.25rem;
+            border-radius: var(--radius-md);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 600;
+            font-size: 1.05rem;
+            transition: all 0.4s ease;
+        }
+
+        .stream-loading {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px dashed var(--accent-amber);
+            color: var(--accent-amber);
+        }
+
+        .stream-loaded {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid var(--static-green);
+            color: var(--static-green);
+        }
+
+        /* Spinner animation */
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border-left-color: var(--accent-amber);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Code Block */
+        .code-block {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            color: #e2e8f0;
+            overflow-x: auto;
+            margin: 1rem 0;
+            line-height: 1.5;
+        }
+
+        .kw { color: #f472b6; }
+        .fn { color: #60a5fa; }
+        .str { color: #34d399; }
+        .cm { color: #64748b; font-style: italic; }
+
+        /* Master Comparison Table */
+        .table-wrapper {
+            overflow-x: auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            margin-bottom: 3rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 1.1rem 1.4rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.92rem;
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.03);
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-main);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.015);
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border-color);
+            padding: 2.5rem 0;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 4rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-logo">
+            <i class="fa-solid fa-water"></i> Streaming in Next.js Master Guide
+        </div>
+        <ul class="nav-links">
+            <li><a href="#overview"><i class="fa-solid fa-layer-group"></i> Overview</a></li>
+            <li><a href="#comparison"><i class="fa-solid fa-code-compare"></i> SSR vs Streaming</a></li>
+            <li><a href="#codebase"><i class="fa-solid fa-code"></i> Codebase</a></li>
+            <li><a href="#line-by-line"><i class="fa-solid fa-list-check"></i> Line-by-Line</a></li>
+            <li><a href="#simulator"><i class="fa-solid fa-play"></i> Live Simulator</a></li>
+            <li><a href="#matrix"><i class="fa-solid fa-table"></i> Summary Matrix</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+
+        <!-- Hero Section -->
+        <section class="hero" id="overview">
+            <div class="hero-badges">
+                <span class="badge stream"><i class="fa-solid fa-water"></i> Streaming SSR</span>
+                <span class="badge purple"><i class="fa-solid fa-atom"></i> React Suspense</span>
+                <span class="badge stream"><i class="fa-solid fa-network-wired"></i> HTTP Chunks</span>
+            </div>
+            <h1>Streaming in Next.js with React Suspense</h1>
+            <p>
+                Learn how Next.js streams HTML chunks progressively over HTTP so slow data fetches (like a 15s comments call) <strong>never block the rest of the page from rendering instantly!</strong>
+            </p>
+            <div class="hero-hinglish">
+                🧠 <strong>Hinglish Summary:</strong><br>
+                Purane SSR me jab tak poore page ka data fetch nahi hota tha (jaise Comments me 15s lage), tab tak user ko **safed khali screen (blank white page)** dikhti thi. Next.js **Streaming + React Suspense** me main layout aur header <strong>0ms me turant dikh jata hai</strong>, aur jaise-jaise dynamic components tayar hote hain (Views 5s me, Likes 10s me, Comments 15s me), waise-waise HTML chunks browser par stream hokar UI ko replace kar dete hain!
+            </div>
+        </section>
+
+
+        <!-- Section 1: Traditional SSR vs Streaming SSR -->
+        <section id="comparison">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-code-compare" style="color: var(--stream-cyan);"></i> Traditional SSR vs Streaming SSR</h2>
+                <p>Comparing user experience & server blocking times.</p>
+            </div>
+
+            <div class="grid-2">
+                <div class="card" style="border-top: 4px solid var(--dynamic-rose);">
+                    <h3 style="color: var(--dynamic-rose); font-family: 'Outfit', sans-serif; font-size: 1.4rem; margin-bottom: 0.75rem;">
+                        ❌ Traditional SSR (Without Streaming)
+                    </h3>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.65rem; font-size: 0.9rem; color: #cbd5e1;">
+                        <li><i class="fa-solid fa-xmark" style="color: var(--dynamic-rose);"></i> Server waits for ALL 3 components (Views 5s + Likes 10s + Comments 15s).</li>
+                        <li><i class="fa-solid fa-xmark" style="color: var(--dynamic-rose);"></i> <strong>User sees BLANK screen for 15 full seconds!</strong></li>
+                        <li><i class="fa-solid fa-xmark" style="color: var(--dynamic-rose);"></i> Bad TTFB (Time to First Byte) & terrible UX.</li>
+                    </ul>
+                </div>
+
+                <div class="card" style="border-top: 4px solid var(--stream-cyan);">
+                    <h3 style="color: var(--stream-cyan); font-family: 'Outfit', sans-serif; font-size: 1.4rem; margin-bottom: 0.75rem;">
+                        🚀 Streaming SSR (Next.js + Suspense)
+                    </h3>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.65rem; font-size: 0.9rem; color: #cbd5e1;">
+                        <li><i class="fa-solid fa-check" style="color: var(--stream-cyan);"></i> <strong>0s:</strong> Navbar, Header & 3 Fallback Loading Spinners appear INSTANTLY!</li>
+                        <li><i class="fa-solid fa-check" style="color: var(--stream-cyan);"></i> <strong>5s:</strong> `Views` chunk streams in ➔ Swaps spinner with "10k Views".</li>
+                        <li><i class="fa-solid fa-check" style="color: var(--stream-cyan);"></i> <strong>10s:</strong> `Likes` chunk streams in ➔ Swaps spinner with "2k Likes".</li>
+                        <li><i class="fa-solid fa-check" style="color: var(--stream-cyan);"></i> <strong>15s:</strong> `Comments` chunk streams in ➔ Swaps spinner with "500 Comments".</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 2: Code Base Case Study -->
+        <section id="codebase">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-code" style="color: var(--next-purple);"></i> Project Codebase Overview</h2>
+                <p>Examining <code>app/blogs/page.js</code> and component delays in project <code>07_streaming-in-next.js</code></p>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <h4 style="color: var(--stream-cyan); font-size: 1.15rem; margin-bottom: 0.5rem;">
+                        📄 Main Page: <code>app/blogs/page.js</code>
+                    </h4>
+                    <div class="code-block">
+<span class="kw">import</span> { Suspense } <span class="kw">from</span> <span class="str">"react"</span>;
+<span class="kw">import</span> Views <span class="kw">from</span> <span class="str">"@/components/Views"</span>;
+<span class="kw">import</span> Likes <span class="kw">from</span> <span class="str">"@/components/Likes"</span>;
+<span class="kw">import</span> Comments <span class="kw">from</span> <span class="str">"@/components/Comments"</span>;
+<span class="kw">import</span> Loading <span class="kw">from</span> <span class="str">"@/components/Loading"</span>;
+
+<span class="kw">const</span> Blogs = () =&gt; {
+  <span class="kw">return</span> (
+    &lt;<span class="fn">div</span>&gt;
+      &lt;<span class="fn">h1</span>&gt;Welcome to Our Blog&lt;/<span class="fn">h1</span>&gt;
+      
+      &lt;<span class="fn">Suspense</span> <span class="kw">fallback</span>={&lt;<span class="fn">Loading</span>&gt;Views&lt;/<span class="fn">Loading</span>&gt;}&gt;
+        &lt;<span class="fn">Views</span> /&gt;
+      &lt;/<span class="fn">Suspense</span>&gt;
+
+      &lt;<span class="fn">Suspense</span> <span class="kw">fallback</span>={&lt;<span class="fn">Loading</span>&gt;Likes&lt;/<span class="fn">Loading</span>&gt;}&gt;
+        &lt;<span class="fn">Likes</span> /&gt;
+      &lt;/<span class="fn">Suspense</span>&gt;
+
+      &lt;<span class="fn">Suspense</span> <span class="kw">fallback</span>={&lt;<span class="fn">Loading</span>&gt;Comments&lt;/<span class="fn">Loading</span>&gt;}&gt;
+        &lt;<span class="fn">Comments</span> /&gt;
+      &lt;/<span class="fn">Suspense</span>&gt;
+    &lt;/<span class="fn">div</span>&gt;
+  );
+};
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h4 style="color: var(--accent-amber); font-size: 1.15rem; margin-bottom: 0.5rem;">
+                        ⚙️ Async Components Delays:
+                    </h4>
+                    <div class="code-block">
+<span class="cm">// components/Views.js (5s Delay)</span>
+<span class="kw">export default async function</span> <span class="fn">Views</span>() {
+  <span class="kw">await new</span> Promise((res) => setTimeout(res, <span class="str">5000</span>));
+  <span class="kw">return</span> &lt;<span class="fn">div</span>&gt;10k Views&lt;/<span class="fn">div</span>&gt;;
+}
+
+<span class="cm">// components/Likes.js (10s Delay)</span>
+<span class="kw">export default async function</span> <span class="fn">Likes</span>() {
+  <span class="kw">await new</span> Promise((res) => setTimeout(res, <span class="str">10000</span>));
+  <span class="kw">return</span> &lt;<span class="fn">div</span>&gt;2k Likes&lt;/<span class="fn">div</span>&gt;;
+}
+
+<span class="cm">// components/Comments.js (15s Delay)</span>
+<span class="kw">export default async function</span> <span class="fn">Comments</span>() {
+  <span class="kw">await new</span> Promise((res) => setTimeout(res, <span class="str">15000</span>));
+  <span class="kw">return</span> &lt;<span class="fn">div</span>&gt;500 Comments&lt;/<span class="fn">div</span>&gt;;
+}
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 3: Exact Line-by-Line Breakdown -->
+        <section id="line-by-line">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-list-check" style="color: var(--static-green);"></i> Exact Line-by-Line Breakdown</h2>
+                <p>Detailed analysis of <code>app/blogs/page.js</code> and component files.</p>
+            </div>
+
+            <div class="line-by-line-container" style="border-top: 4px solid var(--stream-cyan);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="font-family: 'Outfit', sans-serif; color: var(--stream-cyan);">File: <code>app/blogs/page.js</code></h3>
+                    <span class="badge-stream">React Suspense Boundary</span>
+                </div>
+
+                <div class="code-line-row">
+                    <div class="line-num">L6</div>
+                    <div class="code-snippet"><span class="kw">import</span> { Suspense } <span class="kw">from</span> <span class="str">"react"</span>;</div>
+                    <div class="line-explanation">
+                        <strong>Imports React Suspense:</strong> The React API used to catch promises thrown by asynchronous components during server rendering and render a fallback UI until the component resolves.
+                    </div>
+                </div>
+
+                <div class="code-line-row">
+                    <div class="line-num">L51-53</div>
+                    <div class="code-snippet">&lt;<span class="fn">Suspense</span> <span class="kw">fallback</span>={&lt;<span class="fn">Loading</span>&gt;Views...&lt;/<span class="fn">Loading</span>&gt;}&gt;</div>
+                    <div class="line-explanation">
+                        <span class="badge-stream">5-SECOND STREAM BOUNDARY</span><br>
+                        • Wraps <code>&lt;Views /&gt;</code>. While <code>Views.js</code> waits on its 5s <code>setTimeout</code> promise, Next.js streams the fallback <code>&lt;Loading&gt;Views&lt;/Loading&gt;</code> component immediately.<br>
+                        • At 5s, the promise resolves and Next.js streams an HTML chunk replacing the fallback with <code>10k Views</code>.
+                    </div>
+                </div>
+
+                <div class="code-line-row">
+                    <div class="line-num">L54-56</div>
+                    <div class="code-snippet">&lt;<span class="fn">Suspense</span> <span class="kw">fallback</span>={&lt;<span class="fn">Loading</span>&gt;Likes...&lt;/<span class="fn">Loading</span>&gt;}&gt;</div>
+                    <div class="line-explanation">
+                        <span class="badge-stream">10-SECOND STREAM BOUNDARY</span><br>
+                        • Wraps <code>&lt;Likes /&gt;</code>. Fallback is rendered at 0s. At 10s, HTML chunk streams in to show <code>2k Likes</code>.
+                    </div>
+                </div>
+
+                <div class="code-line-row">
+                    <div class="line-num">L57-59</div>
+                    <div class="code-snippet">&lt;<span class="fn">Suspense</span> <span class="kw">fallback</span>={&lt;<span class="fn">Loading</span>&gt;Comments...&lt;/<span class="fn">Loading</span>&gt;}&gt;</div>
+                    <div class="line-explanation">
+                        <span class="badge-stream">15-SECOND STREAM BOUNDARY</span><br>
+                        • Wraps <code>&lt;Comments /&gt;</code>. Slowest data fetch on the page (15s). Streams in last without blocking Views or Likes!
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 4: Interactive Live Streaming Simulator -->
+        <section id="simulator">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-play" style="color: var(--accent-amber);"></i> Live Streaming Simulator</h2>
+                <p>Click "Start Streaming" to watch progressive HTML chunk delivery in real-time!</p>
+            </div>
+
+            <div class="simulator-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <div>
+                        <h3 style="font-family: 'Outfit', sans-serif; color: var(--stream-cyan); margin-bottom: 0.25rem;">
+                            🌊 Real-Time HTTP Stream Simulator
+                        </h3>
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">Timer: <span id="timer-display" style="color: var(--accent-amber); font-weight: 700;">0.0s</span></p>
+                    </div>
+                    <button class="btn btn-ssg" style="background: rgba(6, 182, 212, 0.2); color: var(--stream-cyan); border-color: var(--stream-cyan);" onclick="startStreamingSim()">
+                        <i class="fa-solid fa-play"></i> Start Streaming Simulation
+                    </button>
+                </div>
+
+                <div class="sim-browser-bar">
+                    <span style="font-size: 0.85rem; color: var(--text-muted);"><i class="fa-solid fa-lock"></i> https://localhost:3000/blogs</span>
+                    <span style="font-size: 0.8rem; color: var(--static-green);" id="stream-status-badge">Ready</span>
+                </div>
+
+                <div class="sim-browser-content">
+                    <h2 style="font-family: 'Outfit', sans-serif; margin-bottom: 1.25rem;">Welcome to Our Blog</h2>
+
+                    <!-- Views Item -->
+                    <div id="views-item" class="stream-item stream-loading">
+                        <span>Loading: Views...</span>
+                        <div class="spinner" id="views-spinner"></div>
+                    </div>
+
+                    <!-- Likes Item -->
+                    <div id="likes-item" class="stream-item stream-loading">
+                        <span>Loading: Likes...</span>
+                        <div class="spinner" id="likes-spinner"></div>
+                    </div>
+
+                    <!-- Comments Item -->
+                    <div id="comments-item" class="stream-item stream-loading">
+                        <span>Loading: Comments...</span>
+                        <div class="spinner" id="comments-spinner"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <p>Next.js Streaming & React Suspense Master Guide</p>
+        </footer>
+
+    </div>
+
+    <!-- Simulator Script -->
+    <script>
+        let timerInterval = null;
+
+        function startStreamingSim() {
+            if (timerInterval) clearInterval(timerInterval);
+            
+            const timerEl = document.getElementById('timer-display');
+            const statusEl = document.getElementById('stream-status-badge');
+            
+            const viewsEl = document.getElementById('views-item');
+            const viewsSpin = document.getElementById('views-spinner');
+            
+            const likesEl = document.getElementById('likes-item');
+            const likesSpin = document.getElementById('likes-spinner');
+
+            const commentsEl = document.getElementById('comments-item');
+            const commentsSpin = document.getElementById('comments-spinner');
+
+            // Reset UI
+            viewsEl.className = 'stream-item stream-loading';
+            viewsEl.innerHTML = '<span>Loading: Views...</span><div class="spinner"></div>';
+            
+            likesEl.className = 'stream-item stream-loading';
+            likesEl.innerHTML = '<span>Loading: Likes...</span><div class="spinner"></div>';
+
+            commentsEl.className = 'stream-item stream-loading';
+            commentsEl.innerHTML = '<span>Loading: Comments...</span><div class="spinner"></div>';
+
+            statusEl.innerText = 'Streaming Initial Shell (0s)...';
+
+            let startTime = Date.now();
+
+            timerInterval = setInterval(() => {
+                let elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+                timerEl.innerText = `${elapsed}s`;
+
+                // At 5.0s -> Views resolved
+                if (elapsed >= 5.0 && viewsEl.classList.contains('stream-loading')) {
+                    viewsEl.className = 'stream-item stream-loaded';
+                    viewsEl.innerHTML = '<span>👁️ 10k Views</span> <span style="font-size: 0.8rem; opacity: 0.8;">Chunk Received at 5.0s</span>';
+                    statusEl.innerText = 'Received Chunk 1 (Views) at 5.0s';
+                }
+
+                // At 10.0s -> Likes resolved
+                if (elapsed >= 10.0 && likesEl.classList.contains('stream-loading')) {
+                    likesEl.className = 'stream-item stream-loaded';
+                    likesEl.innerHTML = '<span>❤️ 2k Likes</span> <span style="font-size: 0.8rem; opacity: 0.8;">Chunk Received at 10.0s</span>';
+                    statusEl.innerText = 'Received Chunk 2 (Likes) at 10.0s';
+                }
+
+                // At 15.0s -> Comments resolved
+                if (elapsed >= 15.0) {
+                    commentsEl.className = 'stream-item stream-loaded';
+                    commentsEl.innerHTML = '<span>💬 500 Comments</span> <span style="font-size: 0.8rem; opacity: 0.8;">Chunk Received at 15.0s</span>';
+                    statusEl.innerText = 'All Chunks Received (Stream Finished)';
+                    clearInterval(timerInterval);
+                }
+            }, 100);
+        }
+    </script>
+</body>
+</html>

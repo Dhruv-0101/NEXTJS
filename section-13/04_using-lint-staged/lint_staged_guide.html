@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Next.js Guide: Using lint-staged for Fast Linting</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #070a11;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border-color: #334155;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --server-color: #10b981;
+      --server-bg: rgba(16, 185, 129, 0.12);
+      
+      --client-color: #38bdf8;
+      --client-bg: rgba(56, 189, 248, 0.12);
+
+      --danger-color: #f43f5e;
+      --danger-bg: rgba(244, 63, 94, 0.15);
+      --danger-border: rgba(244, 63, 94, 0.4);
+      
+      --warning-color: #fbbf24;
+      --warning-bg: rgba(251, 191, 36, 0.12);
+      
+      --purple-color: #a855f7;
+      --purple-bg: rgba(168, 85, 247, 0.12);
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+    }
+
+    .container { max-width: 1150px; margin: 0 auto; }
+
+    /* HERO HEADER */
+    header.hero {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      background: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.15) 0%, rgba(7, 10, 17, 0) 70%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 2.5rem;
+    }
+
+    .badge-group {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+    }
+
+    .badge-server { background: var(--server-bg); color: var(--server-color); border-color: rgba(16, 185, 129, 0.4); }
+    .badge-client { background: var(--client-bg); color: var(--client-color); border-color: rgba(56, 189, 248, 0.4); }
+    .badge-purple { background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4); }
+
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #ffffff 40%, #10b981 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .badge-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+      background: var(--server-bg);
+      color: var(--server-color);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+
+    /* ARCHITECTURE GRID */
+    .arch-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 768px) { .arch-grid { grid-template-columns: 1fr; } }
+
+    .arch-box {
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      background: rgba(30, 41, 59, 0.4);
+    }
+
+    .arch-box.full-project { border-color: var(--danger-border); background: var(--danger-bg); }
+    .arch-box.lint-staged { border-color: rgba(16, 185, 129, 0.4); background: var(--server-bg); }
+
+    .arch-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* SIMULATOR */
+    .simulator-container {
+      background: #030712;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    .sim-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      max-width: 550px;
+      margin: 0 auto 1.5rem auto;
+      background: #0b0f19;
+      padding: 1.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+    }
+
+    .sim-btn-submit {
+      padding: 0.75rem 1.5rem;
+      border-radius: 9999px;
+      border: none;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      background: linear-gradient(135deg, #10b981 0%, #38bdf8 100%);
+      color: #000;
+      transition: all 0.2s ease;
+    }
+
+    .mock-console {
+      background: #020617;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      font-family: 'Fira Code', monospace;
+      padding: 1rem;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+
+    /* CODE COMPARISON */
+    .code-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    @media (max-width: 850px) { .code-grid { grid-template-columns: 1fr; } }
+
+    .code-panel {
+      background: #050811;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .code-panel-header {
+      padding: 0.65rem 1rem;
+      background: #0d1322;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .code-content {
+      padding: 1.25rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      white-space: pre;
+      overflow-x: auto;
+      line-height: 1.6;
+    }
+
+    .hl-kw { color: #f472b6; }
+    .hl-imp { color: #38bdf8; }
+    .hl-str { color: #a3e635; }
+    .hl-func { color: #fbbf24; }
+    .hl-comment { color: var(--text-dim); font-style: italic; }
+    .hl-tag { color: #818cf8; }
+    .hl-purple { color: #a855f7; font-weight: bold; }
+    .hl-danger { color: #f43f5e; font-weight: bold; }
+    .hl-green { color: #10b981; font-weight: bold; }
+
+    /* QUIZ */
+    .quiz-option {
+      background: var(--bg-card-hover);
+      border: 1px solid var(--border-color);
+      padding: 1rem;
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .quiz-option.correct { background: var(--server-bg) !important; border-color: var(--server-color) !important; color: var(--server-color); }
+    .quiz-option.incorrect { background: var(--danger-bg) !important; border-color: var(--danger-color) !important; color: var(--danger-color); }
+    .radio-circle { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--text-dim); }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--text-dim);
+      font-size: 0.875rem;
+      border-top: 1px solid var(--border-color);
+      margin-top: 3rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- HERO -->
+    <header class="hero">
+      <div class="badge-group">
+        <span class="badge badge-server">lint-staged</span>
+        <span class="badge badge-purple">Selective Git Pre-Commit</span>
+        <span class="badge badge-client">Sub-Second Execution</span>
+      </div>
+      <h1>Using <code>lint-staged</code> for Fast Selective Linting</h1>
+      <p class="hero-subtitle">
+        Understand how <code>lint-staged</code> filters Git status to execute ESLint and Prettier strictly on staged files (<code>git add</code>), boosting linter performance by 100x.
+      </p>
+    </header>
+
+    <!-- SECTION 1: COMPARISON -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">⚙️</div>
+        <h2>1. Full-Project Scans vs. Staged-Only Scans</h2>
+      </div>
+
+      <div class="arch-grid">
+        <div class="arch-box full-project">
+          <div class="arch-title">
+            <span>🐢 Full Project Scan (next lint)</span>
+          </div>
+          <p style="font-size: 0.9rem; color: var(--text-muted);">
+            • Scans 5,000+ project files on every commit.<br>
+            • High execution time (~30s - 60s delay).<br>
+            • Frustrates developers during rapid commits.
+          </p>
+        </div>
+
+        <div class="arch-box lint-staged">
+          <div class="arch-title">
+            <span>⚡ lint-staged (Selective Scan)</span>
+          </div>
+          <p style="font-size: 0.9rem; color: var(--text-muted);">
+            • Inspects Git status and scans <strong>ONLY staged files</strong> (<code>git add</code>).<br>
+            • Blazing fast execution (&lt;1 second delay for 2 modified files).<br>
+            • Auto-fixes and re-stages files before commit completes!
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: CONFIGURATION PATTERN -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4);">📜</div>
+        <h2>2. Next.js `.lintstagedrc.js` Configuration Pattern</h2>
+      </div>
+
+      <div style="font-family: 'Fira Code', monospace; background: #020617; padding: 1.25rem; border-radius: var(--radius-sm); font-size: 0.85rem; border-left: 4px solid var(--purple-color);">
+        const path = require('path');<br><br>
+        // Formats file array into: next lint --fix --file app/page.js --file lib/auth.js<br>
+        const buildEslintCommand = (filenames) =&gt;<br>
+        &nbsp;&nbsp;`next lint --fix --file ${filenames<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;.map((f) =&gt; path.relative(process.cwd(), f))<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;.join(' --file ')}`;<br><br>
+        const buildPrettierCommand = (filenames) =&gt;<br>
+        &nbsp;&nbsp;`prettier --write ${filenames.join(' ')}`;<br><br>
+        module.exports = {<br>
+        &nbsp;&nbsp;'*.{js,jsx,ts,tsx}': [buildEslintCommand, buildPrettierCommand],<br>
+        &nbsp;&nbsp;'*.{json,css,scss,md}': [buildPrettierCommand],<br>
+        };
+      </div>
+    </div>
+
+    <!-- SECTION 3: LIVE SIMULATOR -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🎮</div>
+        <h2>3. Live Interactive `lint-staged` Execution Simulator</h2>
+      </div>
+
+      <div class="simulator-container">
+        <div style="background: #0b0f19; border: 1px solid var(--border-color); padding: 1rem; border-radius: 6px; font-family: 'Fira Code', monospace; font-size: 0.82rem; margin-bottom: 1.25rem;">
+          <span style="color: var(--client-color);">Git Status (Staged Files):</span><br>
+          <span style="color: #a7f3d0;">+ app/register/page.js</span><br>
+          <span style="color: #a7f3d0;">+ lib/schema/userSchema.js</span><br>
+          <span style="color: var(--text-dim);">(5,240 other files UNCHANGED &amp; SKIPPED)</span>
+        </div>
+
+        <div class="sim-form">
+          <button class="sim-btn-submit" onclick="simulateLintStaged()">
+            ⚡ Run `npx lint-staged`
+          </button>
+        </div>
+
+        <div id="sim-console" class="mock-console">
+          Console Log: Click "Run npx lint-staged" to simulate staged files linting.
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: CODE BREAKDOWN -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🔍</div>
+        <h2>4. Side-by-Side Code Breakdown</h2>
+      </div>
+
+      <div class="code-grid">
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span style="color: var(--server-color); me">.lintstagedrc.js</span>
+            <span>Next.js Compatible Helper</span>
+          </div>
+          <div class="code-content"><span class="hl-kw">const</span> path = <span class="hl-func">require</span>(<span class="hl-str">'path'</span>);
+
+<span class="hl-kw">const</span> <span class="hl-func">buildEslintCommand</span> = (filenames) =&gt;
+  <span class="hl-str">`next lint --fix --file </span><span class="hl-purple">${filenames
+    .map((f) =&gt; path.relative(process.cwd(), f))
+    .join(' --file ')}</span><span class="hl-str">`</span>;
+
+module.exports = {
+  <span class="hl-str">'*.{js,jsx,ts,tsx}'</span>: [buildEslintCommand],
+};</div>
+        </div>
+
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span style="color: var(--client-color);">package.json</span>
+            <span>CLI Script</span>
+          </div>
+          <div class="code-content">{
+  <span class="hl-str">"scripts"</span>: {
+    <span class="hl-str">"lint"</span>: <span class="hl-str">"next lint"</span>,
+    <span class="hl-purple">"lint:staged"</span>: <span class="hl-str">"lint-staged"</span>
+  },
+  <span class="hl-str">"devDependencies"</span>: {
+    <span class="hl-str">"lint-staged"</span>: <span class="hl-str">"^16.0.0"</span>
+  }
+}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 5: KNOWLEDGE CHECK -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">❓</div>
+        <h2>5. Quick Knowledge Check</h2>
+      </div>
+
+      <div>
+        <h4 style="margin-bottom: 0.75rem;">Q1: What is the main performance benefit of lint-staged over standard `next lint`?</h4>
+        <div class="quiz-option" onclick="checkAnswer(this, true)">
+          <span class="radio-circle"></span>
+          <span>A) It scans ONLY files added via `git add`, making pre-commit checks run in <1 second instead of scanning thousands of project files.</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>B) It disables TypeScript checking.</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>C) It automatically pushes code to GitHub.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 6: POORA SAAR / HINGLISH GOLDEN RULE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4);">💡</div>
+        <h2>6. Poora Saar &amp; Golden Master Rule (Hinglish)</h2>
+      </div>
+
+      <div style="padding: 1.5rem; background: #020617; border-left: 5px solid var(--purple-color); border-radius: var(--radius-md);">
+        <h3 style="color: var(--purple-color); margin-bottom: 0.75rem; font-size: 1.15rem;">💡 Using lint-staged Ka Poora Saar:</h3>
+
+        <p style="font-size: 0.98rem; color: var(--text-main); line-height: 1.8; margin-bottom: 1rem;">
+          Production apps me pooray project (5,000+ files) par `next lint` chalamne se commit process bohot slow (~45 seconds) ho jaati hai. <strong>`lint-staged`</strong> iss problem ka ultimate solution hai!
+        </p>
+
+        <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 1.25rem;">
+          1. <strong>Selective Staged Scanning ⚡</strong> ➔ `lint-staged` Git status ko inspect karta hai aur **SIRF UNHI FILES** par ESLint aur Prettier chalata hai jinhe aapne `git add` se stage kiya hai (Execution time: &lt;1 second!).
+          <br>2. <strong>Next.js Relative Path Command (`.lintstagedrc.js`) ⚙️</strong> ➔ Next.js ke `next lint --file` argument ke liye custom helper function `buildEslintCommand` use kiya jata hai jo file paths ko relative format me pass karta hai.
+          <br>3. <strong>Auto-Fix &amp; Auto Re-Stage 🔄</strong> ➔ Linting ke dauran auto-fixed formatting changes automatically re-stage ho jaati hain bina developer ke extra manual steps ke!
+        </p>
+
+        <div style="background: rgba(168, 85, 247, 0.1); border: 1px dashed var(--purple-color); padding: 1rem; border-radius: var(--radius-sm); font-size: 0.9rem;">
+          <strong style="color: var(--purple-color); display: block; margin-bottom: 0.5rem;">🔥 lint-staged Master Rules:</strong>
+          <ul style="padding-left: 1.2rem; line-height: 1.8; color: var(--text-main);">
+            <li><strong>1. Config File 📁</strong> ➔ Use `.lintstagedrc.js` in root directory for Next.js path helpers.</li>
+            <li><strong>2. Match File Extensions 🎯</strong> ➔ Group `*.{js,jsx,ts,tsx}` for ESLint + Prettier, and `*.{json,css,md}` for Prettier only.</li>
+            <li><strong>3. Sub-Second Commits ⚡</strong> ➔ Keeps Git commit pipeline lightning fast while maintaining 100% code quality.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Next.js Using lint-staged Guide &bull; Section 13 Lesson 04
+    </footer>
+  </div>
+
+  <script>
+    function simulateLintStaged() {
+      const consoleBox = document.getElementById('sim-console');
+
+      consoleBox.innerHTML = `
+        <span style="color: var(--purple-color)">$ npx lint-staged</span><br>
+        <span style="color: var(--client-color)">[Git Status] Found 2 staged files (5,240 unchanged files skipped!).</span><br>
+        <span style="color: var(--purple-color)">[Task 1/2] Running next lint --fix --file app/register/page.js --file lib/schema/userSchema.js...</span><br>
+        <span style="color: var(--purple-color)">[Task 2/2] Running prettier --write app/register/page.js lib/schema/userSchema.js...</span><br>
+        <span style="color: var(--server-color)">✔ Fixed & formatted 2 files in 0.4 seconds! Re-staged files cleanly! ✅</span>
+      `;
+    }
+
+    function checkAnswer(element, isCorrect) {
+      const parent = element.parentElement;
+      parent.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('correct', 'incorrect'));
+      if (isCorrect) element.classList.add('correct');
+      else element.classList.add('incorrect');
+    }
+  </script>
+</body>
+</html>

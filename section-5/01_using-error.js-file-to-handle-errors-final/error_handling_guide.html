@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Next.js Error Handling Guide: Mastering error.js with Real "FEEL"</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #070a11;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border-color: #334155;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --server-color: #10b981;
+      --server-bg: rgba(16, 185, 129, 0.12);
+      
+      --client-color: #38bdf8;
+      --client-bg: rgba(56, 189, 248, 0.12);
+
+      --danger-color: #f43f5e;
+      --danger-bg: rgba(244, 63, 94, 0.15);
+      --danger-border: rgba(244, 63, 94, 0.4);
+      
+      --warning-color: #fbbf24;
+      --warning-bg: rgba(251, 191, 36, 0.12);
+      
+      --purple-color: #a855f7;
+      --purple-bg: rgba(168, 85, 247, 0.12);
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+    }
+
+    .container { max-width: 1150px; margin: 0 auto; }
+
+    /* HERO HEADER */
+    header.hero {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      background: radial-gradient(circle at 50% 0%, rgba(244, 63, 94, 0.15) 0%, rgba(7, 10, 17, 0) 70%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 2.5rem;
+    }
+
+    .badge-group {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+    }
+
+    .badge-danger { background: var(--danger-bg); color: var(--danger-color); border-color: var(--danger-border); }
+    .badge-client { background: var(--client-bg); color: var(--client-color); border-color: rgba(56, 189, 248, 0.4); }
+    .badge-server { background: var(--server-bg); color: var(--server-color); border-color: rgba(16, 185, 129, 0.4); }
+
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #ffffff 40%, #f43f5e 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .badge-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+      background: var(--danger-bg);
+      color: var(--danger-color);
+      border: 1px solid var(--danger-border);
+    }
+
+    /* METAPHOR SECTION */
+    .analogy-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 768px) { .analogy-grid { grid-template-columns: 1fr; } }
+
+    .analogy-box {
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      background: rgba(30, 41, 59, 0.4);
+    }
+
+    .analogy-box.without-error { border-color: var(--danger-border); background: var(--danger-bg); }
+    .analogy-box.with-error { border-color: rgba(16, 185, 129, 0.4); background: var(--server-bg); }
+
+    .analogy-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* INTERACTIVE SIMULATOR */
+    .simulator-container {
+      background: #030712;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    .sim-controls {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .sim-btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 9999px;
+      border: none;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .sim-btn-trigger {
+      background: #f43f5e;
+      color: #fff;
+      box-shadow: 0 0 15px rgba(244, 63, 94, 0.4);
+    }
+
+    .sim-btn-trigger:hover { background: #e11d48; }
+
+    .sim-btn-reset {
+      background: #10b981;
+      color: #000;
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+    }
+
+    .sim-btn-reset:hover { background: #059669; }
+
+    /* MOCK BROWSER DISPLAY */
+    .mock-browser {
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      background: #0b0f19;
+    }
+
+    .mock-browser-bar {
+      background: #1e293b;
+      padding: 0.5rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .mock-dots { display: flex; gap: 6px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-red { background: #f43f5e; }
+    .dot-yellow { background: #fbbf24; }
+    .dot-green { background: #10b981; }
+
+    .mock-browser-content {
+      padding: 1.5rem;
+      min-height: 220px;
+    }
+
+    .mock-layout {
+      border: 2px dashed #38bdf8;
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+      margin-bottom: 1rem;
+      background: rgba(56, 189, 248, 0.05);
+    }
+
+    .mock-layout-header {
+      font-size: 0.8rem;
+      color: var(--client-color);
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+
+    .mock-page-success {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid var(--server-color);
+      border-radius: var(--radius-sm);
+      padding: 1.25rem;
+      color: #a7f3d0;
+    }
+
+    .mock-page-error {
+      background: rgba(244, 63, 94, 0.1);
+      border: 1px solid var(--danger-color);
+      border-radius: var(--radius-sm);
+      padding: 1.25rem;
+      color: #fca5a5;
+      animation: shake 0.3s ease;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+
+    /* CODE TABS */
+    .code-tab-buttons {
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .code-tab-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-sm);
+      font-family: 'Fira Code', monospace;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+
+    .code-tab-btn.active {
+      background: var(--bg-card-hover);
+      color: var(--danger-color);
+      border-color: var(--border-color);
+      font-weight: 600;
+    }
+
+    .code-panel {
+      background: #050811;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .code-panel-header {
+      padding: 0.65rem 1rem;
+      background: #0d1322;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .code-content {
+      padding: 1.25rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      white-space: pre;
+      overflow-x: auto;
+      line-height: 1.6;
+    }
+
+    .hl-kw { color: #f472b6; }
+    .hl-imp { color: #38bdf8; }
+    .hl-str { color: #a3e635; }
+    .hl-func { color: #fbbf24; }
+    .hl-comment { color: var(--text-dim); font-style: italic; }
+    .hl-tag { color: #818cf8; }
+    .hl-danger { color: #f43f5e; font-weight: bold; }
+
+    /* RULES GRID */
+    .rules-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .rule-card {
+      background: var(--bg-card-hover);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      position: relative;
+    }
+
+    .rule-num {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: rgba(255, 255, 255, 0.08);
+      position: absolute;
+      top: 10px;
+      right: 15px;
+    }
+
+    .rule-title { font-weight: 700; font-size: 1.05rem; color: var(--client-color); margin-bottom: 0.5rem; }
+
+    /* QUIZ */
+    .quiz-option {
+      background: var(--bg-card-hover);
+      border: 1px solid var(--border-color);
+      padding: 1rem;
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .quiz-option.correct { background: var(--server-bg) !important; border-color: var(--server-color) !important; color: var(--server-color); }
+    .quiz-option.incorrect { background: var(--danger-bg) !important; border-color: var(--danger-color) !important; color: var(--danger-color); }
+    .radio-circle { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--text-dim); }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--text-dim);
+      font-size: 0.875rem;
+      border-top: 1px solid var(--border-color);
+      margin-top: 3rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- HERO HEADER -->
+    <header class="hero">
+      <div class="badge-group">
+        <span class="badge badge-danger">Next.js Error Boundaries</span>
+        <span class="badge badge-client">"use client" Required</span>
+        <span class="badge badge-server">Route Segment Scope</span>
+      </div>
+      <h1>Mastering Error Handling with error.js</h1>
+      <p class="hero-subtitle">
+        Understand how Next.js automatically isolates runtime errors, protects your UI layout from crashing, and provides instant recovery.
+      </p>
+    </header>
+
+    <!-- SECTION 1: THE CIRCUIT BREAKER METAPHOR -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">⚡</div>
+        <h2>1. The Real-World Metaphor: The Circuit Breaker 🔌</h2>
+      </div>
+
+      <div class="analogy-grid">
+        <div class="analogy-box without-error">
+          <div class="analogy-title">
+            <span>💥 Without error.js (Whole House Blackout)</span>
+          </div>
+          <p>
+            If a single lightbulb in the bedroom short-circuits (an unhandled error in <code>/blogs/1</code>), 
+            <strong>the entire house power trips!</strong> The user sees a horrible White Screen of Death or crashed server.
+          </p>
+        </div>
+
+        <div class="analogy-box with-error">
+          <div class="analogy-title">
+            <span>🛡️ With error.js (Isolated Room Fuse)</span>
+          </div>
+          <p>
+            <code>error.js</code> acts as a localized Room Fuse! If <code>/blogs/1</code> throws an error, 
+            <strong>only that specific blog page shows a friendly error message</strong>. The Navbar, Header, and rest of the website stay 100% active!
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: LIVE INTERACTIVE SIMULATOR -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🎮</div>
+        <h2>2. Live Interactive Error Simulator</h2>
+      </div>
+
+      <p style="color: var(--text-muted); margin-bottom: 1.25rem;">
+        In the lesson code (<code>app/blogs/[blogID]/page.js</code>), there is a 50% random chance (<code>Math.random() &gt; 0.5</code>) of an error occurring. 
+        Test it live below:
+      </p>
+
+      <div class="simulator-container">
+        <div class="sim-controls">
+          <button class="sim-btn sim-btn-trigger" onclick="runSimulation()">
+            🎲 Fetch Blog /blogs/1 (Random 50% Error)
+          </button>
+          <button id="reset-btn" class="sim-btn sim-btn-reset" onclick="resetSimulation()" style="display: none;">
+            🔄 Call reset() Function (Retry Render)
+          </button>
+        </div>
+
+        <!-- MOCK BROWSER DISPLAY -->
+        <div class="mock-browser">
+          <div class="mock-browser-bar">
+            <div class="mock-dots">
+              <span class="dot dot-red"></span>
+              <span class="dot dot-yellow"></span>
+              <span class="dot dot-green"></span>
+            </div>
+            <span style="margin-left: 10px;">http://localhost:3000/blogs/1</span>
+          </div>
+
+          <div class="mock-browser-content">
+            <!-- PARENT LAYOUT ALWAYS STAYS INTACT -->
+            <div class="mock-layout">
+              <div class="mock-layout-header">🌐 app/layout.js &amp; Header (STAYS ACTIVE ALWAYS!)</div>
+              
+              <!-- PAGE CONTENT AREA -->
+              <div id="sim-target">
+                <div class="mock-page-success">
+                  <h3>Welcome to Our Blog 1</h3>
+                  <p>This is blog 1 page. Everything rendered smoothly on the server!</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="sim-console" style="margin-top: 1rem; font-family: 'Fira Code', monospace; font-size: 0.85rem; color: var(--text-dim);">
+          Console Log: System initialized. Click button to fetch /blogs/1.
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: THE 4 GOLDEN RULES -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">📌</div>
+        <h2>3. The 4 Golden Rules of error.js</h2>
+      </div>
+
+      <div class="rules-grid">
+        <div class="rule-card">
+          <div class="rule-num">01</div>
+          <div class="rule-title">Must be "use client"</div>
+          <p style="font-size: 0.9rem; color: var(--text-muted);">
+            React Error Boundaries must be Client Components because catching runtime errors &amp; handling interactive retries requires client state.
+          </p>
+        </div>
+
+        <div class="rule-card">
+          <div class="rule-num">02</div>
+          <div class="rule-title">Receives error &amp; reset()</div>
+          <p style="font-size: 0.9rem; color: var(--text-muted);">
+            <code>error</code> object contains details. <code>reset()</code> is a helper function that tries to re-render the <code>page.js</code> segment.
+          </p>
+        </div>
+
+        <div class="rule-card">
+          <div class="rule-num">03</div>
+          <div class="rule-title">Layout Preservation</div>
+          <p style="font-size: 0.9rem; color: var(--text-muted);">
+            An <code>error.js</code> file handles errors for its nested children and <code>page.js</code>, but <strong>does NOT catch errors in its own layout file</strong>.
+          </p>
+        </div>
+
+        <div class="rule-card">
+          <div class="rule-num">04</div>
+          <div class="rule-title">Production Security (digest)</div>
+          <p style="font-size: 0.9rem; color: var(--text-muted);">
+            In production builds, server error details are stripped for security, and a unique <code>error.digest</code> hash is provided to match server logs.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: CODE BREAKDOWN TABS -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🔍</div>
+        <h2>4. Code Breakdown: Lesson Files</h2>
+      </div>
+
+      <div class="code-tab-buttons">
+        <button class="code-tab-btn active" onclick="showCodeTab('tab-page')">app/blogs/[blogID]/page.js</button>
+        <button class="code-tab-btn" onclick="showCodeTab('tab-error')">app/blogs/[blogID]/error.js</button>
+        <button class="code-tab-btn" onclick="showCodeTab('tab-log')">Logging Tip (server.log)</button>
+      </div>
+
+      <!-- TAB 1: PAGE -->
+      <div id="tab-page" class="code-tab-content">
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span>app/blogs/[blogID]/page.js (Server Component throwing error)</span>
+          </div>
+          <div class="code-content"><span class="hl-kw">const</span> <span class="hl-func">Blog</span> = <span class="hl-kw">async</span> ({ params }) =&gt; {
+  <span class="hl-kw">const</span> { blogID } = <span class="hl-kw">await</span> params;
+
+  <span class="hl-kw">const</span> randomNumber = Math.random();
+  console.log(randomNumber);
+
+  <span class="hl-comment">// 🎲 50% Random Error Simulation:</span>
+  <span class="hl-kw">if</span> (randomNumber &gt; <span class="hl-str">0.5</span>) {
+    <span class="hl-danger">throw new Error("Error occurred");</span>
+  }
+
+  <span class="hl-kw">return</span> (
+    &lt;<span class="hl-tag">div</span>&gt;
+      &lt;<span class="hl-tag">h1</span>&gt;Welcome to Our Blog {blogID}&lt;/<span class="hl-tag">h1</span>&gt;
+      &lt;<span class="hl-tag">p</span>&gt;This is blog {blogID} page.&lt;/<span class="hl-tag">p</span>&gt;
+    &lt;/<span class="hl-tag">div</span>&gt;
+  );
+};
+
+<span class="hl-kw">export default</span> Blog;</div>
+        </div>
+      </div>
+
+      <!-- TAB 2: ERROR -->
+      <div id="tab-error" class="code-tab-content" style="display: none;">
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span style="color: var(--danger-color);">app/blogs/[blogID]/error.js (Client Component Boundary)</span>
+          </div>
+          <div class="code-content"><span class="hl-str">"use client"</span>; <span class="hl-comment">// 👈 MUST be a Client Component!</span>
+
+<span class="hl-kw">export default function</span> <span class="hl-func">Error</span>({ error, reset }) {
+  <span class="hl-comment">// error.message contains the error string</span>
+  <span class="hl-comment">// error.digest contains unique production log hash</span>
+  <span class="hl-kw">return</span> (
+    &lt;<span class="hl-tag">div</span> className=<span class="hl-str">"error-container"</span>&gt;
+      &lt;<span class="hl-tag">h2</span>&gt;Something went wrong!&lt;/<span class="hl-tag">h2</span>&gt;
+      &lt;<span class="hl-tag">p</span>&gt;{error.message}&lt;/<span class="hl-tag">p</span>&gt;
+      &lt;<span class="hl-tag">button</span> onClick={() =&gt; <span class="hl-func">reset</span>()}&gt;Try Again&lt;/<span class="hl-tag">button</span>&gt;
+    &lt;/<span class="hl-tag">div</span>&gt;
+  );
+}</div>
+        </div>
+      </div>
+
+      <!-- TAB 3: SERVER LOG TIP -->
+      <div id="tab-log" class="code-tab-content" style="display: none;">
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span>Terminal Redirection Command Tip (server.log)</span>
+          </div>
+          <div class="code-content"><span class="hl-comment"># 1. Standard Output redirection:</span>
+npm start &gt; server.log
+
+<span class="hl-comment"># 2. Redirect Standard Error (2) to Standard Output (1):</span>
+npm start &gt; server.log 2&gt;&amp;1
+
+<span class="hl-comment"># 3. Persistent Append mode (doesn't overwrite old logs):</span>
+npm start &gt;&gt; server.log 2&gt;&amp;1</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 5: QUIZ -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">❓</div>
+        <h2>5. Quick Knowledge Check</h2>
+      </div>
+
+      <div>
+        <h4 style="margin-bottom: 0.75rem;">Q1: Why MUST <code>error.js</code> always be marked with <code>"use client"</code>?</h4>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>A) Because Server Components cannot render text strings.</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, true)">
+          <span class="radio-circle"></span>
+          <span>B) Because React Error Boundaries require client-side state &amp; recovery triggers like reset().</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>C) It is optional, Server Components can also be error.js.</span>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Next.js Error Handling Guide &bull; Section 5 Lesson 01
+    </footer>
+  </div>
+
+  <script>
+    function runSimulation() {
+      const target = document.getElementById('sim-target');
+      const consoleLog = document.getElementById('sim-console');
+      const resetBtn = document.getElementById('reset-btn');
+      const rand = Math.random();
+
+      consoleLog.innerHTML = `Console Log: Executing page.js... Math.random() = ${rand.toFixed(4)}`;
+
+      if (rand > 0.5) {
+        target.innerHTML = `
+          <div class="mock-page-error">
+            <h3 style="color: var(--danger-color); margin-bottom: 0.5rem;">⚠️ Something went wrong</h3>
+            <p style="font-size: 0.9rem; margin-bottom: 1rem;">Caught by app/blogs/[blogID]/error.js boundary!</p>
+            <p style="font-size: 0.8rem; font-family: monospace; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px; display: inline-block;">
+              Error: Error occurred (randomNumber: ${rand.toFixed(2)} > 0.5)
+            </p>
+          </div>
+        `;
+        consoleLog.innerHTML += `<br><span style="color: var(--danger-color)">❌ ERROR CAUGHT BY error.js! Notice how the top Layout bar remained intact!</span>`;
+        resetBtn.style.display = 'inline-flex';
+      } else {
+        target.innerHTML = `
+          <div class="mock-page-success">
+            <h3>Welcome to Our Blog 1</h3>
+            <p>This is blog 1 page. Rendered smoothly on server! (randomNumber: ${rand.toFixed(2)} ≤ 0.5)</p>
+          </div>
+        `;
+        consoleLog.innerHTML += `<br><span style="color: var(--server-color)">✅ SUCCESS! Page rendered smoothly.</span>`;
+        resetBtn.style.display = 'none';
+      }
+    }
+
+    function resetSimulation() {
+      const consoleLog = document.getElementById('sim-console');
+      consoleLog.innerHTML = `Console Log: reset() function called! Re-trying to render page.js...`;
+      runSimulation();
+    }
+
+    function showCodeTab(tabId) {
+      document.querySelectorAll('.code-tab-content').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.code-tab-btn').forEach(el => el.classList.remove('active'));
+
+      document.getElementById(tabId).style.display = 'block';
+      event.currentTarget.classList.add('active');
+    }
+
+    function checkAnswer(element, isCorrect) {
+      const parent = element.parentElement;
+      parent.querySelectorAll('.quiz-option').forEach(el => {
+        el.classList.remove('correct', 'incorrect');
+      });
+
+      if (isCorrect) {
+        element.classList.add('correct');
+      } else {
+        element.classList.add('incorrect');
+      }
+    }
+  </script>
+</body>
+</html>

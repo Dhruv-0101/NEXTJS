@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Next.js Auth: Protecting Endpoints with Reusable Auth Helper</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #070a11;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border-color: #334155;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --server-color: #10b981;
+      --server-bg: rgba(16, 185, 129, 0.12);
+      
+      --client-color: #38bdf8;
+      --client-bg: rgba(56, 189, 248, 0.12);
+
+      --danger-color: #f43f5e;
+      --danger-bg: rgba(244, 63, 94, 0.15);
+      
+      --warning-color: #fbbf24;
+      --warning-bg: rgba(251, 191, 36, 0.12);
+      
+      --purple-color: #a855f7;
+      --purple-bg: rgba(168, 85, 247, 0.12);
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+    }
+
+    .container { max-width: 1150px; margin: 0 auto; }
+
+    header.hero {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      background: radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.15) 0%, rgba(7, 10, 17, 0) 70%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 2.5rem;
+    }
+
+    .badge-group { display: flex; justify-content: center; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .badge { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.35rem 0.85rem; border-radius: 9999px; border: 1px solid var(--border-color); }
+    .badge-purple { background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4); }
+    .badge-server { background: var(--server-bg); color: var(--server-color); border-color: rgba(16, 185, 129, 0.4); }
+    .badge-danger { background: var(--danger-bg); color: var(--danger-color); }
+
+    h1 { font-size: 2.4rem; font-weight: 800; margin-bottom: 0.75rem; background: linear-gradient(135deg, #ffffff 40%, #a855f7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero-subtitle { font-size: 1.1rem; color: var(--text-muted); max-width: 800px; margin: 0 auto; }
+
+    .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 2rem; margin-bottom: 2.5rem; box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5); }
+    .card-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; }
+    .badge-icon { width: 40px; height: 40px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold; background: var(--purple-bg); color: var(--purple-color); border: 1px solid rgba(168, 85, 247, 0.4); }
+
+    .arch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 768px) { .arch-grid { grid-template-columns: 1fr; } }
+    .arch-box { border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.5rem; background: rgba(30, 41, 59, 0.4); }
+
+    .simulator-container { background: #030712; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.5rem; margin-top: 1rem; }
+    .sim-controls { display: flex; gap: 1rem; justify-content: center; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .sim-btn { padding: 0.75rem 1.5rem; border-radius: 9999px; border: none; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: all 0.2s ease; }
+    .sim-btn-auth { background: #10b981; color: #000; }
+    .sim-btn-unauth { background: #f43f5e; color: #fff; }
+
+    .mock-console { background: #020617; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-family: 'Fira Code', monospace; padding: 1rem; margin-top: 1rem; font-size: 0.85rem; line-height: 1.6; }
+
+    .code-panel { background: #050811; border: 1px solid var(--border-color); border-radius: var(--radius-md); overflow: hidden; }
+    .code-panel-header { padding: 0.65rem 1rem; background: #0d1322; border-bottom: 1px solid var(--border-color); font-size: 0.8rem; font-weight: 700; display: flex; justify-content: space-between; }
+    .code-content { padding: 1.25rem; font-family: 'Fira Code', monospace; font-size: 0.85rem; white-space: pre; overflow-x: auto; line-height: 1.6; }
+
+    .hl-kw { color: #f472b6; }
+    .hl-imp { color: #38bdf8; }
+    .hl-str { color: #a3e635; }
+    .hl-func { color: #fbbf24; }
+    .hl-comment { color: var(--text-dim); font-style: italic; }
+
+    .quiz-option { background: var(--bg-card-hover); border: 1px solid var(--border-color); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 0.75rem; }
+    .quiz-option.correct { background: var(--server-bg) !important; border-color: var(--server-color) !important; color: var(--server-color); }
+    .quiz-option.incorrect { background: var(--danger-bg) !important; border-color: var(--danger-color) !important; color: var(--danger-color); }
+    .radio-circle { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--text-dim); }
+
+    footer { text-align: center; padding: 2rem 0; color: var(--text-dim); font-size: 0.875rem; border-top: 1px solid var(--border-color); margin-top: 3rem; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- HERO -->
+    <header class="hero">
+      <div class="badge-group">
+        <span class="badge badge-purple">getLoggedInUser() Helper</span>
+        <span class="badge badge-server">DRY Auth Architecture</span>
+        <span class="badge badge-danger">401 Unauthorized Guard</span>
+      </div>
+      <h1>Protecting Endpoints with Reusable Auth Function</h1>
+      <p class="hero-subtitle">
+        Learn how to centralize authentication logic using a reusable <code>getLoggedInUser()</code> helper function across API endpoints to scope data specifically to the authenticated user.
+      </p>
+    </header>
+
+    <!-- SECTION 1: TECHNICAL ARCHITECTURE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">⚙️</div>
+        <h2>1. Reusable Auth Protection Architecture</h2>
+      </div>
+
+      <div class="arch-grid">
+        <div class="arch-box">
+          <h3 style="color: var(--purple-color); margin-bottom: 0.5rem;">🔒 Centralized getLoggedInUser() Helper</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted);">
+            Instead of duplicating cookie parsing and MongoDB user validation in every single route handler, we abstract it into <code>lib/auth.js</code>.<br>
+            If the cookie is missing or user invalid ➔ Returns pre-configured <code>Response 401 Unauthorized</code>!
+          </p>
+        </div>
+
+        <div class="arch-box">
+          <h3 style="color: var(--server-color); margin-bottom: 0.5rem;">🎯 Instanceof Early Exit Guard</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted);">
+            Inside route handlers:
+            <code style="display: block; margin-top: 0.5rem; background: #020617; padding: 6px; border-radius: 4px;">
+              const user = await getLoggedInUser();<br>
+              if (user instanceof Response) return user;
+            </code>
+            If unauthorized, the handler immediately returns the 401 Response! Otherwise, execution proceeds with valid <code>user</code> object.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: LIVE SIMULATOR -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">⚡</div>
+        <h2>2. Interactive Endpoint Guard Simulator</h2>
+      </div>
+
+      <div class="simulator-container">
+        <div class="sim-controls">
+          <button class="sim-btn sim-btn-auth" onclick="runSim('auth')">
+            ✅ Authenticated GET /api/todos (Cookie Present)
+          </button>
+          <button class="sim-btn sim-btn-unauth" onclick="runSim('unauth')">
+            💥 Unauthenticated GET /api/todos (No Cookie)
+          </button>
+        </div>
+
+        <div id="sim-console" class="mock-console">
+          Console Output: Click a button above to test route protection execution.
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: CODE ANATOMY -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🔍</div>
+        <h2>3. Code Breakdown: <code>lib/auth.js</code> &amp; <code>app/api/todos/route.js</code></h2>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span>lib/auth.js</span>
+            <span style="color: var(--purple-color);">Reusable Auth Helper</span>
+          </div>
+          <div class="code-content"><span class="hl-imp">import</span> User <span class="hl-imp">from</span> <span class="hl-str">"@/models/userModel"</span>;
+<span class="hl-imp">import</span> { cookies } <span class="hl-imp">from</span> <span class="hl-str">"next/headers"</span>;
+
+<span class="hl-kw">export async function</span> <span class="hl-func">getLoggedInUser</span>() {
+  <span class="hl-kw">const</span> cookieStore = <span class="hl-kw">await</span> <span class="hl-func">cookies</span>();
+  <span class="hl-kw">const</span> errorResponse = Response.<span class="hl-func">json</span>(
+    { <span class="hl-str">error</span>: <span class="hl-str">"Please login"</span> },
+    { <span class="hl-str">status</span>: <span class="hl-str">401</span> }
+  );
+
+  <span class="hl-kw">const</span> userId = cookieStore.<span class="hl-func">get</span>(<span class="hl-str">"userId"</span>)?.value;
+  <span class="hl-kw">if</span> (!userId) <span class="hl-kw">return</span> errorResponse;
+
+  <span class="hl-kw">const</span> user = <span class="hl-kw">await</span> User.<span class="hl-func">findById</span>(userId);
+  <span class="hl-kw">if</span> (!user) <span class="hl-kw">return</span> errorResponse;
+
+  <span class="hl-kw">return</span> user;
+}</div>
+        </div>
+
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span>app/api/todos/route.js</span>
+            <span style="color: var(--server-color);">Protected API Handler</span>
+          </div>
+          <div class="code-content"><span class="hl-kw">export async function</span> <span class="hl-func">GET</span>() {
+  <span class="hl-kw">await</span> <span class="hl-func">connectDB</span>();
+  <span class="hl-kw">const</span> user = <span class="hl-kw">await</span> <span class="hl-func">getLoggedInUser</span>();
+  
+  <span class="hl-comment">// 🔒 Early exit if unauthorized:</span>
+  <span class="hl-kw">if</span> (user <span class="hl-kw">instanceof</span> Response) <span class="hl-kw">return</span> user;
+
+  <span class="hl-comment">// 🎯 User authenticated! Fetch ONLY this user's todos:</span>
+  <span class="hl-kw">const</span> allTodos = <span class="hl-kw">await</span> Todo.<span class="hl-func">find</span>({ <span class="hl-str">userId</span>: user.id });
+  <span class="hl-kw">return</span> Response.<span class="hl-func">json</span>(allTodos);
+}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: KNOWLEDGE CHECK -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">❓</div>
+        <h2>4. Quick Knowledge Check</h2>
+      </div>
+
+      <div>
+        <h4 style="margin-bottom: 0.75rem;">Q1: What does `if (user instanceof Response) return user;` do?</h4>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>A) Deletes the user document from MongoDB.</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, true)">
+          <span class="radio-circle"></span>
+          <span>B) Immediately returns the 401 Unauthorized Response created by getLoggedInUser() if authentication failed.</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>C) Redirects the client to the homepage.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 5: POORA SAAR / HINGLISH GOLDEN RULE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4);">💡</div>
+        <h2>5. Poora Saar &amp; Golden Master Rule (Hinglish)</h2>
+      </div>
+
+      <div style="padding: 1.5rem; background: #020617; border-left: 5px solid var(--purple-color); border-radius: var(--radius-md);">
+        <h3 style="color: var(--purple-color); margin-bottom: 0.75rem; font-size: 1.15rem;">💡 Reusable Auth Protection Ka Poora Saar:</h3>
+
+        <p style="font-size: 0.98rem; color: var(--text-main); line-height: 1.8; margin-bottom: 1rem;">
+          Sabhi protected API routes (e.g. GET todos, POST todo, GET profile) me cookie check and DB user validation ka code bar-bar copy-paste karne ke bajaye ek central helper <code>getLoggedInUser()</code> banaya jata hai.
+        </p>
+
+        <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 1.25rem;">
+          Ye helper do cheezon me se ek hi return karta hai:
+          <br>1. Agar login nahi hai ➔ Pre-configured <code>Response.json({ error: "Please login" }, { status: 401 })</code>.
+          <br>2. Agar login verified hai ➔ MongoDB <code>user</code> object.
+          <br>Isiliye route handler me <code>if (user instanceof Response) return user;</code> likhte hi unauthorized requests instant block ho jaati hain!
+        </p>
+
+        <div style="background: rgba(168, 85, 247, 0.1); border: 1px dashed var(--purple-color); padding: 1rem; border-radius: var(--radius-sm); font-size: 0.9rem;">
+          <strong style="color: var(--purple-color); display: block; margin-bottom: 0.5rem;">🔥 DRY Protection Golden Pattern:</strong>
+          <ul style="padding-left: 1.2rem; line-height: 1.8; color: var(--text-main);">
+            <li><strong>1. Centralized Auth 🔒</strong> ➔ Keep all cookie extraction &amp; DB user checks in <code>lib/auth.js</code>.</li>
+            <li><strong>2. Instanceof Guard 🛡️</strong> ➔ Use <code>if (result instanceof Response) return result;</code> at top of handlers.</li>
+            <li><strong>3. Scoped Data Queries 🎯</strong> ➔ Always query DB with <code>{ userId: user.id }</code> so users can ONLY access their own data!</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Next.js Protected Endpoints Guide &bull; Section 9 Lesson 05
+    </footer>
+  </div>
+
+  <script>
+    function runSim(type) {
+      const consoleBox = document.getElementById('sim-console');
+      if (type === 'auth') {
+        consoleBox.innerHTML = `
+          <span style="color: var(--client-color)">[GET /api/todos] Incoming Cookie: userId=65b1a...</span><br>
+          <span style="color: var(--purple-color)">[CALL] getLoggedInUser() ➔ Found User in MongoDB (name: "Rahul")</span><br>
+          <span style="color: var(--server-color)">[QUERY] Todo.find({ userId: "65b1a..." }) ➔ Returns 3 todos for Rahul</span><br>
+          <span style="color: var(--server-color)">[RESPONSE 200 OK] [ { id: 1, text: "Buy milk" }, ... ]</span>
+        `;
+      } else {
+        consoleBox.innerHTML = `
+          <span style="color: var(--client-color)">[GET /api/todos] Incoming Cookie: undefined</span><br>
+          <span style="color: var(--danger-color)">[CALL] getLoggedInUser() ➔ No cookie! Returns Response (status: 401)</span><br>
+          <span style="color: var(--warning-color)">[EARLY EXIT] if (user instanceof Response) return user; ➔ EXECUTED!</span><br>
+          <span style="color: var(--danger-color)">[RESPONSE 401 Unauthorized] { error: "Please login" }</span>
+        `;
+      }
+    }
+
+    function checkAnswer(element, isCorrect) {
+      const parent = element.parentElement;
+      parent.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('correct', 'incorrect'));
+      if (isCorrect) element.classList.add('correct');
+      else element.classList.add('incorrect');
+    }
+  </script>
+</body>
+</html>

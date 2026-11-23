@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Next.js RSC Master Guide: Rendering Server Components in Client Components</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #070a11;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border-color: #334155;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --server-color: #10b981;
+      --server-bg: rgba(16, 185, 129, 0.12);
+      --server-border: rgba(16, 185, 129, 0.4);
+      
+      --client-color: #38bdf8;
+      --client-bg: rgba(56, 189, 248, 0.12);
+      --client-border: rgba(56, 189, 248, 0.4);
+
+      --danger-color: #f43f5e;
+      --danger-bg: rgba(244, 63, 94, 0.12);
+      
+      --warning-color: #fbbf24;
+      --warning-bg: rgba(251, 191, 36, 0.12);
+      
+      --purple-color: #a855f7;
+      --purple-bg: rgba(168, 85, 247, 0.12);
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+    }
+
+    .container { max-width: 1150px; margin: 0 auto; }
+
+    /* HERO HEADER */
+    header.hero {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      background: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.15) 0%, rgba(7, 10, 17, 0) 70%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 2.5rem;
+    }
+
+    .badge-group {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+    }
+
+    .badge-next { background: rgba(255, 255, 255, 0.05); color: #fff; }
+    .badge-server { background: var(--server-bg); color: var(--server-color); border-color: var(--server-border); }
+    .badge-client { background: var(--client-bg); color: var(--client-color); border-color: var(--client-border); }
+
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #ffffff 40%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    /* CARD STRUCTURE */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .badge-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+      background: var(--client-bg);
+      color: var(--client-color);
+      border: 1px solid var(--client-border);
+    }
+
+    /* ARCHITECTURE EXPLANATION GRID */
+    .analogy-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 768px) { .analogy-grid { grid-template-columns: 1fr; } }
+
+    .analogy-box {
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      background: rgba(30, 41, 59, 0.4);
+    }
+
+    .analogy-box.kitchen { border-color: var(--server-border); background: var(--server-bg); }
+    .analogy-box.table { border-color: var(--client-border); background: var(--client-bg); }
+
+    .analogy-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* EXAMPLE CODE GRID */
+    .example-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    @media (max-width: 850px) { .example-grid { grid-template-columns: 1fr; } }
+
+    .example-panel {
+      background: #050811;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+    }
+
+    .example-panel.wrong { border-color: rgba(244, 63, 94, 0.4); background: rgba(244, 63, 94, 0.03); }
+    .example-panel.right { border-color: var(--server-border); background: rgba(16, 185, 129, 0.03); }
+
+    .example-panel-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* VISUALIZER & SIMULATOR */
+    .toggle-bar {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .toggle-btn {
+      padding: 0.85rem 1.75rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card-hover);
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .toggle-btn.active-starter {
+      background: var(--danger-bg);
+      color: var(--danger-color);
+      border-color: rgba(244, 63, 94, 0.5);
+      box-shadow: 0 0 20px rgba(244, 63, 94, 0.2);
+    }
+
+    .toggle-btn.active-final {
+      background: var(--server-bg);
+      color: var(--server-color);
+      border-color: var(--server-border);
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+    }
+
+    .visualizer-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 900px) { .visualizer-grid { grid-template-columns: 1fr; } }
+
+    .env-box {
+      border: 1px dashed var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      position: relative;
+      background: rgba(15, 23, 42, 0.4);
+    }
+
+    .env-box.server-env { border-color: var(--server-border); background: rgba(16, 185, 129, 0.03); }
+    .env-box.client-env { border-color: var(--client-border); background: rgba(56, 189, 248, 0.03); }
+
+    .env-label {
+      position: absolute;
+      top: -12px;
+      left: 16px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 2px 10px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .server-label { background: var(--server-color); color: #000; }
+    .client-label { background: var(--client-color); color: #000; }
+
+    .tree-node {
+      background: var(--bg-card-hover);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
+      position: relative;
+    }
+
+    .tree-node.is-server { border-left: 4px solid var(--server-color); }
+    .tree-node.is-client { border-left: 4px solid var(--client-color); }
+    .tree-node.is-converted {
+      border-left: 4px solid var(--danger-color);
+      background: rgba(244, 63, 94, 0.05);
+    }
+
+    .node-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .node-title { font-weight: 700; font-family: 'Fira Code', monospace; }
+    .node-tag { font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
+
+    .tag-server { background: var(--server-bg); color: var(--server-color); border: 1px solid var(--server-border); }
+    .tag-client { background: var(--client-bg); color: var(--client-color); border: 1px solid var(--client-border); }
+    .tag-danger { background: var(--danger-bg); color: var(--danger-color); border: 1px solid rgba(244, 63, 94, 0.3); }
+
+    .node-desc { font-size: 0.85rem; color: var(--text-muted); }
+    .arrow-down { text-align: center; color: var(--text-dim); font-size: 1.25rem; margin: 0.5rem 0; }
+
+    /* CONSOLE BOX */
+    .console-box {
+      background: #030712;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      font-family: 'Fira Code', monospace;
+      padding: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .console-header {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.5rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .console-log { font-size: 0.85rem; line-height: 1.8; }
+    .log-server { color: var(--server-color); }
+    .log-client { color: var(--client-color); }
+    .log-warning { color: var(--warning-color); }
+
+    /* STEP CARDS */
+    .step-card {
+      background: #090d16;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .step-badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+    }
+
+    .step-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+
+    .code-snippet {
+      font-family: 'Fira Code', monospace;
+      background: #020617;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--client-color);
+      margin: 0.75rem 0;
+      font-size: 0.9rem;
+      white-space: pre-wrap;
+    }
+
+    .highlight-red { color: #f43f5e; font-weight: bold; }
+    .highlight-green { color: #10b981; font-weight: bold; }
+
+    .callout {
+      padding: 1.25rem;
+      border-radius: var(--radius-md);
+      margin-top: 1.5rem;
+      border-left: 4px solid var(--warning-color);
+      background: var(--warning-bg);
+      color: #fef08a;
+    }
+
+    /* CODE TABS */
+    .code-tab-buttons {
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .code-tab-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-sm);
+      font-family: 'Fira Code', monospace;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+
+    .code-tab-btn.active {
+      background: var(--bg-card-hover);
+      color: var(--client-color);
+      border-color: var(--border-color);
+      font-weight: 600;
+    }
+
+    .code-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    @media (max-width: 850px) { .code-grid { grid-template-columns: 1fr; } }
+
+    .code-panel {
+      background: #050811;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .code-panel-header {
+      padding: 0.65rem 1rem;
+      background: #0d1322;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .code-content {
+      padding: 1.25rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      white-space: pre;
+      overflow-x: auto;
+      line-height: 1.6;
+    }
+
+    .hl-kw { color: #f472b6; }
+    .hl-imp { color: #38bdf8; }
+    .hl-str { color: #a3e635; }
+    .hl-func { color: #fbbf24; }
+    .hl-comment { color: var(--text-dim); font-style: italic; }
+    .hl-tag { color: #818cf8; }
+    .hl-diff-del { background: rgba(244, 63, 94, 0.2); display: block; padding: 2px 4px; }
+    .hl-diff-add { background: rgba(16, 185, 129, 0.2); display: block; padding: 2px 4px; }
+
+    /* QUIZ */
+    .quiz-option {
+      background: var(--bg-card-hover);
+      border: 1px solid var(--border-color);
+      padding: 1rem;
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .quiz-option.correct { background: var(--server-bg) !important; border-color: var(--server-color) !important; color: var(--server-color); }
+    .quiz-option.incorrect { background: var(--danger-bg) !important; border-color: var(--danger-color) !important; color: var(--danger-color); }
+    .radio-circle { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--text-dim); }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--text-dim);
+      font-size: 0.875rem;
+      border-top: 1px solid var(--border-color);
+      margin-top: 3rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- HERO HEADER -->
+    <header class="hero">
+      <div class="badge-group">
+        <span class="badge badge-next">Next.js App Router</span>
+        <span class="badge badge-server">Server Components</span>
+        <span class="badge badge-client">Client Components</span>
+      </div>
+      <h1>Rendering Server Components inside Client Components</h1>
+      <p class="hero-subtitle">
+        Technical Architecture Guide: Client Boundary Propagation, Composition Slots &amp; Code Breakdown.
+      </p>
+    </header>
+
+    <!-- SECTION 1: ARCHITECTURE EXPLANATION -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">⚙️</div>
+        <h2>1. Next.js Server &amp; Client Execution Spaces</h2>
+      </div>
+
+      <div class="analogy-grid">
+        <div class="analogy-box kitchen">
+          <div class="analogy-title">
+            <span>⚙️ Node.js Server Environment</span>
+          </div>
+          <p>
+            Executes Server Components. Accesses databases &amp; secret environment variables. 
+            <strong>Renders HTML / RSC Payload on the server</strong> with zero impact on the client JavaScript bundle.
+          </p>
+        </div>
+
+        <div class="analogy-box table">
+          <div class="analogy-title">
+            <span>🌐 Browser Client Environment</span>
+          </div>
+          <p>
+            Executes Client Components (files with <code>"use client"</code>). Has DOM state, event listeners, and browser APIs. 
+            <strong>Code here is compiled into JavaScript bundles shipped to the client browser.</strong>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 1.5: E-COMMERCE CART CODE EXAMPLE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4);">🛍️</div>
+        <h2>Code Example: E-Commerce Secret Discount Cart</h2>
+      </div>
+
+      <p style="color: var(--text-muted); margin-bottom: 1.25rem;">
+        An interactive Cart Modal button (needs <code>useState</code> on client) holding a Secret Discount Calculator (uses private server API keys):
+      </p>
+
+      <div class="example-grid">
+        <div class="example-panel wrong">
+          <div class="example-panel-title">
+            <span style="color: var(--danger-color);">❌ WRONG: Direct Import Leak</span>
+            <span style="font-size: 0.75rem; background: var(--danger-bg); color: var(--danger-color); padding: 2px 8px; border-radius: 4px;">DANGEROUS</span>
+          </div>
+          <div class="code-snippet" style="border-left-color: var(--danger-color); font-size: 0.82rem;"><span class="hl-comment">// components/CartModal.jsx</span>
+<span class="highlight-red">"use client"</span>;
+<span class="hl-imp">import</span> SecretDiscount <span class="hl-imp">from</span> <span class="hl-str">"./SecretDiscount"</span>; <span class="hl-comment">// 👈 Direct import!</span>
+
+<span class="hl-kw">export default function</span> <span class="hl-func">CartModal</span>() {
+  <span class="hl-kw">const</span> [open, setOpen] = useState(false);
+  <span class="hl-kw">return</span> (
+    &lt;div&gt;
+      &lt;button onClick={() =&gt; setOpen(!open)}&gt;Cart&lt;/button&gt;
+      {open &amp;&amp; &lt;<span class="hl-tag">SecretDiscount</span> /&gt;}
+    &lt;/div&gt;
+  );
+}</div>
+          <p style="font-size: 0.85rem; color: #fca5a5; margin-top: 0.5rem;">
+            💥 Direct import bundled <code>SecretDiscount</code> into client JS! Secret API keys leak or build fails!
+          </p>
+        </div>
+
+        <div class="example-panel right">
+          <div class="example-panel-title">
+            <span style="color: var(--server-color);">✅ RIGHT: Composition via Children</span>
+            <span style="font-size: 0.75rem; background: var(--server-bg); color: var(--server-color); padding: 2px 8px; border-radius: 4px;">SAFE &amp; FAST</span>
+          </div>
+          <div class="code-snippet" style="border-left-color: var(--server-color); font-size: 0.82rem;"><span class="hl-comment">// components/CartModal.jsx</span>
+<span class="hl-str">"use client"</span>;
+<span class="hl-comment">// NO Direct import of SecretDiscount!</span>
+
+<span class="hl-kw">export default function</span> <span class="hl-func">CartModal</span>({ <span class="highlight-green">children</span> }) {
+  <span class="hl-kw">const</span> [open, setOpen] = useState(false);
+  <span class="hl-kw">return</span> (
+    &lt;div&gt;
+      &lt;button onClick={() =&gt; setOpen(!open)}&gt;Cart&lt;/button&gt;
+      {open &amp;&amp; <span class="highlight-green">children</span>}
+    &lt;/div&gt;
+  );
+}</div>
+          <p style="font-size: 0.85rem; color: #a7f3d0; margin-top: 0.5rem;">
+            🛡️ <code>SecretDiscount</code> runs 100% safely on Server inside <code>app/cart/page.jsx</code> and is passed via <code>children</code> slot!
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: INTERACTIVE VISUALIZER & SIMULATOR -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">⚡</div>
+        <h2>2. Interactive Architecture Visualizer &amp; Simulator</h2>
+      </div>
+
+      <div class="toggle-bar">
+        <button id="btn-starter" class="toggle-btn active-starter" onclick="switchMode('starter')">
+          ❌ Starter Code (Direct Import)
+        </button>
+        <button id="btn-final" class="toggle-btn" onclick="switchMode('final')">
+          ✅ Final Code (Composition / {children})
+        </button>
+      </div>
+
+      <div id="diagram-starter" class="visualizer-grid">
+        <div class="env-box server-env">
+          <span class="env-label server-label">Server Execution Space</span>
+          <div class="tree-node is-server">
+            <div class="node-header">
+              <span class="node-title">app/services/page.js</span>
+              <span class="node-tag tag-server">Server Component</span>
+            </div>
+            <div class="node-desc">Renders page structure &amp; imports ServiceList.</div>
+          </div>
+          <div class="arrow-down">⬇️ Renders Client Boundary</div>
+          <div class="node-desc" style="text-align: center; font-style: italic; color: var(--text-dim); margin-top: 1rem;">
+            Notice: ServiceItem is NOT rendered here on the Server!
+          </div>
+        </div>
+
+        <div class="env-box client-env">
+          <span class="env-label client-label">Client Browser Space</span>
+          <div class="tree-node is-client">
+            <div class="node-header">
+              <span class="node-title">ServiceList.js ("use client")</span>
+              <span class="node-tag tag-client">Client Component</span>
+            </div>
+            <div class="node-desc">Directly imports <code>import ServiceItem from "./ServiceItem"</code></div>
+          </div>
+          <div class="arrow-down">⬇️ Direct Import pulls child into Client Bundle</div>
+          <div class="tree-node is-converted">
+            <div class="node-header">
+              <span class="node-title">ServiceItem.js</span>
+              <span class="node-tag tag-danger">CONVERTED TO CLIENT!</span>
+            </div>
+            <div class="node-desc">
+              ⚠️ Even without <code>"use client"</code>, this component was bundled and sent to the browser!
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="diagram-final" class="visualizer-grid" style="display: none;">
+        <div class="env-box server-env">
+          <span class="env-label server-label">Server Execution Space</span>
+          <div class="tree-node is-server">
+            <div class="node-header">
+              <span class="node-title">app/services/page.js</span>
+              <span class="node-tag tag-server">Server Component</span>
+            </div>
+            <div class="node-desc">Imports BOTH ServiceList &amp; ServiceItem. Passes ServiceItem as children.</div>
+          </div>
+          <div class="arrow-down">⬇️ Renders ServiceItem on Server!</div>
+          <div class="tree-node is-server">
+            <div class="node-header">
+              <span class="node-title">ServiceItem.js</span>
+              <span class="node-tag tag-server">STAYS SERVER COMPONENT ✅</span>
+            </div>
+            <div class="node-desc">
+              Executes 100% on the Server! Rendered HTML is passed into ServiceList via <code>children</code> slot.
+            </div>
+          </div>
+        </div>
+
+        <div class="env-box client-env">
+          <span class="env-label client-label">Client Browser Space</span>
+          <div class="tree-node is-client">
+            <div class="node-header">
+              <span class="node-title">ServiceList.js ({ children })</span>
+              <span class="node-tag tag-client">Client Component</span>
+            </div>
+            <div class="node-desc">
+              Receives pre-rendered <code>children</code> slot. Client JS bundle size stays 0 KB added!
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="console-box">
+        <div class="console-header">
+          <span>SIMULATED EXECUTION CONSOLE</span>
+          <span id="mode-badge-indicator" class="log-warning">CURRENT: STARTER MODE</span>
+        </div>
+        <div id="console-output" class="console-log">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: STEP-BY-STEP INTUITION BREAKDOWN -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">💡</div>
+        <h2>3. Step-by-Step Technical Breakdown</h2>
+      </div>
+
+      <div id="explanation-starter">
+        <div class="step-card" style="border-left: 4px solid var(--danger-color);">
+          <span class="step-badge" style="background: var(--danger-bg); color: var(--danger-color);">Problem Step 1</span>
+          <div class="step-title">Starter: <code>ServiceList.js</code> has <code>"use client"</code></div>
+          <p>You mark <code>ServiceList</code> as a Client Component because it needs client interactivity.</p>
+          <div class="code-snippet">// components/ServiceList.js
+<span class="highlight-red">"use client";</span>
+import ServiceItem from "./ServiceItem"; // 👈 DIRECT IMPORT!</div>
+        </div>
+
+        <div class="step-card" style="border-left: 4px solid var(--danger-color);">
+          <span class="step-badge" style="background: var(--danger-bg); color: var(--danger-color);">Problem Step 2</span>
+          <div class="step-title">The Client Boundary Cascade 🌊</div>
+          <p>
+            Because <code>ServiceList</code> directly <code>import</code>ed <code>ServiceItem</code>, 
+            <strong>React is forced to bundle <code>ServiceItem</code> JS code and ship it to the browser!</strong>
+          </p>
+          <div class="code-snippet">Result: ServiceItem gets compiled into client JS!
+typeof window === "undefined" ➔ EVALUATES TO FALSE IN BROWSER!
+Log output: <span class="highlight-red">"Running ServiceItem as a Client Component"</span></div>
+        </div>
+
+        <div class="callout">
+          <strong>⚠️ Starter Takeaway:</strong> Directly importing a component into a <code>"use client"</code> file forces that child component to become a Client Component too!
+        </div>
+      </div>
+
+      <div id="explanation-final" style="display: none;">
+        <div class="step-card" style="border-left: 4px solid var(--server-color);">
+          <span class="step-badge" style="background: var(--server-bg); color: var(--server-color);">Solution Step 1</span>
+          <div class="step-title">Make <code>ServiceList.js</code> accept a <code>children</code> slot</div>
+          <p>Remove the direct import of <code>ServiceItem</code> from <code>ServiceList.js</code>!</p>
+          <div class="code-snippet">// components/ServiceList.js
+"use client";
+
+export default function ServiceList({ <span class="highlight-green">children</span> }) {
+  return &lt;ul className="services-list"&gt;<span class="highlight-green">{children}</span>&lt;/ul&gt;;
+}</div>
+        </div>
+
+        <div class="step-card" style="border-left: 4px solid var(--server-color);">
+          <span class="step-badge" style="background: var(--server-bg); color: var(--server-color);">Solution Step 2</span>
+          <div class="step-title">Assemble them inside <code>page.js</code> (Server Component)</div>
+          <p>The Server Component (<code>page.js</code>) imports BOTH <code>ServiceList</code> AND <code>ServiceItem</code>.</p>
+          <div class="code-snippet">// app/services/page.js (Server Component)
+import ServiceList from "@/components/ServiceList";
+import ServiceItem from "@/components/ServiceItem";
+
+export default function Services() {
+  return (
+    &lt;ServiceList&gt;
+      <span class="highlight-green">&lt;ServiceItem serviceName="Web Development" /&gt;</span>
+    &lt;/ServiceList&gt;
+  );
+}</div>
+        </div>
+
+        <div class="step-card" style="border-left: 4px solid var(--server-color);">
+          <span class="step-badge" style="background: var(--server-bg); color: var(--server-color);">Solution Step 3</span>
+          <div class="step-title">How React Executes This on the Server 🔮</div>
+          <p>
+            1. On the Node Server, <code>page.js</code> executes.<br>
+            2. The Server renders <code>ServiceItem</code> right there on the server into pre-rendered HTML.<br>
+            3. The pre-rendered HTML is passed into <code>ServiceList</code> as the <code>children</code> prop!<br>
+            4. <code>ServiceItem</code> JS code <strong>NEVER</strong> gets sent to the browser bundle!
+          </p>
+          <div class="code-snippet">Result: ServiceItem runs 100% on the Server!
+typeof window === "undefined" ➔ EVALUATES TO TRUE ON SERVER!
+Log output: <span class="highlight-green">"Running ServiceItem as a Server Component"</span></div>
+        </div>
+
+        <div class="callout" style="border-color: var(--server-color); background: var(--server-bg); color: #a7f3d0;">
+          <strong>🎉 Final Takeaway:</strong> Passing a Server Component as <code>children</code> to a Client Component allows the parent Server Component to render it beforehand. The Client Component just acts as a container slot!
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: CODE BREAKDOWN TABS -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🔍</div>
+        <h2>4. Side-by-Side Code Breakdown</h2>
+      </div>
+
+      <div class="code-tab-buttons">
+        <button class="code-tab-btn active" onclick="showCodeTab('tab-servicelist')">ServiceList.js</button>
+        <button class="code-tab-btn" onclick="showCodeTab('tab-page')">app/services/page.js</button>
+        <button class="code-tab-btn" onclick="showCodeTab('tab-serviceitem')">ServiceItem.js</button>
+      </div>
+
+      <div id="tab-servicelist" class="code-tab-content">
+        <div class="code-grid">
+          <div class="code-panel">
+            <div class="code-panel-header">
+              <span style="color: var(--danger-color)">Starter: Direct Import (Problem)</span>
+              <span>components/ServiceList.js</span>
+            </div>
+            <div class="code-content"><span class="hl-str">"use client"</span>;
+<span class="hl-diff-del"><span class="hl-imp">import</span> ServiceItem <span class="hl-imp">from</span> <span class="hl-str">"./ServiceItem"</span>;</span>
+
+<span class="hl-kw">export default function</span> <span class="hl-func">ServiceList</span>() {
+  <span class="hl-kw">const</span> services = [<span class="hl-str">"Web Dev"</span>, <span class="hl-str">"Mobile App"</span>];
+  <span class="hl-kw">return</span> (
+    &lt;&gt;
+      &lt;<span class="hl-tag">h3</span>&gt;All Services List&lt;/<span class="hl-tag">h3</span>&gt;
+      &lt;<span class="hl-tag">ul</span> className=<span class="hl-str">"services-list"</span>&gt;
+        {services.map((s) =&gt; (
+          &lt;<span class="hl-tag">ServiceItem</span> key={s} serviceName={s} /&gt;
+        ))}
+      &lt;/<span class="hl-tag">ul</span>&gt;
+    &lt;/&gt;
+  );
+}</div>
+          </div>
+
+          <div class="code-panel">
+            <div class="code-panel-header">
+              <span style="color: var(--server-color)">Final: Composition Slot (Fix)</span>
+              <span>components/ServiceList.js</span>
+            </div>
+            <div class="code-content"><span class="hl-str">"use client"</span>;
+<span class="hl-comment">// NO Direct import of ServiceItem!</span>
+
+<span class="hl-kw">export default function</span> <span class="hl-func">ServiceList</span>({ <span class="hl-diff-add">children</span> }) {
+  <span class="hl-kw">return</span> (
+    &lt;&gt;
+      &lt;<span class="hl-tag">h3</span>&gt;All Services List&lt;/<span class="hl-tag">h3</span>&gt;
+      &lt;<span class="hl-tag">ul</span> className=<span class="hl-str">"services-list"</span>&gt;
+        <span class="hl-diff-add">{children}</span>
+      &lt;/<span class="hl-tag">ul</span>&gt;
+    &lt;/&gt;
+  );
+}</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-page" class="code-tab-content" style="display: none;">
+        <div class="code-grid">
+          <div class="code-panel">
+            <div class="code-panel-header">
+              <span style="color: var(--danger-color)">Starter: Services Page</span>
+              <span>app/services/page.js</span>
+            </div>
+            <div class="code-content"><span class="hl-imp">import</span> Header <span class="hl-imp">from</span> <span class="hl-str">"@/components/Header"</span>;
+<span class="hl-imp">import</span> ServiceList <span class="hl-imp">from</span> <span class="hl-str">"@/components/ServiceList"</span>;
+
+<span class="hl-kw">const</span> <span class="hl-func">Services</span> = () =&gt; {
+  <span class="hl-kw">return</span> (
+    &lt;&gt;
+      &lt;<span class="hl-tag">Header</span> /&gt;
+      &lt;<span class="hl-tag">div</span>&gt;
+        &lt;<span class="hl-tag">h1</span>&gt;Our Services&lt;/<span class="hl-tag">h1</span>&gt;
+        &lt;<span class="hl-tag">ServiceList</span> /&gt;
+      &lt;/<span class="hl-tag">div</span>&gt;
+    &lt;/&gt;
+  );
+};</div>
+          </div>
+
+          <div class="code-panel">
+            <div class="code-panel-header">
+              <span style="color: var(--server-color)">Final: Services Page (Assembly on Server)</span>
+              <span>app/services/page.js</span>
+            </div>
+            <div class="code-content"><span class="hl-imp">import</span> Header <span class="hl-imp">from</span> <span class="hl-str">"@/components/Header"</span>;
+<span class="hl-diff-add"><span class="hl-imp">import</span> ServiceItem <span class="hl-imp">from</span> <span class="hl-str">"@/components/ServiceItem"</span>;</span>
+<span class="hl-imp">import</span> ServiceList <span class="hl-imp">from</span> <span class="hl-str">"@/components/ServiceList"</span>;
+
+<span class="hl-kw">const</span> <span class="hl-func">Services</span> = () =&gt; {
+  <span class="hl-kw">const</span> services = [<span class="hl-str">"Web Dev"</span>, <span class="hl-str">"Mobile App"</span>];
+
+  <span class="hl-kw">return</span> (
+    &lt;&gt;
+      &lt;<span class="hl-tag">Header</span> /&gt;
+      &lt;<span class="hl-tag">div</span>&gt;
+        &lt;<span class="hl-tag">h1</span>&gt;Our Services&lt;/<span class="hl-tag">h1</span>&gt;
+        <span class="hl-diff-add">&lt;<span class="hl-tag">ServiceList</span>&gt;
+          {services.map((s) =&gt; (
+            &lt;<span class="hl-tag">ServiceItem</span> key={s} serviceName={s} /&gt;
+          ))}
+        &lt;/<span class="hl-tag">ServiceList</span>&gt;</span>
+      &lt;/<span class="hl-tag">div</span>&gt;
+    &lt;/&gt;
+  );
+};</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-serviceitem" class="code-tab-content" style="display: none;">
+        <div class="code-grid">
+          <div class="code-panel" style="grid-column: 1 / -1;">
+            <div class="code-panel-header">
+              <span>components/ServiceItem.js</span>
+            </div>
+            <div class="code-content"><span class="hl-kw">export default function</span> <span class="hl-func">ServiceItem</span>({ serviceName }) {
+  <span class="hl-comment">// Runtime Environment Detection Log:</span>
+  <span class="hl-kw">if</span> (<span class="hl-kw">typeof</span> window === <span class="hl-str">"undefined"</span>) {
+    console.log(<span class="hl-str">"Running ServiceItem as a Server Component"</span>);
+  } <span class="hl-kw">else</span> {
+    console.log(<span class="hl-str">"Running ServiceItem as a Client Component"</span>);
+  }
+
+  <span class="hl-kw">return</span> &lt;<span class="hl-tag">li</span>&gt;{serviceName}&lt;/<span class="hl-tag">li</span>&gt;;
+}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 5: QUIZ -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">📌</div>
+        <h2>5. Quick Knowledge Check</h2>
+      </div>
+      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Test your understanding of Server vs Client Component composition:</p>
+      <div>
+        <h4 style="margin-bottom: 0.75rem;">Q1: What happens if a file with <code>"use client"</code> directly imports another component without <code>"use client"</code>?</h4>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>A) Next.js throws a build error.</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, true)">
+          <span class="radio-circle"></span>
+          <span>B) The imported component automatically gets compiled as a Client Component and bundled to the browser.</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>C) It remains a Server Component automatically.</span>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Next.js React Server Components (RSC) Architecture Guide &bull; Section 4 Lesson 06
+    </footer>
+  </div>
+
+  <script>
+    function updateConsole(mode) {
+      const consoleOutput = document.getElementById('console-output');
+      const indicator = document.getElementById('mode-badge-indicator');
+
+      if (mode === 'starter') {
+        indicator.textContent = 'CURRENT: STARTER MODE (Direct Import)';
+        indicator.className = 'log-warning';
+        consoleOutput.innerHTML = `
+          <div class="log-server">[SERVER TERMINAL] Page.js rendered on Node server</div>
+          <div class="log-client">[CLIENT BROWSER CONSOLE] ⚠️ Running ServiceItem as a Client Component</div>
+          <div class="log-client">[CLIENT BROWSER CONSOLE] ⚠️ Running ServiceItem as a Client Component</div>
+          <div class="log-warning" style="margin-top: 0.5rem;">➔ Impact: ServiceItem JS code sent to browser bundle (Increases Bundle Size!)</div>
+        `;
+      } else {
+        indicator.textContent = 'CURRENT: FINAL MODE (Composition via children)';
+        indicator.className = 'log-server';
+        consoleOutput.innerHTML = `
+          <div class="log-server">[SERVER TERMINAL] Page.js rendered on Node server</div>
+          <div class="log-server">[SERVER TERMINAL] ✅ Running ServiceItem as a Server Component</div>
+          <div class="log-server">[SERVER TERMINAL] ✅ Running ServiceItem as a Server Component</div>
+          <div class="log-client">[CLIENT BROWSER CONSOLE] ServiceList hydrated on client (Received rendered children HTML)</div>
+          <div class="log-server" style="margin-top: 0.5rem;">➔ Impact: ServiceItem code kept ONLY on Server (0 KB added to Client Bundle!)</div>
+        `;
+      }
+    }
+
+    function switchMode(mode) {
+      const starterBtn = document.getElementById('btn-starter');
+      const finalBtn = document.getElementById('btn-final');
+      const starterDiagram = document.getElementById('diagram-starter');
+      const finalDiagram = document.getElementById('diagram-final');
+      const starterExp = document.getElementById('explanation-starter');
+      const finalExp = document.getElementById('explanation-final');
+
+      if (mode === 'starter') {
+        starterBtn.className = 'toggle-btn active-starter';
+        finalBtn.className = 'toggle-btn';
+        starterDiagram.style.display = 'grid';
+        finalDiagram.style.display = 'none';
+        if (starterExp) starterExp.style.display = 'block';
+        if (finalExp) finalExp.style.display = 'none';
+      } else {
+        starterBtn.className = 'toggle-btn';
+        finalBtn.className = 'toggle-btn active-final';
+        starterDiagram.style.display = 'none';
+        finalDiagram.style.display = 'grid';
+        if (starterExp) starterExp.style.display = 'none';
+        if (finalExp) finalExp.style.display = 'block';
+      }
+
+      updateConsole(mode);
+    }
+
+    function showCodeTab(tabId) {
+      document.querySelectorAll('.code-tab-content').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.code-tab-btn').forEach(el => el.classList.remove('active'));
+
+      document.getElementById(tabId).style.display = 'block';
+      event.currentTarget.classList.add('active');
+    }
+
+    function checkAnswer(element, isCorrect) {
+      const parent = element.parentElement;
+      parent.querySelectorAll('.quiz-option').forEach(el => {
+        el.classList.remove('correct', 'incorrect');
+      });
+
+      if (isCorrect) {
+        element.classList.add('correct');
+      } else {
+        element.classList.add('incorrect');
+      }
+    }
+
+    updateConsole('starter');
+  </script>
+</body>
+</html>

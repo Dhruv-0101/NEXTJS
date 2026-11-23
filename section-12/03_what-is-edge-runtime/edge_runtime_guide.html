@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Next.js Guide: Understanding Edge Runtime</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #070a11;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border-color: #334155;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --server-color: #10b981;
+      --server-bg: rgba(16, 185, 129, 0.12);
+      
+      --client-color: #38bdf8;
+      --client-bg: rgba(56, 189, 248, 0.12);
+
+      --danger-color: #f43f5e;
+      --danger-bg: rgba(244, 63, 94, 0.15);
+      --danger-border: rgba(244, 63, 94, 0.4);
+      
+      --warning-color: #fbbf24;
+      --warning-bg: rgba(251, 191, 36, 0.12);
+      
+      --purple-color: #a855f7;
+      --purple-bg: rgba(168, 85, 247, 0.12);
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+    }
+
+    .container { max-width: 1150px; margin: 0 auto; }
+
+    /* HERO HEADER */
+    header.hero {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      background: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.15) 0%, rgba(7, 10, 17, 0) 70%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 2.5rem;
+    }
+
+    .badge-group {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+    }
+
+    .badge-server { background: var(--server-bg); color: var(--server-color); border-color: rgba(16, 185, 129, 0.4); }
+    .badge-client { background: var(--client-bg); color: var(--client-color); border-color: rgba(56, 189, 248, 0.4); }
+    .badge-purple { background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4); }
+
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #ffffff 40%, #10b981 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .badge-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+      background: var(--server-bg);
+      color: var(--server-color);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+
+    /* ARCHITECTURE COMPARISON TABLE */
+    .comp-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .comp-table th, .comp-table td {
+      padding: 1rem;
+      border: 1px solid var(--border-color);
+      text-align: left;
+    }
+
+    .comp-table th {
+      background: #0d1322;
+      color: var(--text-main);
+      font-weight: 700;
+    }
+
+    .comp-table td {
+      background: rgba(15, 23, 42, 0.5);
+      color: var(--text-muted);
+    }
+
+    /* SIMULATOR */
+    .simulator-container {
+      background: #030712;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    .sim-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      max-width: 550px;
+      margin: 0 auto 1.5rem auto;
+      background: #0b0f19;
+      padding: 1.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .sim-btn {
+      padding: 0.65rem 1.2rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      background: var(--bg-card-hover);
+      color: var(--text-main);
+      transition: all 0.2s ease;
+    }
+
+    .mock-console {
+      background: #020617;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      font-family: 'Fira Code', monospace;
+      padding: 1rem;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+
+    /* CODE COMPARISON */
+    .code-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    @media (max-width: 850px) { .code-grid { grid-template-columns: 1fr; } }
+
+    .code-panel {
+      background: #050811;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .code-panel-header {
+      padding: 0.65rem 1rem;
+      background: #0d1322;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .code-content {
+      padding: 1.25rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      white-space: pre;
+      overflow-x: auto;
+      line-height: 1.6;
+    }
+
+    .hl-kw { color: #f472b6; }
+    .hl-imp { color: #38bdf8; }
+    .hl-str { color: #a3e635; }
+    .hl-func { color: #fbbf24; }
+    .hl-comment { color: var(--text-dim); font-style: italic; }
+    .hl-tag { color: #818cf8; }
+    .hl-purple { color: #a855f7; font-weight: bold; }
+    .hl-danger { color: #f43f5e; font-weight: bold; }
+    .hl-green { color: #10b981; font-weight: bold; }
+
+    /* QUIZ */
+    .quiz-option {
+      background: var(--bg-card-hover);
+      border: 1px solid var(--border-color);
+      padding: 1rem;
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .quiz-option.correct { background: var(--server-bg) !important; border-color: var(--server-color) !important; color: var(--server-color); }
+    .quiz-option.incorrect { background: var(--danger-bg) !important; border-color: var(--danger-color) !important; color: var(--danger-color); }
+    .radio-circle { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--text-dim); }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--text-dim);
+      font-size: 0.875rem;
+      border-top: 1px solid var(--border-color);
+      margin-top: 3rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- HERO -->
+    <header class="hero">
+      <div class="badge-group">
+        <span class="badge badge-server">Edge Runtime (V8 Engine)</span>
+        <span class="badge badge-purple">0ms Cold Start</span>
+        <span class="badge badge-client">Web Standard APIs</span>
+      </div>
+      <h1>Understanding Edge Runtime in Next.js</h1>
+      <p class="hero-subtitle">
+        Discover the high-performance, lightweight V8 execution environment powering Next.js Edge Middleware and Edge Route Handlers globally across CDN Points of Presence.
+      </p>
+    </header>
+
+    <!-- SECTION 1: ARCHITECTURE COMPARISON -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">⚙️</div>
+        <h2>1. Node.js Runtime vs. Edge Runtime Architectural Comparison</h2>
+      </div>
+
+      <table class="comp-table">
+        <thead>
+          <tr>
+            <th>Architecture Feature</th>
+            <th style="color: var(--client-color);">Node.js Runtime (Default Server)</th>
+            <th style="color: var(--server-color);">Edge Runtime (Middleware Default)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Engine &amp; Specs</strong></td>
+            <td>Full Node.js environment (v20+)</td>
+            <td>Lightweight V8 JS Engine (Web Standards)</td>
+          </tr>
+          <tr>
+            <td><strong>Physical Location</strong></td>
+            <td>Centralized Origin Server (e.g., AWS US-East)</td>
+            <td>Distributed globally across 300+ Edge Nodes</td>
+          </tr>
+          <tr>
+            <td><strong>Cold Start Latency</strong></td>
+            <td>100ms - 2000ms (Container boot time)</td>
+            <td><strong style="color: var(--server-color);">0ms - 5ms (Instantaneous)</strong></td>
+          </tr>
+          <tr>
+            <td><strong>Node.js Native APIs</strong></td>
+            <td>✅ Full support (<code>fs</code>, <code>path</code>, <code>net</code>, <code>child_process</code>)</td>
+            <td><strong style="color: var(--danger-color);">❌ Prohibited (No filesystem access)</strong></td>
+          </tr>
+          <tr>
+            <td><strong>Web Standard APIs</strong></td>
+            <td>✅ Supported (<code>fetch</code>, <code>URL</code>, <code>Request</code>)</td>
+            <td>✅ Full support (<code>fetch</code>, <code>crypto</code>, <code>WebSockets</code>, <code>URL</code>)</td>
+          </tr>
+          <tr>
+            <td><strong>Database Drivers</strong></td>
+            <td>Native TCP Socket drivers (Mongoose, pg)</td>
+            <td>HTTP/REST Edge SDKs (Upstash Redis, Neon HTTP)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SECTION 2: PROHIBITED IMPORTS IN EDGE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--danger-bg); color: var(--danger-color); border-color: var(--danger-border);">⚠️</div>
+        <h2>2. Critical Prohibited APIs in Edge Runtime</h2>
+      </div>
+
+      <div style="padding: 1.25rem; background: rgba(244, 63, 94, 0.08); border-left: 4px solid var(--danger-color); border-radius: var(--radius-sm); margin-bottom: 1rem;">
+        <h4 style="color: var(--danger-color); margin-bottom: 0.5rend; font-size: 1rem;">❌ What Will Break in Edge Middleware:</h4>
+        <ul style="padding-left: 1.2rem; line-height: 1.8; color: var(--text-main); font-size: 0.9rem;">
+          <li><strong>Filesystem Access 📁</strong> ➔ <code>import fs from 'fs'</code> throws a build error! Edge servers have no local disk storage.</li>
+          <li><strong>Native C++ Addons 🔐</strong> ➔ Heavy native C++ binaries like <code>bcrypt</code> fail. Use Web Crypto API or pure JS libraries instead.</li>
+          <li><strong>TCP Socket Database Connections 🔌</strong> ➔ <code>mongoose.connect()</code> with raw TCP sockets fails on Edge. Use HTTP-based DB proxies!</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- SECTION 3: LIVE SIMULATOR -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🎮</div>
+        <h2>3. Live Interactive Global Latency &amp; API Compatibility Simulator</h2>
+      </div>
+
+      <div class="simulator-container">
+        <div class="sim-controls">
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">
+              Test Execution Runtime from Global User Location:
+            </label>
+            <div class="btn-row">
+              <button class="sim-btn" onclick="testRuntime('nodejs')" style="border-color: var(--client-color);">
+                Execute on Node.js Origin Server (US Data Center)
+              </button>
+              <button class="sim-btn" onclick="testRuntime('edge')" style="border-color: var(--server-color); background: var(--server-bg); color: var(--server-color);">
+                Execute on Edge Runtime (Local Edge Node)
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">
+              Test Importing Restricted API in Middleware:
+            </label>
+            <div class="btn-row">
+              <button class="sim-btn" onclick="testApiImport('fs')" style="border-color: var(--danger-color);">
+                Try importing `fs` module
+              </button>
+              <button class="sim-btn" onclick="testApiImport('fetch')" style="border-color: var(--server-color);">
+                Try using `fetch()` &amp; Web Crypto
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="sim-console" class="mock-console">
+          Console Log: Click buttons above to simulate Edge vs Node.js runtime behavior.
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: CODE BREAKDOWN -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🔍</div>
+        <h2>4. Side-by-Side Code Breakdown: Route Runtime Configurations</h2>
+      </div>
+
+      <div class="code-grid">
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span style="color: var(--server-color);">Edge Runtime Route/Middleware</span>
+            <span>Fast V8</span>
+          </div>
+          <div class="code-content"><span class="hl-comment">// Force Edge Runtime in API/Page Route:</span>
+<span class="hl-kw">export const</span> runtime = <span class="hl-str">"edge"</span>; 
+
+<span class="hl-kw">export async function</span> <span class="hl-func">GET</span>(request) {
+  <span class="hl-comment">// ✅ Works: Web Standard APIs only</span>
+  <span class="hl-kw">const</span> res = <span class="hl-kw">await</span> <span class="hl-func">fetch</span>(<span class="hl-str">"https://api.example.com"</span>);
+  <span class="hl-kw">return</span> Response.<span class="hl-func">json</span>({ ok: <span class="hl-kw">true</span> });
+}</div>
+        </div>
+
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span style="color: var(--client-color);">Node.js Runtime (Default)</span>
+            <span>Full API Access</span>
+          </div>
+          <div class="code-content"><span class="hl-comment">// Default Node.js Runtime:</span>
+<span class="hl-kw">export const</span> runtime = <span class="hl-str">"nodejs"</span>; 
+
+<span class="hl-imp">import</span> fs <span class="hl-imp">from</span> <span class="hl-str">"fs"</span>;
+<span class="hl-imp">import</span> mongoose <span class="hl-imp">from</span> <span class="hl-str">"mongoose"</span>;
+
+<span class="hl-kw">export async function</span> <span class="hl-func">GET</span>(request) {
+  <span class="hl-comment">// ✅ Works: Node.js filesystem &amp; Mongoose TCP</span>
+  <span class="hl-kw">await</span> mongoose.<span class="hl-func">connect</span>(...);
+  <span class="hl-kw">return</span> Response.<span class="hl-func">json</span>({ ok: <span class="hl-kw">true</span> });
+}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 5: KNOWLEDGE CHECK -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">❓</div>
+        <h2>5. Quick Knowledge Check</h2>
+      </div>
+
+      <div>
+        <h4 style="margin-bottom: 0.75rem;">Q1: Why is the Node.js `fs` module prohibited inside Next.js Edge Middleware?</h4>
+        <div class="quiz-option" onclick="checkAnswer(this, true)">
+          <span class="radio-circle"></span>
+          <span>A) Because Edge Runtime runs on lightweight V8 isolated workers deployed across global CDN PoPs without local disk storage.</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>B) Because Next.js disabled files for security reasons.</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>C) `fs` works fine on Edge Runtime.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 6: POORA SAAR / HINGLISH GOLDEN RULE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4);">💡</div>
+        <h2>6. Poora Saar &amp; Golden Master Rule (Hinglish)</h2>
+      </div>
+
+      <div style="padding: 1.5rem; background: #020617; border-left: 5px solid var(--purple-color); border-radius: var(--radius-md);">
+        <h3 style="color: var(--purple-color); margin-bottom: 0.75rem; font-size: 1.15rem;">💡 Edge Runtime Ka Poora Saar:</h3>
+
+        <p style="font-size: 0.98rem; color: var(--text-main); line-height: 1.8; margin-bottom: 1rem;">
+          <strong>Edge Runtime</strong> Google Chrome ke V8 JavaScript engine par bana ek lightweight execution environment hai jo duniya bhar ke CDN Edge Servers par chalta hai.
+        </p>
+
+        <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 1.25rem;">
+          1. <strong>Super-Fast Cold Start (0ms - 5ms) ⚡</strong> ➔ Node.js server ko container start karne me 500ms lagte hain, jabki Edge instant 0ms cold start ke saath request ko process karta hai.
+          <br>2. <strong>Web Standards Only 🌐</strong> ➔ Edge Runtime me aap standard Browser APIs (<code>fetch</code>, <code>crypto</code>, <code>URL</code>, <code>Request</code>, <code>Response</code>) use kar sakte ho.
+          <br>3. <strong>NO Node.js `fs` or TCP DB ❌</strong> ➔ Edge servers par koi hard drive/filesystem nahi hoti, isliye <code>import fs from 'fs'</code> crash kar dega. Mongoose TCP connection bhi Edge par block ho jayega.
+        </p>
+
+        <div style="background: rgba(168, 85, 247, 0.1); border: 1px dashed var(--purple-color); padding: 1rem; border-radius: var(--radius-sm); font-size: 0.9rem;">
+          <strong style="color: var(--purple-color); display: block; margin-bottom: 0.5rem;">🔥 Edge Runtime Golden Rules:</strong>
+          <ul style="padding-left: 1.2rem; line-height: 1.8; color: var(--text-main);">
+            <li><strong>1. Middleware Default 🛡️</strong> ➔ Next.js `middleware.js` strictly runs on Edge Runtime by default.</li>
+            <li><strong>2. Web Standard APIs 🌐</strong> ➔ Use `fetch()`, `Web Crypto`, and `NextResponse` instead of Node modules.</li>
+            <li><strong>3. Explicit Config ⚙️</strong> ➔ You can opt-in any route file using `export const runtime = "edge";`.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Next.js Edge Runtime Guide &bull; Section 12 Lesson 03
+    </footer>
+  </div>
+
+  <script>
+    function testRuntime(type) {
+      const consoleBox = document.getElementById('sim-console');
+      if (type === 'nodejs') {
+        consoleBox.innerHTML = `
+          <span style="color: var(--client-color)">[NODE.JS RUNTIME] Request sent to US-East Central Data Center</span><br>
+          <span style="color: var(--warning-color)">➔ Cold Start: ~450ms (Container initialization)</span><br>
+          <span style="color: var(--warning-color)">➔ Network Roundtrip Latency: ~220ms for Asia User</span><br>
+          <span style="color: var(--text-muted)">➔ Total Request Delay: ~670ms</span>
+        `;
+      } else {
+        consoleBox.innerHTML = `
+          <span style="color: var(--server-color)">[EDGE RUNTIME] Request intercepted at closest Edge CDN PoP</span><br>
+          <span style="color: var(--server-color)">➔ Cold Start: 0ms - 2ms (V8 Isolated Worker) ✅</span><br>
+          <span style="color: var(--server-color)">➔ Network Roundtrip Latency: ~8ms (Local Edge Node) ✅</span><br>
+          <span style="color: var(--server-color)">⚡ Total Request Delay: ~10ms (Blazing fast!)</span>
+        `;
+      }
+    }
+
+    function testApiImport(api) {
+      const consoleBox = document.getElementById('sim-console');
+      if (api === 'fs') {
+        consoleBox.innerHTML = `
+          <span style="color: var(--danger-color)">[BUILD ERROR] import fs from 'fs'</span><br>
+          <span style="color: var(--danger-color)">💥 ModuleNotAllowedError: Node.js 'fs' module is not supported in the Edge Runtime.</span><br>
+          <span style="color: var(--warning-color)">💡 Edge nodes have no local filesystem storage!</span>
+        `;
+      } else {
+        consoleBox.innerHTML = `
+          <span style="color: var(--server-color)">[VALID EDGE API] fetch("https://...") & crypto.subtle</span><br>
+          <span style="color: var(--server-color)">✅ Executed cleanly! Web Standard APIs are 100% supported in Edge Runtime.</span>
+        `;
+      }
+    }
+
+    function checkAnswer(element, isCorrect) {
+      const parent = element.parentElement;
+      parent.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('correct', 'incorrect'));
+      if (isCorrect) element.classList.add('correct');
+      else element.classList.add('incorrect');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Next.js Guide: Form Validation with Zod &amp; Server Actions</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #070a11;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border-color: #334155;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --server-color: #10b981;
+      --server-bg: rgba(16, 185, 129, 0.12);
+      
+      --client-color: #38bdf8;
+      --client-bg: rgba(56, 189, 248, 0.12);
+
+      --danger-color: #f43f5e;
+      --danger-bg: rgba(244, 63, 94, 0.15);
+      --danger-border: rgba(244, 63, 94, 0.4);
+      
+      --warning-color: #fbbf24;
+      --warning-bg: rgba(251, 191, 36, 0.12);
+      
+      --purple-color: #a855f7;
+      --purple-bg: rgba(168, 85, 247, 0.12);
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+    }
+
+    .container { max-width: 1150px; margin: 0 auto; }
+
+    /* HERO HEADER */
+    header.hero {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      background: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.15) 0%, rgba(7, 10, 17, 0) 70%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 2.5rem;
+    }
+
+    .badge-group {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+    }
+
+    .badge-server { background: var(--server-bg); color: var(--server-color); border-color: rgba(16, 185, 129, 0.4); }
+    .badge-client { background: var(--client-bg); color: var(--client-color); border-color: rgba(56, 189, 248, 0.4); }
+    .badge-purple { background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4); }
+
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #ffffff 40%, #10b981 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .badge-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+      background: var(--server-bg);
+      color: var(--server-color);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+
+    /* ARCHITECTURE GRID */
+    .arch-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 768px) { .arch-grid { grid-template-columns: 1fr; } }
+
+    .arch-box {
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      background: rgba(30, 41, 59, 0.4);
+    }
+
+    .arch-box.client-val { border-color: var(--client-color); background: var(--client-bg); }
+    .arch-box.server-val { border-color: rgba(16, 185, 129, 0.4); background: var(--server-bg); }
+
+    .arch-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* SIMULATOR */
+    .simulator-container {
+      background: #030712;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    .sim-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      max-width: 500px;
+      margin: 0 auto 1.5rem auto;
+      background: #0b0f19;
+      padding: 1.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .form-group label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .form-group input {
+      padding: 0.65rem 0.85rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: #020617;
+      color: var(--text-main);
+      font-family: 'Fira Code', monospace;
+      font-size: 0.9rem;
+    }
+
+    .err-msg {
+      font-size: 0.75rem;
+      color: var(--danger-color);
+      font-family: 'Fira Code', monospace;
+    }
+
+    .sim-btn-submit {
+      padding: 0.75rem 1.5rem;
+      border-radius: 9999px;
+      border: none;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      background: linear-gradient(135deg, #10b981 0%, #38bdf8 100%);
+      color: #000;
+      transition: all 0.2s ease;
+    }
+
+    .mock-console {
+      background: #020617;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      font-family: 'Fira Code', monospace;
+      padding: 1rem;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+
+    /* CODE COMPARISON */
+    .code-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    @media (max-width: 850px) { .code-grid { grid-template-columns: 1fr; } }
+
+    .code-panel {
+      background: #050811;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .code-panel-header {
+      padding: 0.65rem 1rem;
+      background: #0d1322;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .code-content {
+      padding: 1.25rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      white-space: pre;
+      overflow-x: auto;
+      line-height: 1.6;
+    }
+
+    .hl-kw { color: #f472b6; }
+    .hl-imp { color: #38bdf8; }
+    .hl-str { color: #a3e635; }
+    .hl-func { color: #fbbf24; }
+    .hl-comment { color: var(--text-dim); font-style: italic; }
+    .hl-tag { color: #818cf8; }
+    .hl-purple { color: #a855f7; font-weight: bold; }
+    .hl-danger { color: #f43f5e; font-weight: bold; }
+    .hl-green { color: #10b981; font-weight: bold; }
+
+    /* QUIZ */
+    .quiz-option {
+      background: var(--bg-card-hover);
+      border: 1px solid var(--border-color);
+      padding: 1rem;
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .quiz-option.correct { background: var(--server-bg) !important; border-color: var(--server-color) !important; color: var(--server-color); }
+    .quiz-option.incorrect { background: var(--danger-bg) !important; border-color: var(--danger-color) !important; color: var(--danger-color); }
+    .radio-circle { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--text-dim); }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--text-dim);
+      font-size: 0.875rem;
+      border-top: 1px solid var(--border-color);
+      margin-top: 3rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- HERO -->
+    <header class="hero">
+      <div class="badge-group">
+        <span class="badge badge-server">Zod Schema Validation</span>
+        <span class="badge badge-purple">registerSchema.safeParse</span>
+        <span class="badge badge-client">Dual-Layer Defense</span>
+      </div>
+      <h1>Form Validation with Zod &amp; Server Actions</h1>
+      <p class="hero-subtitle">
+        Master production form validation using Zod schemas: share a single validation contract between client pre-flight checks and server-side action guards.
+      </p>
+    </header>
+
+    <!-- SECTION 1: ARCHITECTURE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">⚙️</div>
+        <h2>1. Dual-Layer Validation Architecture (Defense in Depth)</h2>
+      </div>
+
+      <div class="arch-grid">
+        <div class="arch-box client-val">
+          <div class="arch-title">
+            <span>🌐 Layer 1: Client Pre-Flight Validation</span>
+          </div>
+          <p style="font-size: 0.9rem; color: var(--text-muted);">
+            Executes <code>registerSchema.safeParse(newUser)</code> inside <code>handleFormAction</code>.<br>
+            If invalid ➔ Extracts <code>z.flattenError(error).fieldErrors</code>, updates React state, and <strong>stops network execution on client!</strong>
+          </p>
+        </div>
+
+        <div class="arch-box server-val">
+          <div class="arch-title">
+            <span>⚙️ Layer 2: Server Action Validation Guard</span>
+          </div>
+          <p style="font-size: 0.9rem; color: var(--text-muted);">
+            Never trust client inputs! Server Action re-executes <code>registerSchema.safeParse(formData)</code>.<br>
+            If an attacker bypasses client JS via Postman or Curl, the Server Action rejects invalid data and returns <code>{ errors }</code>.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: ZOD SCHEMA & FLATTEN ERROR -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4);">📜</div>
+        <h2>2. Zod Schema Definition &amp; `flattenError` Formatting</h2>
+      </div>
+
+      <div style="font-family: 'Fira Code', monospace; background: #020617; padding: 1.25rem; border-radius: var(--radius-sm); font-size: 0.85rem; border-left: 4px solid var(--purple-color);">
+        // lib/schema/userSchema.js<br>
+        export const registerSchema = z.object({<br>
+        &nbsp;&nbsp;name: z.string().min(3, "Name should be at least 3 characters").max(100),<br>
+        &nbsp;&nbsp;email: z.email("Please enter a valid email"),<br>
+        &nbsp;&nbsp;password: z.string().regex(<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;"Enter at least 8 characters, with uppercase, lowercase, and a number."<br>
+        &nbsp;&nbsp;)<br>
+        });
+      </div>
+
+      <div style="margin-top: 1.25rem; padding: 1rem; background: rgba(56, 189, 248, 0.08); border-left: 4px solid var(--client-color); border-radius: var(--radius-sm);">
+        <strong style="color: var(--client-color); display: block; margin-bottom: 0.35rem;">✨ z.flattenError(error).fieldErrors Format:</strong>
+        <p style="font-size: 0.88rem; color: var(--text-main);">
+          Converts raw Zod error syntax trees into simple key-value objects matching form field names:<br>
+          <code style="color: #a7f3d0;">{ name: ["Min 3 chars"], password: ["Enter at least 8 characters, with uppercase, lowercase, and a number."] }</code>
+        </p>
+      </div>
+    </div>
+
+    <!-- SECTION 3: LIVE SIMULATOR -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🎮</div>
+        <h2>3. Live Interactive Zod Schema Validation Simulator</h2>
+      </div>
+
+      <div class="simulator-container">
+        <div class="sim-form">
+          <div class="form-group">
+            <label>Name (Zod min 3 chars)</label>
+            <input id="input-name" type="text" value="Ab">
+            <div id="err-name" class="err-msg"></div>
+          </div>
+
+          <div class="form-group">
+            <label>Email (Zod z.email())</label>
+            <input id="input-email" type="text" value="bad-email">
+            <div id="err-email" class="err-msg"></div>
+          </div>
+
+          <div class="form-group">
+            <label>Password (Zod Regex: 8+ chars, 1 Upper, 1 Lower, 1 Num)</label>
+            <input id="input-password" type="password" value="simple">
+            <div id="err-password" class="err-msg"></div>
+          </div>
+
+          <button class="sim-btn-submit" onclick="simulateZodValidation()">
+            ⚡ Validate &amp; Submit (registerSchema.safeParse)
+          </button>
+        </div>
+
+        <div id="sim-console" class="mock-console">
+          Console Log: System initialized. Click Validate & Submit to test Zod parsing.
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: CODE BREAKDOWN -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🔍</div>
+        <h2>4. Side-by-Side Code Breakdown: Client Page vs. Server Action</h2>
+      </div>
+
+      <div class="code-grid">
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span style="color: var(--client-color);">app/register/page.js (Client Pre-Flight)</span>
+          </div>
+          <div class="code-content"><span class="hl-str">"use client"</span>;
+
+<span class="hl-imp">import</span> { registerSchema } <span class="hl-imp">from</span> <span class="hl-str">"@/lib/schema/userSchema"</span>;
+<span class="hl-imp">import</span> { z } <span class="hl-imp">from</span> <span class="hl-str">"zod"</span>;
+
+<span class="hl-kw">const</span> <span class="hl-func">handleFormAction</span> = <span class="hl-kw">async</span> (formData) =&gt; {
+  <span class="hl-kw">const</span> newUser = {
+    <span class="hl-str">name</span>: formData.<span class="hl-func">get</span>(<span class="hl-str">"name"</span>),
+    <span class="hl-str">email</span>: formData.<span class="hl-func">get</span>(<span class="hl-str">"email"</span>),
+    <span class="hl-str">password</span>: formData.<span class="hl-func">get</span>(<span class="hl-str">"password"</span>),
+  };
+
+  <span class="hl-comment">// 1️⃣ Client Pre-flight Zod Check:</span>
+  <span class="hl-kw">const</span> { success, data, error } = 
+    registerSchema.<span class="hl-func">safeParse</span>(newUser);
+
+  <span class="hl-kw">if</span> (!success) {
+    <span class="hl-kw">return</span> <span class="hl-func">setErrors</span>(z.<span class="hl-func">flattenError</span>(error).fieldErrors);
+  }
+
+  <span class="hl-func">setErrors</span>({});
+  <span class="hl-kw">return</span> <span class="hl-purple">formAction</span>(data);
+};</div>
+        </div>
+
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span style="color: var(--server-color);">app/actions/userAction.js (Server Enforcement)</span>
+          </div>
+          <div class="code-content"><span class="hl-green">"use server"</span>;
+
+<span class="hl-imp">import</span> { registerSchema } <span class="hl-imp">from</span> <span class="hl-str">"@/lib/schema/userSchema"</span>;
+<span class="hl-imp">import</span> { z } <span class="hl-imp">from</span> <span class="hl-str">"zod"</span>;
+
+<span class="hl-kw">export async function</span> <span class="hl-func">registerUser</span>(_, formData) {
+  <span class="hl-comment">// ⚙️ 2️⃣ Server Enforcement Zod Check:</span>
+  <span class="hl-kw">const</span> { success, data, error } = 
+    registerSchema.<span class="hl-func">safeParse</span>(formData);
+
+  <span class="hl-kw">if</span> (!success) {
+    <span class="hl-kw">return</span> { <span class="hl-str">errors</span>: z.<span class="hl-func">flattenError</span>(error).fieldErrors };
+  }
+
+  <span class="hl-kw">return</span> { <span class="hl-str">message</span>: <span class="hl-str">`</span><span class="hl-str">${formData.email}</span><span class="hl-str"> registered`</span>, data };
+}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 5: KNOWLEDGE CHECK -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">❓</div>
+        <h2>5. Quick Knowledge Check</h2>
+      </div>
+
+      <div>
+        <h4 style="margin-bottom: 0.75rem;">Q1: Why should registerSchema.safeParse() be executed on BOTH client and server?</h4>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>A) Because Next.js requires all functions to run twice.</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, true)">
+          <span class="radio-circle"></span>
+          <span>B) Client validation provides instant UI feedback &amp; blocks bad network calls; Server validation guarantees security if client JS is bypassed.</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>C) Zod schemas can only validate half the inputs at a time.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 6: POORA SAAR / HINGLISH GOLDEN RULE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4);">💡</div>
+        <h2>6. Poora Saar &amp; Golden Master Rule (Hinglish)</h2>
+      </div>
+
+      <div style="padding: 1.5rem; background: #020617; border-left: 5px solid var(--purple-color); border-radius: var(--radius-md);">
+        <h3 style="color: var(--purple-color); margin-bottom: 0.75rem; font-size: 1.15rem;">💡 Form Validation With Zod Ka Poora Saar:</h3>
+
+        <p style="font-size: 0.98rem; color: var(--text-main); line-height: 1.8; margin-bottom: 1rem;">
+          Manual `if` conditions (jaise `if (email.indexOf("@") === -1)`) se form validation karna amateur tareeka hai. Production apps me <strong>Zod Schema</strong> use hota hai.
+        </p>
+
+        <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 1.25rem;">
+          Zod validation <strong>Dual-Layer Defense</strong> par kaam karta hai:
+          <br>1. **Single Source of Truth (`userSchema.js`)**: Ek central file me `registerSchema` define karte hain (e.g. `z.email()`, `z.string().min(3)`, `z.string().regex(...)`).
+          <br>2. **Layer 1 (Client Pre-Flight)**: Form submit hote hi `registerSchema.safeParse(newUser)` chalta hai. Agar validation fail huyi ➔ `z.flattenError(error).fieldErrors` se errors nikaal kar screen par dikha dete hain aur **Server Call KO WAHIN BLOCK kar dete hain**!
+          <br>3. **Layer 2 (Server Enforcement)**: Server Action ke andar `registerSchema.safeParse(formData)` phirse run karta hai. Isse agar koi hacker Postman/Curl se direct API hit kare, tab bhi Server use block kar deta hai!
+        </p>
+
+        <div style="background: rgba(168, 85, 247, 0.1); border: 1px dashed var(--purple-color); padding: 1rem; border-radius: var(--radius-sm); font-size: 0.9rem;">
+          <strong style="color: var(--purple-color); display: block; margin-bottom: 0.5rem;">🔥 Zod Validation Golden Pattern:</strong>
+          <ul style="padding-left: 1.2rem; line-height: 1.8; color: var(--text-main);">
+            <li><strong>1. Single Shared Schema 📜</strong> ➔ Define Zod schemas in <code>lib/schema/</code> and import on both client page and server action.</li>
+            <li><strong>2. safeParse Everywhere 🛡️</strong> ➔ Always use <code>safeParse()</code> (not <code>parse()</code>) to handle errors gracefully without app crashes.</li>
+            <li><strong>3. flattenError Parsing 🏷️</strong> ➔ Use <code>z.flattenError(error).fieldErrors</code> to get clean `{ fieldName: ["Error msg"] }` objects for form UI.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Next.js Form Validation with Zod Guide &bull; Section 11 Lesson 05
+    </footer>
+  </div>
+
+  <script>
+    function simulateZodValidation() {
+      const name = document.getElementById('input-name').value;
+      const email = document.getElementById('input-email').value;
+      const password = document.getElementById('input-password').value;
+      
+      const errName = document.getElementById('err-name');
+      const errEmail = document.getElementById('err-email');
+      const errPassword = document.getElementById('err-password');
+      const consoleBox = document.getElementById('sim-console');
+
+      errName.innerText = "";
+      errEmail.innerText = "";
+      errPassword.innerText = "";
+
+      const fieldErrors = {};
+
+      if (name.length < 3) fieldErrors.name = ["Name should be at least 3 characters"];
+      if (!email.includes("@") || !email.includes(".")) fieldErrors.email = ["Please enter a valid email"];
+      
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+      if (!passwordRegex.test(password)) {
+        fieldErrors.password = ["Enter at least 8 characters, with uppercase, lowercase, and a number."];
+      }
+
+      if (Object.keys(fieldErrors).length) {
+        if (fieldErrors.name) errName.innerText = fieldErrors.name[0];
+        if (fieldErrors.email) errEmail.innerText = fieldErrors.email[0];
+        if (fieldErrors.password) errPassword.innerText = fieldErrors.password[0];
+
+        consoleBox.innerHTML = `
+          <span style="color: var(--danger-color)">[LAYER 1: CLIENT ZOD safeParse FAILED]</span><br>
+          <span style="color: var(--warning-color)">[z.flattenError(error).fieldErrors]</span><br>
+          <span style="color: var(--warning-color)">${JSON.stringify(fieldErrors, null, 2)}</span><br>
+          <span style="color: var(--danger-color)">🛑 Server Action WAS NOT CALLED! Zero network calls sent.</span>
+        `;
+        return;
+      }
+
+      consoleBox.innerHTML = `
+        <span style="color: var(--client-color)">[LAYER 1: CLIENT ZOD safeParse PASSED ✅]</span><br>
+        <span style="color: var(--purple-color)">[INVOKING SERVER ACTION] formAction({ name: "${name}", email: "${email}", ... })</span><br>
+        <span style="color: var(--server-color)">[LAYER 2: SERVER ZOD safeParse PASSED ✅] Data validated on Node.js!</span><br>
+        <span style="color: var(--server-color)">[SERVER RESPONSE] { message: "${email} registered", data: { name: "${name}", email: "${email}" } } ✅</span>
+      `;
+    }
+
+    function checkAnswer(element, isCorrect) {
+      const parent = element.parentElement;
+      parent.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('correct', 'incorrect'));
+      if (isCorrect) element.classList.add('correct');
+      else element.classList.add('incorrect');
+    }
+  </script>
+</body>
+</html>

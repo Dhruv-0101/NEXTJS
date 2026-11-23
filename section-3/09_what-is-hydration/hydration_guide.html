@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What is Hydration in Next.js? - Master Guide</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-dark: #07090e;
+            --bg-card: #111622;
+            --bg-card-hover: #182030;
+            --bg-code: #0b0e17;
+            --border-color: #1e293b;
+            
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-accent: #38bdf8;
+            
+            --hydrate-cyan: #06b6d4;
+            --hydrate-bg: rgba(6, 182, 212, 0.1);
+            
+            --static-green: #10b981;
+            --next-purple: #c084fc;
+            --dynamic-rose: #f43f5e;
+            --accent-amber: #fbbf24;
+            
+            --gradient-hero: linear-gradient(135deg, #0e7490 0%, #0f172a 50%, #311042 100%);
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --radius-sm: 6px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 5px;
+        }
+
+        /* Sticky Navigation */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(7, 9, 14, 0.85);
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(90deg, var(--hydrate-cyan), var(--next-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.25rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--hydrate-cyan);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: var(--gradient-hero);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 3.5rem 2.5rem;
+            margin-top: 1rem;
+            margin-bottom: 3rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .hero-badges {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.25rem;
+        }
+
+        .badge {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 0.35rem 0.85rem;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .badge.hydrate { color: var(--hydrate-cyan); border-color: rgba(6, 182, 212, 0.4); }
+        .badge.static { color: var(--static-green); border-color: rgba(16, 185, 129, 0.4); }
+
+        .hero h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.8rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        .hero p {
+            font-size: 1.15rem;
+            color: #cbd5e1;
+            max-width: 850px;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-hinglish {
+            background: rgba(0, 0, 0, 0.4);
+            border-left: 4px solid var(--hydrate-cyan);
+            padding: 1rem 1.25rem;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            font-size: 0.98rem;
+            color: #cffaff;
+        }
+
+        /* Section Title Header */
+        .section-header {
+            margin-bottom: 2rem;
+            margin-top: 1rem;
+        }
+
+        .section-header h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-header p {
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            font-size: 1rem;
+        }
+
+        /* Card Component */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.75rem;
+            transition: all 0.25s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(6, 182, 212, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        /* Quote Box */
+        .txt-note-card {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(15, 23, 42, 0.95) 100%);
+            border: 2px solid var(--hydrate-cyan);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        /* Line by Line Code Table & Box */
+        .line-by-line-container {
+            background: #090d16;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .code-line-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.9rem;
+            border-radius: var(--radius-sm);
+            transition: background 0.2s ease;
+        }
+
+        .code-line-row:hover {
+            background: rgba(255, 255, 255, 0.025);
+        }
+
+        .line-num {
+            font-family: 'Fira Code', monospace;
+            color: #64748b;
+            font-weight: 600;
+            width: 35px;
+            flex-shrink: 0;
+        }
+
+        .code-snippet {
+            font-family: 'Fira Code', monospace;
+            color: #e2e8f0;
+            width: 44%;
+            flex-shrink: 0;
+            overflow-x: auto;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 0.35rem 0.75rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .line-explanation {
+            color: #cbd5e1;
+            flex-grow: 1;
+            line-height: 1.5;
+        }
+
+        .badge-hydrate {
+            background: rgba(6, 182, 212, 0.15);
+            color: var(--hydrate-cyan);
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Interactive Hydration Simulator */
+        .simulator-card {
+            background: #090d16;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin-bottom: 3rem;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        }
+
+        .step-pill {
+            padding: 0.5rem 1rem;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: #1e293b;
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+        }
+
+        .step-pill.active {
+            background: rgba(6, 182, 212, 0.2);
+            color: var(--hydrate-cyan);
+            border-color: var(--hydrate-cyan);
+        }
+
+        /* Code Block */
+        .code-block {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            color: #e2e8f0;
+            overflow-x: auto;
+            margin: 1rem 0;
+            line-height: 1.5;
+        }
+
+        .kw { color: #f472b6; }
+        .fn { color: #60a5fa; }
+        .str { color: #34d399; }
+        .cm { color: #64748b; font-style: italic; }
+
+        /* Master Comparison Table */
+        .table-wrapper {
+            overflow-x: auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            margin-bottom: 3rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 1.1rem 1.4rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.92rem;
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.03);
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-main);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.015);
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border-color);
+            padding: 2.5rem 0;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 4rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-logo">
+            <i class="fa-solid fa-droplet"></i> Hydration Master Guide
+        </div>
+        <ul class="nav-links">
+            <li><a href="#overview"><i class="fa-solid fa-layer-group"></i> Overview</a></li>
+            <li><a href="#definition"><i class="fa-solid fa-quote-left"></i> Definition</a></li>
+            <li><a href="#pipeline"><i class="fa-solid fa-diagram-project"></i> 5-Step Pipeline</a></li>
+            <li><a href="#analogies"><i class="fa-solid fa-lightbulb"></i> Real Analogies</a></li>
+            <li><a href="#mismatches"><i class="fa-solid fa-triangle-exclamation"></i> Mismatch Fixes</a></li>
+            <li><a href="#simulator"><i class="fa-solid fa-play"></i> Interactive Simulator</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+
+        <!-- Hero Section -->
+        <section class="hero" id="overview">
+            <div class="hero-badges">
+                <span class="badge hydrate"><i class="fa-solid fa-droplet"></i> React Hydration</span>
+                <span class="badge static"><i class="fa-solid fa-bolt"></i> SSR Static HTML</span>
+                <span class="badge hydrate"><i class="fa-solid fa-hand-pointer"></i> Attach Event Listeners</span>
+            </div>
+            <h1>What is Hydration in Next.js?</h1>
+            <p>
+                Learn how React takes pre-rendered static HTML sent from the server and <strong>"hydrates" it into a fully interactive web application</strong> by attaching JavaScript event handlers, state hooks, and virtual DOM trees.
+            </p>
+            <div class="hero-hinglish">
+                🧠 <strong>Hinglish Summary:</strong><br>
+                Next.js server pehle ek <strong>suukha static HTML page (without JavaScript interactivity)</strong> banata hai jisse browser screen par instantly text aur layout dikh jata hai. Phir jab browser me JavaScript download hokar execute hoti hai, toh React HTML elements ke uper <code>onClick</code> listeners, state (`useState`), aur DOM events ko jodta hai. Is <strong>suukhe HTML me jaan daalne ke process ko HYDRATION bolte hain!</strong>
+            </div>
+        </section>
+
+
+        <!-- Section 1: Note from Hydration.txt -->
+        <section id="definition">
+            <div class="txt-note-card">
+                <h3 style="font-family: 'Outfit', sans-serif; color: var(--hydrate-cyan); font-size: 1.5rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 10px;">
+                    <i class="fa-solid fa-file-lines"></i> Definition from `Hydration.txt`:
+                </h3>
+                <p style="font-size: 1.25rem; color: #ecfeff; font-weight: 600; font-family: 'Fira Code', monospace; line-height: 1.6;">
+                    "Hydration is the process of adding interactivity to our pre-rendered HTML pages."
+                </p>
+            </div>
+        </section>
+
+
+        <!-- Section 2: The 5-Step Hydration Pipeline -->
+        <section id="pipeline">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-diagram-project" style="color: var(--hydrate-cyan);"></i> The 5-Step Hydration Pipeline</h2>
+                <p>From initial HTTP request to a fully interactive client React application.</p>
+            </div>
+
+            <div class="grid-3">
+                <div class="card" style="border-top: 4px solid var(--server-blue);">
+                    <h4 style="color: var(--server-blue); margin-bottom: 0.5rem;">
+                        Step 1: Server Pre-rendering (SSR)
+                    </h4>
+                    <p style="font-size: 0.88rem; color: #cbd5e1;">
+                        Next.js Node.js server executes React components and converts them into a pure static HTML string.
+                    </p>
+                </div>
+
+                <div class="card" style="border-top: 4px solid var(--accent-amber);">
+                    <h4 style="color: var(--accent-amber); margin-bottom: 0.5rem;">
+                        Step 2: HTML Delivered to Browser
+                    </h4>
+                    <p style="font-size: 0.88rem; color: #cbd5e1;">
+                        Browser receives HTML and renders text/layout instantly (0ms UI). <em>Note: Buttons cannot be clicked yet!</em>
+                    </p>
+                </div>
+
+                <div class="card" style="border-top: 4px solid var(--next-purple);">
+                    <h4 style="color: var(--next-purple); margin-bottom: 0.5rem;">
+                        Step 3: JS Bundle Download
+                    </h4>
+                    <p style="font-size: 0.88rem; color: #cbd5e1;">
+                        Browser downloads the client JavaScript bundle containing React runtime & Client Components (`"use client"`).
+                    </p>
+                </div>
+
+                <div class="card" style="border-top: 4px solid var(--hydrate-cyan);">
+                    <h4 style="color: var(--hydrate-cyan); margin-bottom: 0.5rem;">
+                        Step 4: React Hydration Phase
+                    </h4>
+                    <p style="font-size: 0.88rem; color: #cbd5e1;">
+                        React walks the existing DOM tree, attaches <code>onClick</code> listeners, initializes <code>useState</code> hooks, and binds Virtual DOM to Real DOM.
+                    </p>
+                </div>
+
+                <div class="card" style="border-top: 4px solid var(--static-green);">
+                    <h4 style="color: var(--static-green); margin-bottom: 0.5rem;">
+                        Step 5: Fully Interactive App
+                    </h4>
+                    <p style="font-size: 0.88rem; color: #cbd5e1;">
+                        Page is now 100% hydrated! Clicking buttons triggers state updates, API calls, and smooth client-side routing.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 3: Real World Analogies -->
+        <section id="analogies">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-lightbulb" style="color: var(--accent-amber);"></i> Real-World Analogies</h2>
+                <p>Intuitive analogies to understand dry HTML vs hydrated JS interactivity.</p>
+            </div>
+
+            <div class="grid-2">
+                <div class="card" style="border-left: 4px solid var(--accent-amber);">
+                    <h3 style="color: var(--accent-amber); font-family: 'Outfit', sans-serif; font-size: 1.3rem; margin-bottom: 0.5rem;">
+                        🍜 Analogy 1: Instant Maggi Noodles
+                    </h3>
+                    <p style="font-size: 0.92rem; color: #cbd5e1; line-height: 1.6;">
+                        • <strong>Server Pre-rendered HTML = Dry Noodles Pack:</strong> It has shape and structure, but you cannot eat it raw.<br>
+                        • <strong>Hydration = Adding Boiling Water & Spices (JS):</strong> Water fills the noodles and makes them ready & delicious to eat (Interactive UI)!
+                    </p>
+                </div>
+
+                <div class="card" style="border-left: 4px solid var(--hydrate-cyan);">
+                    <h3 style="color: var(--hydrate-cyan); font-family: 'Outfit', sans-serif; font-size: 1.3rem; margin-bottom: 0.5rem;">
+                        🏠 Analogy 2: House Electric Wiring
+                    </h3>
+                    <p style="font-size: 0.92rem; color: #cbd5e1; line-height: 1.6;">
+                        • <strong>Server Pre-rendered HTML = Building Walls & Plastic Switches:</strong> The physical structure is complete, but pressing a light switch does nothing.<br>
+                        • <strong>Hydration = Laying Electric Cables & Powering Grid (JS):</strong> Connecting live electricity wires to the switches so pressing them turns on the lights (Event Handlers)!
+                    </p>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 4: Hydration Mismatch Errors & 4 Solutions -->
+        <section id="mismatches">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-triangle-exclamation" style="color: var(--dynamic-rose);"></i> Hydration Mismatch Errors & Solutions</h2>
+                <p>What causes "Text content does not match server-rendered HTML" and how to fix it.</p>
+            </div>
+
+            <div class="card" style="border-top: 4px solid var(--dynamic-rose); margin-bottom: 2.5rem;">
+                <h4 style="color: var(--dynamic-rose); font-size: 1.15rem; margin-bottom: 0.5rem;">
+                    ⚠️ What is a Hydration Mismatch?
+                </h4>
+                <p style="font-size: 0.93rem; color: #cbd5e1; line-height: 1.6;">
+                    If the HTML rendered by the Server on Node.js DOES NOT MATCH the HTML generated by React in the browser during hydration (e.g. using <code>new Date()</code>, <code>Math.random()</code>, or <code>window.innerWidth</code>), React throws a <strong>Hydration Failed Warning</strong>!
+                </p>
+
+                <h4 style="color: var(--static-green); font-size: 1.1rem; margin-top: 1.25rem; margin-bottom: 0.5rem;">
+                    🛠️ 4 Solutions to Fix Hydration Mismatches:
+                </h4>
+                <div class="code-block">
+<span class="cm">// Solution 1: Use useEffect() for Client-Only Rendering</span>
+<span class="kw">const</span> [isClient, setIsClient] = useState(<span class="kw">false</span>);
+useEffect(() => { setIsClient(<span class="kw">true</span>); }, []);
+<span class="kw">if</span> (!isClient) <span class="kw">return</span> <span class="kw">null</span>;
+
+<span class="cm">// Solution 2: Use suppressHydrationWarning Prop on DOM elements</span>
+&lt;<span class="fn">span</span> <span class="kw">suppressHydrationWarning</span>&gt;{<span class="kw">new</span> Date().toLocaleTimeString()}&lt;/<span class="fn">span</span>&gt;
+
+<span class="cm">// Solution 3: Disable SSR for Client Component using next/dynamic</span>
+<span class="kw">import</span> dynamic <span class="kw">from</span> <span class="str">'next/dynamic'</span>;
+<span class="kw">const</span> ClientOnlyComp = dynamic(() => import(<span class="str">'@/components/ClientOnly'</span>), { ssr: <span class="kw">false</span> });
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Section 5: Interactive Hydration Visual Simulator -->
+        <section id="simulator">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-play" style="color: var(--accent-amber);"></i> Interactive Hydration Step Simulator</h2>
+                <p>Click through the 5 hydration steps to see HTML transition into an interactive app live!</p>
+            </div>
+
+            <div class="simulator-card">
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
+                    <button class="step-pill active" id="pill-1" onclick="setHydrationStep(1)">1. Server HTML (SSR)</button>
+                    <button class="step-pill" id="pill-2" onclick="setHydrationStep(2)">2. Browser HTML Render (0ms)</button>
+                    <button class="step-pill" id="pill-3" onclick="setHydrationStep(3)">3. Download JS Bundle</button>
+                    <button class="step-pill" id="pill-4" onclick="setHydrationStep(4)">4. React Hydrating...</button>
+                    <button class="step-pill" id="pill-5" onclick="setHydrationStep(5)">5. Fully Hydrated App! 🎉</button>
+                </div>
+
+                <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.75rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <span id="step-title" style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; font-weight: 700; color: var(--hydrate-cyan);">
+                            Step 1: Server Pre-rendering (SSR)
+                        </span>
+                        <span id="step-status" class="badge" style="background: rgba(59, 130, 246, 0.2); color: var(--server-blue);">Node.js Server</span>
+                    </div>
+
+                    <p id="step-desc" style="color: #cbd5e1; font-size: 0.95rem; margin-bottom: 1.5rem; line-height: 1.6;">
+                        Node.js server executes component tree and generates plain static HTML string without active JS event listeners.
+                    </p>
+
+                    <!-- Interactive Demo Button Box -->
+                    <div style="background: var(--bg-code); padding: 1.5rem; border-radius: var(--radius-md); text-align: center; border: 1px solid var(--border-color);">
+                        <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 0.75rem;">Interactive Counter Component:</p>
+                        <button id="sim-btn" disabled style="background: #334155; color: #94a3b8; border: 1px solid #475569; padding: 0.75rem 1.5rem; border-radius: var(--radius-md); font-weight: 700; cursor: not-allowed; transition: all 0.3s ease;">
+                            Likes: <span id="sim-count">0</span> (Un-hydrated / Disabled)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <p>Next.js Hydration Master Guide</p>
+        </footer>
+
+    </div>
+
+    <!-- Simulator Script -->
+    <script>
+        let currentLikes = 0;
+
+        function setHydrationStep(step) {
+            // Update pills
+            for (let i = 1; i <= 5; i++) {
+                const pill = document.getElementById(`pill-${i}`);
+                if (i === step) pill.classList.add('active');
+                else pill.classList.remove('active');
+            }
+
+            const title = document.getElementById('step-title');
+            const desc = document.getElementById('step-desc');
+            const status = document.getElementById('step-status');
+            const btn = document.getElementById('sim-btn');
+
+            if (step === 1) {
+                title.innerText = "Step 1: Server Pre-rendering (SSR)";
+                status.innerText = "Node.js Server";
+                status.style.background = "rgba(59, 130, 246, 0.2)";
+                status.style.color = "var(--server-blue)";
+                desc.innerText = "Node.js server converts React components into static HTML string. Zero client JS executing.";
+                btn.disabled = true;
+                btn.style.cursor = "not-allowed";
+                btn.style.background = "#334155";
+                btn.style.color = "#94a3b8";
+                btn.innerHTML = 'Likes: <span id="sim-count">' + currentLikes + '</span> (Server HTML Shell)';
+            } else if (step === 2) {
+                title.innerText = "Step 2: HTML Delivered to Browser (0ms)";
+                status.innerText = "Static Browser Paint";
+                status.style.background = "rgba(245, 158, 11, 0.2)";
+                status.style.color = "var(--accent-amber)";
+                desc.innerText = "Browser paints HTML on screen immediately. Text is visible, but clicking button does NOTHING because JS listeners aren't attached!";
+                btn.disabled = true;
+                btn.style.cursor = "not-allowed";
+                btn.style.background = "rgba(245, 158, 11, 0.1)";
+                btn.style.color = "var(--accent-amber)";
+                btn.innerHTML = 'Likes: <span id="sim-count">' + currentLikes + '</span> (Static HTML - Click does nothing)';
+            } else if (step === 3) {
+                title.innerText = "Step 3: Download JS Bundle";
+                status.innerText = "Downloading JS...";
+                status.style.background = "rgba(192, 132, 252, 0.2)";
+                status.style.color = "var(--next-purple)";
+                desc.innerText = "Browser downloads React runtime and Client Component JavaScript bundle in background.";
+                btn.disabled = true;
+                btn.style.cursor = "not-allowed";
+                btn.style.background = "rgba(192, 132, 252, 0.1)";
+                btn.style.color = "var(--next-purple)";
+                btn.innerHTML = 'Likes: <span id="sim-count">' + currentLikes + '</span> (Downloading JS Bundle...)';
+            } else if (step === 4) {
+                title.innerText = "Step 4: React Hydrating DOM...";
+                status.innerText = "Attaching Listeners";
+                status.style.background = "rgba(6, 182, 212, 0.2)";
+                status.style.color = "var(--hydrate-cyan)";
+                desc.innerText = "React walks the existing DOM elements, initializes useState(0) hook, and binds onClick event handlers.";
+                btn.disabled = true;
+                btn.style.cursor = "not-allowed";
+                btn.style.background = "rgba(6, 182, 212, 0.2)";
+                btn.style.color = "var(--hydrate-cyan)";
+                btn.innerHTML = 'Likes: <span id="sim-count">' + currentLikes + '</span> (Hydrating Event Handlers...)';
+            } else if (step === 5) {
+                title.innerText = "Step 5: Fully Hydrated App! 🎉";
+                status.innerText = "100% Interactive";
+                status.style.background = "rgba(16, 185, 129, 0.2)";
+                status.style.color = "var(--static-green)";
+                desc.innerText = "Page is fully hydrated! Try clicking the button below now to update state and trigger onClick handlers live!";
+                btn.disabled = false;
+                btn.style.cursor = "pointer";
+                btn.style.background = "rgba(16, 185, 129, 0.2)";
+                btn.style.borderColor = "var(--static-green)";
+                btn.style.color = "var(--static-green)";
+                btn.onclick = () => {
+                    currentLikes++;
+                    document.getElementById('sim-count').innerText = currentLikes;
+                };
+                btn.innerHTML = 'Likes: <span id="sim-count">' + currentLikes + '</span> (Click Me - Hydrated!)';
+            }
+        }
+    </script>
+</body>
+</html>
