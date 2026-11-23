@@ -35,3 +35,4 @@ export default function Likes() {
 
 // Servers components execute only on the server
 // Client components execute on the server as well as on the client
+//Is line ka simple matlab hai: "Server component ke andar jab hum client component (Likes.js) use karte hain jisme useState / onClick hai, toh agar hum usme "use client" mark kar dein toh koi error nahi aati."
