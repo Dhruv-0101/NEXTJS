@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Section 8: Next.js MongoDB & Mongoose Integration - Master Learning Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-dark: #070a11;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border-color: #334155;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --server-color: #10b981;
+      --server-bg: rgba(16, 185, 129, 0.12);
+      --server-border: rgba(16, 185, 129, 0.35);
+      
+      --client-color: #38bdf8;
+      --client-bg: rgba(56, 189, 248, 0.12);
+      --client-border: rgba(56, 189, 248, 0.35);
+
+      --danger-color: #f43f5e;
+      --danger-bg: rgba(244, 63, 94, 0.12);
+      --danger-border: rgba(244, 63, 94, 0.35);
+      
+      --warning-color: #fbbf24;
+      --warning-bg: rgba(251, 191, 36, 0.12);
+      --warning-border: rgba(251, 191, 36, 0.35);
+      
+      --purple-color: #a855f7;
+      --purple-bg: rgba(168, 85, 247, 0.12);
+      --purple-border: rgba(168, 85, 247, 0.35);
+
+      --mongo-green: #00ed64;
+      --mongo-bg: rgba(0, 237, 100, 0.12);
+      --mongo-border: rgba(0, 237, 100, 0.35);
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2.5rem 1rem;
+      min-height: 100vh;
+    }
+
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    header.hero {
+      text-align: center;
+      padding: 3.5rem 1.5rem;
+      background: radial-gradient(circle at 50% 0%, rgba(0, 237, 100, 0.18) 0%, rgba(7, 10, 17, 0) 70%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 2.5rem;
+    }
+
+    .badge-group {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+    }
+
+    .badge-next { background: rgba(255, 255, 255, 0.05); color: #fff; }
+    .badge-mongo { background: var(--mongo-bg); color: var(--mongo-green); border-color: var(--mongo-border); }
+    .badge-blue { background: var(--client-bg); color: var(--client-color); border-color: var(--client-border); }
+
+    h1 {
+      font-size: 2.6rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #ffffff 30%, #00ed64 70%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      max-width: 840px;
+      margin: 0 auto;
+    }
+
+    /* CHAPTER GRID */
+    .chapter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .chapter-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chapter-card:hover {
+      border-color: #475569;
+      transform: translateY(-3px);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+    }
+
+    .chapter-top { margin-bottom: 1.25rem; }
+
+    .chapter-num {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chapter-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.6rem;
+      line-height: 1.35;
+    }
+
+    .chapter-desc {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    .chapter-tags {
+      display: flex;
+      gap: 0.45rem;
+      margin: 1rem 0;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      font-size: 0.72rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      font-family: 'Fira Code', monospace;
+      background: rgba(255, 255, 255, 0.06);
+      color: #cbd5e1;
+    }
+
+    .btn-open {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
+      font-weight: 700;
+      text-decoration: none;
+      color: #000;
+      background: var(--mongo-green);
+      transition: all 0.2s ease;
+    }
+
+    .btn-open:hover {
+      background: #047857;
+      color: #fff;
+    }
+
+    /* STATS */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+
+    @media (max-width: 768px) { .stats-grid { grid-template-columns: 1fr 1fr; } }
+
+    .stat-card {
+      background: #0b1120;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      text-align: center;
+    }
+
+    .stat-num {
+      font-size: 1.8rem;
+      font-weight: 800;
+      font-family: 'Fira Code', monospace;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* ARCHITECTURE CALLOUT */
+    .arch-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      margin-bottom: 2.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- HERO HEADER -->
+    <header class="hero">
+      <div class="badge-group">
+        <span class="badge badge-next">Next.js 15 Database</span>
+        <span class="badge badge-mongo"><i class="fa-solid fa-leaf"></i> MongoDB & Mongoose</span>
+        <span class="badge badge-blue">Section 08</span>
+      </div>
+      <h1>MongoDB & Mongoose Database Integration</h1>
+      <p class="hero-subtitle">
+        Graduate from flat JSON files to a production-grade NoSQL database! Master connection pooling with <code>readyState</code>, preventing <code>OverwriteModelError</code> during Fast Refresh, and building full-stack CRUD with Mongoose.
+      </p>
+    </header>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-num" style="color: #00ed64;">4</div>
+        <div class="stat-label">Core Chapters</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color: #38bdf8;">100%</div>
+        <div class="stat-label">Real MongoDB Storage</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color: #fbbf24;">Safe</div>
+        <div class="stat-label">HMR Fast Refresh Protected</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color: #a855f7;">Full</div>
+        <div class="stat-label">CRUD with { new: true }</div>
+      </div>
+    </div>
+
+    <!-- CHAPTER CARDS GRID -->
+    <div class="chapter-grid">
+
+      <!-- CHAPTER 01 -->
+      <div class="chapter-card">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--mongo-green);">
+            <span>Chapter 01</span>
+            <span class="tag" style="color: #00ed64;">Connection Caching</span>
+          </div>
+          <h2 class="chapter-title">Connecting MongoDB in Next.js</h2>
+          <p class="chapter-desc">
+            Why traditional server startup connections fail in Next.js serverless functions, how <code>mongoose.connection.readyState === 1</code> prevents socket pool exhaustion, and querying raw MongoDB collections.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">mongoose.connect</span>
+            <span class="tag">readyState === 1</span>
+            <span class="tag">Connection Pool</span>
+          </div>
+        </div>
+        <a href="01_connecting-mongodb/mongodb_connection_guide.html" class="btn-open">
+          Open Guide 01 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- CHAPTER 02 -->
+      <div class="chapter-card">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--danger-color);">
+            <span>Chapter 02</span>
+            <span class="tag" style="color: #f43f5e;">OverwriteModelError</span>
+          </div>
+          <h2 class="chapter-title">Creating Mongoose Models in Next.js</h2>
+          <p class="chapter-desc">
+            The infamous Fast Refresh model compilation error and how the universal singleton pattern <code>mongoose.models.Todo || mongoose.model("Todo", schema)</code> keeps Next.js running smoothly.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">mongoose.models.Todo</span>
+            <span class="tag">Fast Refresh</span>
+            <span class="tag">Schema Validation</span>
+          </div>
+        </div>
+        <a href="02_creating-mongoose-models-in-nextjs/mongoose_models_guide.html" class="btn-open">
+          Open Guide 02 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- CHAPTER 03 -->
+      <div class="chapter-card">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--server-color);">
+            <span>Chapter 03</span>
+            <span class="tag" style="color: #10b981;">Create & Read</span>
+          </div>
+          <h2 class="chapter-title">MongoDB CRUD: Create & Read</h2>
+          <p class="chapter-desc">
+            Refactoring GET & POST endpoints to use <code>Todo.find()</code> and <code>Todo.create()</code>, understanding Mongoose's virtual <code>id</code> vs binary <code>_id</code>, and initial React state loading.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">Todo.find()</span>
+            <span class="tag">Todo.create()</span>
+            <span class="tag">Virtual id</span>
+          </div>
+        </div>
+        <a href="03_mongodb-crud-operation-in-nextjs-create-and-read/mongodb_create_read_guide.html" class="btn-open">
+          Open Guide 03 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- CHAPTER 04 -->
+      <div class="chapter-card">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--purple-color);">
+            <span>Chapter 04</span>
+            <span class="tag" style="color: #a855f7;">Update & Delete</span>
+          </div>
+          <h2 class="chapter-title">MongoDB CRUD: Update & Delete</h2>
+          <p class="chapter-desc">
+            Dynamic Route Handlers with Mongoose! Why <code>{ new: true }</code> is essential in <code>findByIdAndUpdate</code>, deleting with <code>findByIdAndDelete</code> (HTTP 204), and inline editing in React.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">findByIdAndUpdate</span>
+            <span class="tag">{ new: true }</span>
+            <span class="tag">findByIdAndDelete</span>
+          </div>
+        </div>
+        <a href="04_mongodb-crud-operation-in-nextjs-update-and-delete/mongodb_update_delete_guide.html" class="btn-open">
+          Open Guide 04 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>
