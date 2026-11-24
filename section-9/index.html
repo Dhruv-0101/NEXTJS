@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Section 9: Next.js Authentication & Session Architecture - Master Learning Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-dark: #070a11;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border-color: #334155;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --server-color: #10b981;
+      --server-bg: rgba(16, 185, 129, 0.12);
+      --server-border: rgba(16, 185, 129, 0.35);
+      
+      --client-color: #38bdf8;
+      --client-bg: rgba(56, 189, 248, 0.12);
+      --client-border: rgba(56, 189, 248, 0.35);
+
+      --danger-color: #f43f5e;
+      --danger-bg: rgba(244, 63, 94, 0.12);
+      --danger-border: rgba(244, 63, 94, 0.35);
+      
+      --warning-color: #fbbf24;
+      --warning-bg: rgba(251, 191, 36, 0.12);
+      --warning-border: rgba(251, 191, 36, 0.35);
+      
+      --purple-color: #a855f7;
+      --purple-bg: rgba(168, 85, 247, 0.12);
+      --purple-border: rgba(168, 85, 247, 0.35);
+
+      --cookie-amber: #f59e0b;
+      --cookie-bg: rgba(245, 158, 11, 0.12);
+      --cookie-border: rgba(245, 158, 11, 0.35);
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2.5rem 1rem;
+      min-height: 100vh;
+    }
+
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    header.hero {
+      text-align: center;
+      padding: 3.5rem 1.5rem;
+      background: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.18) 0%, rgba(7, 10, 17, 0) 70%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 2.5rem;
+    }
+
+    .badge-group {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+    }
+
+    .badge-next { background: rgba(255, 255, 255, 0.05); color: #fff; }
+    .badge-blue { background: var(--client-bg); color: var(--client-color); border-color: var(--client-border); }
+    .badge-green { background: var(--server-bg); color: var(--server-color); border-color: var(--server-border); }
+    .badge-cookie { background: var(--cookie-bg); color: var(--cookie-amber); border-color: var(--cookie-border); }
+
+    h1 {
+      font-size: 2.6rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #ffffff 30%, #38bdf8 70%, #10b981 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      max-width: 840px;
+      margin: 0 auto;
+    }
+
+    /* STATS */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+
+    @media (max-width: 768px) { .stats-grid { grid-template-columns: 1fr 1fr; } }
+
+    .stat-card {
+      background: #0b1120;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      text-align: center;
+    }
+
+    .stat-num {
+      font-size: 1.8rem;
+      font-weight: 800;
+      font-family: 'Fira Code', monospace;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* CHAPTER GRID */
+    .chapter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .chapter-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chapter-card:hover {
+      border-color: #475569;
+      transform: translateY(-3px);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+    }
+
+    .chapter-top { margin-bottom: 1.25rem; }
+
+    .chapter-num {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chapter-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.6rem;
+      line-height: 1.35;
+    }
+
+    .chapter-desc {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    .chapter-tags {
+      display: flex;
+      gap: 0.45rem;
+      margin: 1rem 0;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      font-size: 0.72rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      font-family: 'Fira Code', monospace;
+      background: rgba(255, 255, 255, 0.06);
+      color: #cbd5e1;
+    }
+
+    .btn-open {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
+      font-weight: 700;
+      text-decoration: none;
+      color: #fff;
+      background: #1e293b;
+      border: 1px solid var(--border-color);
+      transition: all 0.2s ease;
+    }
+
+    .btn-open:hover {
+      background: #2563eb;
+      border-color: #3b82f6;
+    }
+
+    .btn-open.green-accent:hover { background: #059669; border-color: #10b981; }
+    .btn-open.amber-accent:hover { background: #d97706; border-color: #fbbf24; }
+    .btn-open.rose-accent:hover { background: #e11d48; border-color: #f43f5e; }
+    .btn-open.purple-accent:hover { background: #7c3aed; border-color: #a855f7; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- HERO -->
+    <header class="hero">
+      <div class="badge-group">
+        <span class="badge badge-next">Next.js 15 Security</span>
+        <span class="badge badge-cookie"><i class="fa-solid fa-cookie-bite"></i> Session-Based Auth</span>
+        <span class="badge badge-blue">Section 09</span>
+        <span class="badge badge-green">10 In-Depth Chapters</span>
+      </div>
+      <h1>Authentication & Session Architecture</h1>
+      <p class="hero-subtitle">
+        Master production-ready authentication in Next.js App Router: register, login, HttpOnly cookies, HMAC signature tampering protection, server-side session databases, bcrypt hashing, and protected endpoints.
+      </p>
+    </header>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-num" style="color: #38bdf8;">10</div>
+        <div class="stat-label">In-Depth Chapters</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color: #10b981;">Zero CORS</div>
+        <div class="stat-label">Same-Origin Architecture</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color: #fbbf24;">HttpOnly</div>
+        <div class="stat-label">XSS-Safe Cookies</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color: #a855f7;">Bcrypt</div>
+        <div class="stat-label">Salted Password Security</div>
+      </div>
+    </div>
+
+    <!-- CHAPTER CARDS GRID -->
+    <div class="chapter-grid">
+
+      <!-- CHAPTER 01 -->
+      <div class="chapter-card">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--client-color);">
+            <span>Chapter 01</span>
+            <span class="tag" style="color: #38bdf8;">Architecture</span>
+          </div>
+          <h2 class="chapter-title">Understanding Auth Flow in Next.js</h2>
+          <p class="chapter-desc">
+            How Next.js eliminates CORS entirely on Port 3000, how HTTP cookies work automatically, and why stateful Session IDs beat stateless JWTs for web applications.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">Zero CORS</span>
+            <span class="tag">Set-Cookie</span>
+            <span class="tag">Session ID vs JWT</span>
+          </div>
+        </div>
+        <a href="01_understanding-auth-flow-in-nextjs/auth_flow_guide.html" class="btn-open">
+          Open Guide 01 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- CHAPTER 02 -->
+      <div class="chapter-card">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--server-color);">
+            <span>Chapter 02</span>
+            <span class="tag" style="color: #10b981;">Registration</span>
+          </div>
+          <h2 class="chapter-title">Implementing User Registration API</h2>
+          <p class="chapter-desc">
+            Receiving client signup payloads, checking unique email constraints in MongoDB, handling error code 11000, and returning proper 409 Conflict status codes.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">User.create()</span>
+            <span class="tag">Error 11000</span>
+            <span class="tag">409 Conflict</span>
+          </div>
+        </div>
+        <a href="02_implementing-register-user-in-nextjs/register_user_guide.html" class="btn-open green-accent">
+          Open Guide 02 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- CHAPTER 03 -->
+      <div class="chapter-card">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--warning-color);">
+            <span>Chapter 03</span>
+            <span class="tag" style="color: #fbbf24;">Cookies</span>
+          </div>
+          <h2 class="chapter-title">Working with Cookies in Route Handlers</h2>
+          <p class="chapter-desc">
+            Reading and setting cookies in Next.js using <code>cookies()</code> from <code>next/headers</code> and the standard <code>Set-Cookie</code> header options (HttpOnly, Secure, Max-Age).
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">cookies()</span>
+            <span class="tag">HttpOnly</span>
+            <span class="tag">SameSite</span>
+          </div>
+        </div>
+        <a href="03_working-with-cookies-in-nextjs/cookies_guide.html" class="btn-open amber-accent">
+          Open Guide 03 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- CHAPTER 04 -->
+      <div class="chapter-card">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--client-color);">
+            <span>Chapter 04</span>
+            <span class="tag" style="color: #38bdf8;">Login</span>
+          </div>
+          <h2 class="chapter-title">Implementing User Login API</h2>
+          <p class="chapter-desc">
+            Verifying email & password credentials against the database, generating session cookies, and handling invalid login attempts with 401 Unauthorized.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">POST /api/login</span>
+            <span class="tag">401 Unauthorized</span>
+            <span class="tag">Credential Check</span>
+          </div>
+        </div>
+        <a href="04_implementing-login-user-in-nextjs/login_user_guide.html" class="btn-open">
+          Open Guide 04 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- CHAPTER 05 -->
+      <div class="chapter-card">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--purple-color);">
+            <span>Chapter 05</span>
+            <span class="tag" style="color: #a855f7;">Protection</span>
+          </div>
+          <h2 class="chapter-title">Protecting Endpoints with Reusable Helper</h2>
+          <p class="chapter-desc">
+            Abstracting auth verification into a DRY helper function to protect private todo endpoints and ensuring only authenticated users can access resources.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">DRY Helper</span>
+            <span class="tag">Auth Guard</span>
+            <span class="tag">403 / 401</span>
+          </div>
+        </div>
+        <a href="05_protecting-todo-endpoints-with-reusable-function/protected_endpoints_guide.html" class="btn-open purple-accent">
+          Open Guide 05 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- CHAPTER 06 -->
+      <div class="chapter-card">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--danger-color);">
+            <span>Chapter 06</span>
+            <span class="tag" style="color: #f43f5e;">Security</span>
+          </div>
+          <h2 class="chapter-title">Signing Cookies with HMAC Secret</h2>
+          <p class="chapter-desc">
+            Why plain cookies can be forged by attackers in developer tools, and how cryptographic HMAC-SHA256 signatures detect and reject any client tampering.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">HMAC-SHA256</span>
+            <span class="tag">Cookie Tampering</span>
+            <span class="tag">Secret Salt</span>
+          </div>
+        </div>
+        <a href="06_signing-cookies-in-nextjs/signed_cookies_guide.html" class="btn-open rose-accent">
+          Open Guide 06 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- CHAPTER 07 -->
+      <div class="chapter-card">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--warning-color);">
+            <span>Chapter 07</span>
+            <span class="tag" style="color: #fbbf24;">Sessions</span>
+          </div>
+          <h2 class="chapter-title">Implementing Session-Based Login</h2>
+          <p class="chapter-desc">
+            Building a dedicated MongoDB Session collection linking random session IDs to user IDs, enabling instant server-side revocation on logout or account ban.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">Session Model</span>
+            <span class="tag">Revocation</span>
+            <span class="tag">Multi-Device</span>
+          </div>
+        </div>
+        <a href="07_implementing-session-based-login/session_login_guide.html" class="btn-open amber-accent">
+          Open Guide 07 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- CHAPTER 08 -->
+      <div class="chapter-card">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--client-color);">
+            <span>Chapter 08</span>
+            <span class="tag" style="color: #38bdf8;">Profile</span>
+          </div>
+          <h2 class="chapter-title">User Profile API Endpoint</h2>
+          <p class="chapter-desc">
+            Creating <code>GET /api/profile</code> to look up the currently active user from their session cookie and returning sanitized public profile information.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">GET /api/profile</span>
+            <span class="tag">Sanitized User</span>
+            <span class="tag">Hydration</span>
+          </div>
+        </div>
+        <a href="08_making-user-profile-endpoint-final/user_profile_guide.html" class="btn-open">
+          Open Guide 08 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- CHAPTER 09 -->
+      <div class="chapter-card">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--danger-color);">
+            <span>Chapter 09</span>
+            <span class="tag" style="color: #f43f5e;">Logout</span>
+          </div>
+          <h2 class="chapter-title">Implementing User Logout API</h2>
+          <p class="chapter-desc">
+            Revoking authentication completely by deleting the session document from MongoDB and expiring the cookie in the browser with <code>Max-Age=0</code>.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">POST /api/logout</span>
+            <span class="tag">Max-Age=0</span>
+            <span class="tag">Session.deleteOne</span>
+          </div>
+        </div>
+        <a href="09_implementing-logout-feature/logout_guide.html" class="btn-open rose-accent">
+          Open Guide 09 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- CHAPTER 10 -->
+      <div class="chapter-card">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--server-color);">
+            <span>Chapter 10</span>
+            <span class="tag" style="color: #10b981;">Bcrypt</span>
+          </div>
+          <h2 class="chapter-title">Password Hashing with Bcrypt</h2>
+          <p class="chapter-desc">
+            Never store plaintext passwords! Learn one-way salt hashing using <code>bcrypt.hash()</code> and timing-safe comparison with <code>bcrypt.compare()</code>.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">bcrypt.hash()</span>
+            <span class="tag">Salt Rounds</span>
+            <span class="tag">bcrypt.compare()</span>
+          </div>
+        </div>
+        <a href="10_hashing-passwords-with-bcrypt/bcrypt_hashing_guide.html" class="btn-open green-accent">
+          Open Guide 10 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>
