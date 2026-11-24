@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Section 7: Next.js Route Handlers & Fullstack CRUD - Master Learning Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-dark: #070a11;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border-color: #334155;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --server-color: #10b981;
+      --server-bg: rgba(16, 185, 129, 0.12);
+      --server-border: rgba(16, 185, 129, 0.35);
+      
+      --client-color: #38bdf8;
+      --client-bg: rgba(56, 189, 248, 0.12);
+      --client-border: rgba(56, 189, 248, 0.35);
+
+      --danger-color: #f43f5e;
+      --danger-bg: rgba(244, 63, 94, 0.12);
+      --danger-border: rgba(244, 63, 94, 0.35);
+      
+      --warning-color: #fbbf24;
+      --warning-bg: rgba(251, 191, 36, 0.12);
+      --warning-border: rgba(251, 191, 36, 0.35);
+      
+      --purple-color: #a855f7;
+      --purple-bg: rgba(168, 85, 247, 0.12);
+      --purple-border: rgba(168, 85, 247, 0.35);
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2.5rem 1rem;
+      min-height: 100vh;
+    }
+
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    header.hero {
+      text-align: center;
+      padding: 3.5rem 1.5rem;
+      background: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.18) 0%, rgba(7, 10, 17, 0) 70%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 2.5rem;
+    }
+
+    .badge-group {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+    }
+
+    .badge-next { background: rgba(255, 255, 255, 0.05); color: #fff; }
+    .badge-blue { background: var(--client-bg); color: var(--client-color); border-color: var(--client-border); }
+    .badge-green { background: var(--server-bg); color: var(--server-color); border-color: var(--server-border); }
+
+    h1 {
+      font-size: 2.6rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #ffffff 30%, #38bdf8 70%, #a855f7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      max-width: 840px;
+      margin: 0 auto;
+    }
+
+    /* FILTER TABS */
+    .filter-bar {
+      display: flex;
+      justify-content: center;
+      gap: 0.6rem;
+      margin-bottom: 2.5rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      background: #0f172a;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 0.5rem 1.1rem;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .filter-btn:hover, .filter-btn.active {
+      color: #fff;
+      background: #1e293b;
+      border-color: #475569;
+    }
+
+    .filter-btn.active {
+      background: var(--client-bg);
+      color: var(--client-color);
+      border-color: var(--client-border);
+    }
+
+    /* CHAPTER GRID */
+    .chapter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .chapter-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chapter-card:hover {
+      border-color: #475569;
+      transform: translateY(-3px);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+    }
+
+    .chapter-top { margin-bottom: 1.25rem; }
+
+    .chapter-num {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chapter-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.6rem;
+      line-height: 1.35;
+    }
+
+    .chapter-desc {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    .chapter-tags {
+      display: flex;
+      gap: 0.45rem;
+      margin: 1rem 0;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      font-size: 0.72rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      font-family: 'Fira Code', monospace;
+      background: rgba(255, 255, 255, 0.06);
+      color: #cbd5e1;
+    }
+
+    .btn-open {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
+      font-weight: 700;
+      text-decoration: none;
+      color: #fff;
+      background: #1e293b;
+      border: 1px solid var(--border-color);
+      transition: all 0.2s ease;
+    }
+
+    .btn-open:hover {
+      background: #2563eb;
+      border-color: #3b82f6;
+    }
+
+    .btn-open.green-accent:hover { background: #059669; border-color: #10b981; }
+    .btn-open.amber-accent:hover { background: #d97706; border-color: #fbbf24; }
+    .btn-open.rose-accent:hover { background: #e11d48; border-color: #f43f5e; }
+    .btn-open.purple-accent:hover { background: #7c3aed; border-color: #a855f7; }
+
+    /* SUMMARY STATS */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+
+    @media (max-width: 768px) { .stats-grid { grid-template-columns: 1fr 1fr; } }
+
+    .stat-card {
+      background: #0b1120;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      text-align: center;
+    }
+
+    .stat-num {
+      font-size: 1.8rem;
+      font-weight: 800;
+      font-family: 'Fira Code', monospace;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- HERO HEADER -->
+    <header class="hero">
+      <div class="badge-group">
+        <span class="badge badge-next">Next.js 15 Full-Stack</span>
+        <span class="badge badge-blue">Section 07</span>
+        <span class="badge badge-green">9 Interactive Chapters</span>
+      </div>
+      <h1>Route Handlers & Backend API Architecture</h1>
+      <p class="hero-subtitle">
+        Master building modern RESTful APIs inside Next.js App Router using Web Standards (<code>Request</code> / <code>Response</code>), async route params, CRUD persistence, and seamless React state synchronization.
+      </p>
+    </header>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-num" style="color: #38bdf8;">9</div>
+        <div class="stat-label">In-Depth Chapters</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color: #10b981;">4</div>
+        <div class="stat-label">HTTP Methods (CRUD)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color: #fbbf24;">100%</div>
+        <div class="stat-label">Web Standards</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color: #a855f7;">Zero</div>
+        <div class="stat-label">External Express Boilerplate</div>
+      </div>
+    </div>
+
+    <!-- FILTER BAR -->
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="filterCards('all')"><i class="fa-solid fa-grid-2"></i> All (9)</button>
+      <button class="filter-btn" onclick="filterCards('get')"><i class="fa-solid fa-download"></i> GET Routes</button>
+      <button class="filter-btn" onclick="filterCards('post')"><i class="fa-solid fa-plus"></i> POST Routes</button>
+      <button class="filter-btn" onclick="filterCards('put-delete')"><i class="fa-solid fa-pen-to-square"></i> PUT & DELETE</button>
+      <button class="filter-btn" onclick="filterCards('frontend')"><i class="fa-brands fa-react"></i> React Integration</button>
+    </div>
+
+    <!-- CHAPTER CARDS GRID -->
+    <div class="chapter-grid" id="main-grid">
+
+      <!-- CHAPTER 01 -->
+      <div class="chapter-card" data-category="get">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--client-color);">
+            <span>Chapter 01</span>
+            <span class="tag" style="color: #38bdf8;">Architecture</span>
+          </div>
+          <h2 class="chapter-title">Writing Backend Code in Next.js</h2>
+          <p class="chapter-desc">
+            How Next.js handles server code, why traditional <code>http.createServer</code> breaks under fast refresh and serverless, and how Route Handlers unify everything on Port 3000.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">http.createServer</span>
+            <span class="tag">route.js</span>
+            <span class="tag">Port 3000</span>
+          </div>
+        </div>
+        <a href="01_writing-backend-code-in-nextjs/backend_code_guide.html" class="btn-open">
+          Open Guide 01 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- CHAPTER 02 -->
+      <div class="chapter-card" data-category="get">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--server-color);">
+            <span>Chapter 02</span>
+            <span class="tag" style="color: #10b981;">GET Method</span>
+          </div>
+          <h2 class="chapter-title">Creating GET Route Handler</h2>
+          <p class="chapter-desc">
+            Exporting <code>GET()</code>, utilizing <code>Response.json()</code> vs manual <code>new Response()</code> with headers, and Next.js 15 uncached-by-default behavior.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">Response.json()</span>
+            <span class="tag">statusText</span>
+            <span class="tag">Next 15 Caching</span>
+          </div>
+        </div>
+        <a href="02_creating-get-route-handler-in-nextjs/get_route_handler_guide.html" class="btn-open green-accent">
+          Open Guide 02 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- CHAPTER 03 -->
+      <div class="chapter-card" data-category="get">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--purple-color);">
+            <span>Chapter 03</span>
+            <span class="tag" style="color: #a855f7;">Dynamic [id]</span>
+          </div>
+          <h2 class="chapter-title">Dynamic Route Handlers</h2>
+          <p class="chapter-desc">
+            Mapping dynamic segments with <code>app/todos/[id]/route.js</code>, the mandatory <code>await params</code> in Next.js 15, and returning 404 Not Found error responses.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">[id] Segment</span>
+            <span class="tag">await params</span>
+            <span class="tag">404 Response</span>
+          </div>
+        </div>
+        <a href="03_dynamic-route-handler/dynamic_route_handler_guide.html" class="btn-open purple-accent">
+          Open Guide 03 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- CHAPTER 04 -->
+      <div class="chapter-card" data-category="get">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--client-color);">
+            <span>Chapter 04</span>
+            <span class="tag" style="color: #38bdf8;">Request Object</span>
+          </div>
+          <h2 class="chapter-title">Understanding Request Object</h2>
+          <p class="chapter-desc">
+            Inspecting the incoming Web <code>Request</code>, extracting query strings via <code>searchParams</code>, reading headers (User-Agent, Authorization), and handling cookies.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">new URL()</span>
+            <span class="tag">searchParams</span>
+            <span class="tag">request.headers</span>
+          </div>
+        </div>
+        <a href="04_understanding-request-object-in-next.js/request_object_guide.html" class="btn-open">
+          Open Guide 04 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- CHAPTER 05 -->
+      <div class="chapter-card" data-category="post">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--server-color);">
+            <span>Chapter 05</span>
+            <span class="tag" style="color: #10b981;">POST Method</span>
+          </div>
+          <h2 class="chapter-title">Handling POST Requests</h2>
+          <p class="chapter-desc">
+            Asynchronously parsing incoming JSON payloads with <code>await request.json()</code>, native UUID generation with <code>crypto.randomUUID()</code>, and file writes with <code>node:fs/promises</code>.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">POST</span>
+            <span class="tag">crypto.randomUUID()</span>
+            <span class="tag">writeFile</span>
+          </div>
+        </div>
+        <a href="05_handling-post-requests-in-nextjs/post_requests_guide.html" class="btn-open green-accent">
+          Open Guide 05 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- CHAPTER 06 -->
+      <div class="chapter-card" data-category="put-delete">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--warning-color);">
+            <span>Chapter 06</span>
+            <span class="tag" style="color: #fbbf24;">PUT / Edit</span>
+          </div>
+          <h2 class="chapter-title">Implementing Edit Todo (PUT)</h2>
+          <p class="chapter-desc">
+            Updating specific todos by ID, merging state properties, and implementing security guards returning <code>403 Forbidden</code> when illegal ID mutation is attempted.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">PUT</span>
+            <span class="tag">403 Forbidden</span>
+            <span class="tag">Immutable ID</span>
+          </div>
+        </div>
+        <a href="06_implementing-edit-todo-functionality/edit_todo_guide.html" class="btn-open amber-accent">
+          Open Guide 06 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- CHAPTER 07 -->
+      <div class="chapter-card" data-category="put-delete">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--danger-color);">
+            <span>Chapter 07</span>
+            <span class="tag" style="color: #f43f5e;">DELETE Method</span>
+          </div>
+          <h2 class="chapter-title">Implementing Delete Functionality</h2>
+          <p class="chapter-desc">
+            Finding item index, removing via <code>splice()</code>, persisting to disk, and returning the RFC standard <code>204 No Content</code> response with a strictly null body.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">DELETE</span>
+            <span class="tag">204 No Content</span>
+            <span class="tag">null Body</span>
+          </div>
+        </div>
+        <a href="07_implementing-delete-functionality/delete_todo_guide.html" class="btn-open rose-accent">
+          Open Guide 07 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- CHAPTER 08 -->
+      <div class="chapter-card" data-category="frontend">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--client-color);">
+            <span>Chapter 08</span>
+            <span class="tag" style="color: #38bdf8;">Integration</span>
+          </div>
+          <h2 class="chapter-title">Integrating GET & POST API</h2>
+          <p class="chapter-desc">
+            Replacing mock client data with live API endpoints, initial data loading in <code>useEffect</code>, and optimistic UI updates when adding tasks via <code>POST</code>.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">"use client"</span>
+            <span class="tag">useEffect</span>
+            <span class="tag">fetch('/todos')</span>
+          </div>
+        </div>
+        <a href="08_integrating-get-and-post-todo-api/integrating_get_post_guide.html" class="btn-open">
+          Open Guide 08 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- CHAPTER 09 -->
+      <div class="chapter-card" data-category="frontend">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--purple-color);">
+            <span>Chapter 09</span>
+            <span class="tag" style="color: #a855f7;">Full CRUD</span>
+          </div>
+          <h2 class="chapter-title">Integrating PUT & DELETE (Full CRUD)</h2>
+          <p class="chapter-desc">
+            The complete full-stack milestone! Wire toggle completion, inline text editing, and delete actions with live backend synchronization and disk <code>readFile()</code>.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">Full CRUD</span>
+            <span class="tag">PUT Toggle</span>
+            <span class="tag">readFile() Sync</span>
+          </div>
+        </div>
+        <a href="09_integrating-put-and-delete-todo-api/full_crud_integration_guide.html" class="btn-open purple-accent">
+          Open Guide 09 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    function filterCards(cat) {
+      // Toggle button styling
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+
+      const cards = document.querySelectorAll('.chapter-card');
+      cards.forEach(card => {
+        if (cat === 'all' || card.getAttribute('data-category') === cat) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+  </script>
+</body>
+</html>

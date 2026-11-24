@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapter 09: Complete Full-Stack CRUD - PUT, DELETE & File Synchronization</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-dark: #070a11;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border-color: #334155;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --server-color: #10b981;
+      --server-bg: rgba(16, 185, 129, 0.12);
+      --server-border: rgba(16, 185, 129, 0.35);
+      
+      --client-color: #38bdf8;
+      --client-bg: rgba(56, 189, 248, 0.12);
+      --client-border: rgba(56, 189, 248, 0.35);
+
+      --danger-color: #f43f5e;
+      --danger-bg: rgba(244, 63, 94, 0.12);
+      --danger-border: rgba(244, 63, 94, 0.35);
+      
+      --warning-color: #fbbf24;
+      --warning-bg: rgba(251, 191, 36, 0.12);
+      --warning-border: rgba(251, 191, 36, 0.35);
+      
+      --purple-color: #a855f7;
+      --purple-bg: rgba(168, 85, 247, 0.12);
+      --purple-border: rgba(168, 85, 247, 0.35);
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+    }
+
+    .container { max-width: 1150px; margin: 0 auto; }
+
+    /* NAVBAR */
+    .nav-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.85rem 1.5rem;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-weight: 700;
+      color: var(--text-main);
+      text-decoration: none;
+      font-size: 0.95rem;
+    }
+
+    .nav-brand i { color: var(--client-color); font-size: 1.1rem; }
+
+    .nav-links {
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+    }
+
+    .nav-btn {
+      padding: 0.45rem 0.9rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-decoration: none;
+      color: var(--text-muted);
+      border: 1px solid var(--border-color);
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .nav-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.08);
+      border-color: #475569;
+    }
+
+    .nav-btn.primary {
+      background: var(--client-bg);
+      color: var(--client-color);
+      border-color: var(--client-border);
+    }
+
+    .nav-btn.primary:hover {
+      background: rgba(56, 189, 248, 0.22);
+    }
+
+    /* HERO */
+    header.hero {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      background: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.15) 0%, rgba(7, 10, 17, 0) 70%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 2.5rem;
+    }
+
+    .badge-group {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+    }
+
+    .badge-get { background: var(--server-bg); color: var(--server-color); border-color: var(--server-border); }
+    .badge-post { background: var(--client-bg); color: var(--client-color); border-color: var(--client-border); }
+    .badge-put { background: var(--warning-bg); color: var(--warning-color); border-color: var(--warning-border); }
+    .badge-delete { background: var(--danger-bg); color: var(--danger-color); border-color: var(--danger-border); }
+    .badge-neutral { background: rgba(255, 255, 255, 0.06); color: #cbd5e1; }
+
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #ffffff 40%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      max-width: 820px;
+      margin: 0 auto;
+    }
+
+    /* CARDS */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.6);
+      padding-bottom: 1rem;
+    }
+
+    .badge-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      font-weight: bold;
+    }
+
+    .badge-icon.blue { background: var(--client-bg); color: var(--client-color); border: 1px solid var(--client-border); }
+    .badge-icon.green { background: var(--server-bg); color: var(--server-color); border: 1px solid var(--server-border); }
+    .badge-icon.amber { background: var(--warning-bg); color: var(--warning-color); border: 1px solid var(--warning-border); }
+    .badge-icon.rose { background: var(--danger-bg); color: var(--danger-color); border: 1px solid var(--danger-border); }
+    .badge-icon.purple { background: var(--purple-bg); color: var(--purple-color); border: 1px solid var(--purple-border); }
+
+    .card-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .card-subtitle {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    /* ANALOGY BOXES */
+    .analogy-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin: 1.25rem 0;
+    }
+
+    @media (max-width: 768px) { .analogy-grid { grid-template-columns: 1fr; } }
+
+    .analogy-box {
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      background: rgba(30, 41, 59, 0.35);
+    }
+
+    .analogy-box.highlight {
+      border-color: var(--client-border);
+      background: rgba(56, 189, 248, 0.05);
+    }
+
+    .analogy-title {
+      font-size: 1.08rem;
+      font-weight: 700;
+      margin-bottom: 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* CODE BLOCKS - ALWAYS PRESERVE FORMATTING */
+    .code-block {
+      background: #030712;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      margin: 1.25rem 0;
+      overflow: hidden;
+    }
+
+    .code-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0b1120;
+      padding: 0.65rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-family: 'Fira Code', monospace;
+    }
+
+    .code-file {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+
+    .code-content {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.88rem;
+      padding: 1.25rem 1.5rem;
+      overflow-x: auto;
+      white-space: pre;
+      line-height: 1.6;
+      color: #e2e8f0;
+    }
+
+    .hl-kw { color: #f43f5e; font-weight: 600; }
+    .hl-fn { color: #38bdf8; font-weight: 600; }
+    .hl-str { color: #10b981; }
+    .hl-comment { color: #64748b; font-style: italic; }
+    .hl-num { color: #fbbf24; }
+    .hl-var { color: #cbd5e1; }
+    .hl-obj { color: #a855f7; }
+
+    /* SIMULATOR STYLING */
+    .sim-container {
+      background: #030712;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      margin-top: 1.25rem;
+    }
+
+    .sim-bar {
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+      background: #0f172a;
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .sim-method {
+      font-family: 'Fira Code', monospace;
+      font-weight: 700;
+      font-size: 0.82rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 4px;
+    }
+
+    .sim-url {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      flex-grow: 1;
+      padding: 0.35rem;
+      background: transparent;
+      border: none;
+      outline: none;
+    }
+
+    .sim-btn {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1.2rem;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: background 0.2s ease;
+    }
+
+    .sim-btn:hover { background: #1d4ed8; }
+
+    .sim-response-box {
+      background: #050b18;
+      border: 1px solid #1e293b;
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      margin-top: 0.85rem;
+    }
+
+    .sim-status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 0.6rem;
+      margin-bottom: 0.6rem;
+      border-bottom: 1px solid #1e293b;
+      font-size: 0.8rem;
+    }
+
+    .callout {
+      padding: 1.25rem 1.5rem;
+      border-radius: var(--radius-md);
+      margin: 1.25rem 0;
+      border-left: 4px solid;
+    }
+
+    .callout-info { background: rgba(56, 189, 248, 0.08); border-color: var(--client-color); }
+    .callout-warning { background: rgba(251, 191, 36, 0.08); border-color: var(--warning-color); }
+    .callout-danger { background: rgba(244, 63, 94, 0.08); border-color: var(--danger-color); }
+    .callout-success { background: rgba(16, 185, 129, 0.08); border-color: var(--server-color); }
+
+    .callout-title {
+      font-weight: 700;
+      margin-bottom: 0.35rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      margin: 1.25rem 0;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    th {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      font-weight: 700;
+    }
+
+    td {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+      color: var(--text-muted);
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255, 255, 255, 0.02); }
+
+    .bottom-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem 0;
+      border-top: 1px solid var(--border-color);
+      margin-top: 3rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- TOP NAVIGATION -->
+    <nav class="nav-bar">
+      <a href="../index.html" class="nav-brand">
+        <i class="fa-solid fa-server"></i> Next.js Section 7 Hub
+      </a>
+      <div class="nav-links">
+        <a href="../08_integrating-get-and-post-todo-api/integrating_get_post_guide.html" class="nav-btn"><i class="fa-solid fa-arrow-left"></i> Chapter 08</a>
+        <a href="../index.html" class="nav-btn primary"><i class="fa-solid fa-grid-2"></i> Section 7 Hub</a>
+      </div>
+    </nav>
+
+    <!-- HERO -->
+    <header class="hero">
+      <div class="badge-group">
+        <span class="badge badge-neutral">Chapter 09</span>
+        <span class="badge badge-post">Complete CRUD</span>
+        <span class="badge badge-put">PUT & DELETE</span>
+        <span class="badge badge-get">Disk readFile Sync</span>
+      </div>
+      <h1>Full CRUD Integration in Next.js</h1>
+      <p class="hero-subtitle">
+        The culmination of Section 7! Connect PUT (toggle completion & text edit) and DELETE to the frontend with robust status checks and disk file re-reading.
+      </p>
+    </header>
+
+    <!-- SECTION 1: COMPLETE FULL-STACK ARCHITECTURE -->
+    <section class="card">
+      <div class="card-header">
+        <div class="badge-icon purple"><i class="fa-solid fa-diagram-project"></i></div>
+        <div>
+          <h2 class="card-title">Full Lifecycle: From UI Click to File Persistence</h2>
+          <p class="card-subtitle">How Chapter 09 completes the production-grade Todo App</p>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-file"><i class="fa-brands fa-react"></i> app/page.js (PUT & DELETE Integration)</span>
+          <span>Full Operations</span>
+        </div>
+        <pre class="code-content"><span class="hl-str">"use client"</span>;
+
+<span class="hl-kw">import</span> { useEffect, useState } <span class="hl-kw">from</span> <span class="hl-str">"react"</span>;
+
+<span class="hl-kw">export default function</span> <span class="hl-fn">Home</span>() {
+  <span class="hl-kw">const</span> [todos, setTodos] = <span class="hl-fn">useState</span>([]);
+
+  <span class="hl-kw">const</span> <span class="hl-fn">fetchTodos</span> = <span class="hl-kw">async</span> () => {
+    <span class="hl-kw">const</span> response = <span class="hl-kw">await</span> <span class="hl-fn">fetch</span>(<span class="hl-str">"/todos"</span>);
+    <span class="hl-kw">const</span> todosData = <span class="hl-kw">await</span> response.<span class="hl-fn">json</span>();
+    <span class="hl-fn">setTodos</span>(todosData.<span class="hl-fn">reverse</span>());
+  };
+
+  <span class="hl-comment">// 🗑️ DELETE TODO HANDLER</span>
+  <span class="hl-kw">const</span> <span class="hl-fn">deleteTodo</span> = <span class="hl-kw">async</span> (id) => {
+    <span class="hl-kw">const</span> response = <span class="hl-kw">await</span> <span class="hl-fn">fetch</span>(<span class="hl-str">`/todos/${id}`</span>, {
+      method: <span class="hl-str">"DELETE"</span>,
+    });
+
+    <span class="hl-kw">if</span> (response.status === <span class="hl-num">204</span>) {
+      <span class="hl-fn">fetchTodos</span>(); <span class="hl-comment">// Re-fetch fresh state</span>
+    }
+  };
+
+  <span class="hl-comment">// 🔄 TOGGLE COMPLETION (PUT)</span>
+  <span class="hl-kw">const</span> <span class="hl-fn">toggleTodo</span> = <span class="hl-kw">async</span> (id) => {
+    <span class="hl-kw">const</span> todo = todos.<span class="hl-fn">find</span>((todo) => todo.id === id);
+    <span class="hl-kw">const</span> response = <span class="hl-kw">await</span> <span class="hl-fn">fetch</span>(<span class="hl-str">`/todos/${id}`</span>, {
+      method: <span class="hl-str">"PUT"</span>,
+      body: JSON.<span class="hl-fn">stringify</span>({ completed: !todo.completed }),
+    });
+
+    <span class="hl-kw">if</span> (response.status === <span class="hl-num">200</span>) {
+      <span class="hl-fn">fetchTodos</span>();
+    }
+  };
+
+  <span class="hl-comment">// ✏️ UPDATE TEXT (PUT)</span>
+  <span class="hl-kw">const</span> <span class="hl-fn">updateTodo</span> = <span class="hl-kw">async</span> (id, newText) => {
+    <span class="hl-kw">const</span> response = <span class="hl-kw">await</span> <span class="hl-fn">fetch</span>(<span class="hl-str">`/todos/${id}`</span>, {
+      method: <span class="hl-str">"PUT"</span>,
+      body: JSON.<span class="hl-fn">stringify</span>({ text: newText }),
+    });
+
+    <span class="hl-kw">if</span> (response.status === <span class="hl-num">200</span>) {
+      <span class="hl-fn">fetchTodos</span>();
+    }
+  };
+}</pre>
+      </div>
+
+      <div class="callout callout-info">
+        <div class="callout-title" style="color: var(--client-color);">
+          <i class="fa-solid fa-rotate"></i> Critical Change in Chapter 09 GET Route Handler: <code>readFile()</code>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.92rem;">
+          Chapter 09 mein instructor ne <code>app/todos/route.js</code> ke GET handler ko update kiya:
+          <br>
+          Pehle woh directly cached memory <code>import todos from "../../todos"</code> return kar raha tha. Lekin jab multiple requests file ko modify karti hain, toh memory cache out of sync ho sakti hai.
+          <br>
+          Isliye Chapter 09 mein GET handler har request par disk se fresh file padhta hai:
+          <br><code>const todoJSONString = await readFile("./todos.json", "utf-8");</code>
+          <br><code>const todos = JSON.parse(todoJSONString);</code>
+          <br><code>return Response.json(todos);</code>
+        </p>
+      </div>
+    </section>
+
+    <!-- SECTION 2: INTERACTIVE FULL CRUD APP SIMULATOR -->
+    <section class="card">
+      <div class="card-header">
+        <div class="badge-icon green"><i class="fa-solid fa-gamepad"></i></div>
+        <div>
+          <h2 class="card-title">Live Interactive Full-Stack Todo App</h2>
+          <p class="card-subtitle">Complete with live CRUD actions, status updates, and HTTP request inspector</p>
+        </div>
+      </div>
+
+      <div class="sim-container">
+        <!-- ADD INPUT -->
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem;">
+          <input type="text" id="app-todo-input" placeholder="Type a task and press enter..." style="flex-grow: 1; background: #0f172a; border: 1px solid #334155; padding: 0.6rem 0.85rem; border-radius: 4px; color: #fff; font-size: 0.9rem;">
+          <button class="sim-btn" onclick="appAddTodo()"><i class="fa-solid fa-plus"></i> Add</button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+          <!-- TODO LIST -->
+          <div>
+            <div style="font-size: 0.85rem; font-weight: 700; color: #38bdf8; margin-bottom: 0.5rem; text-transform: uppercase;">
+              Active Todo List:
+            </div>
+            <div id="app-todos-container" style="display: flex; flex-direction: column; gap: 0.5rem;">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- NETWORK TRAFFIC -->
+          <div>
+            <div style="font-size: 0.85rem; font-weight: 700; color: #10b981; margin-bottom: 0.5rem; text-transform: uppercase;">
+              Real-Time HTTP Traffic:
+            </div>
+            <div id="app-traffic-log" style="background: #050b18; border: 1px solid #1e293b; border-radius: 6px; padding: 0.75rem; height: 240px; overflow-y: auto; font-family: 'Fira Code', monospace; font-size: 0.76rem; color: #94a3b8;">
+              <div style="color: #64748b;">// Ready for client operations...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: SECTION 7 SUMMARY CHEAT-SHEET -->
+    <section class="card">
+      <div class="card-header">
+        <div class="badge-icon amber"><i class="fa-solid fa-trophy"></i></div>
+        <div>
+          <h2 class="card-title">Section 7 Master Summary: Route Handlers Cheat-Sheet</h2>
+          <p class="card-subtitle">Everything you mastered across all 9 chapters</p>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Operation</th>
+              <th>HTTP Method</th>
+              <th>Route File</th>
+              <th>Status Code</th>
+              <th>Key Nuance</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Get All</strong></td>
+              <td><code>GET</code></td>
+              <td><code>app/todos/route.js</code></td>
+              <td><code>200 OK</code></td>
+              <td><code>Response.json(todos)</code>, uncached in Next 15</td>
+            </tr>
+            <tr>
+              <td><strong>Get One</strong></td>
+              <td><code>GET</code></td>
+              <td><code>app/todos/[id]/route.js</code></td>
+              <td><code>200 / 404</code></td>
+              <td><code>const { id } = await params</code> (async in Next 15)</td>
+            </tr>
+            <tr>
+              <td><strong>Create</strong></td>
+              <td><code>POST</code></td>
+              <td><code>app/todos/route.js</code></td>
+              <td><code>201 Created</code></td>
+              <td><code>await request.json()</code>, <code>crypto.randomUUID()</code></td>
+            </tr>
+            <tr>
+              <td><strong>Update</strong></td>
+              <td><code>PUT</code></td>
+              <td><code>app/todos/[id]/route.js</code></td>
+              <td><code>200 / 403</code></td>
+              <td>Protect immutable IDs with 403 Forbidden check</td>
+            </tr>
+            <tr>
+              <td><strong>Delete</strong></td>
+              <td><code>DELETE</code></td>
+              <td><code>app/todos/[id]/route.js</code></td>
+              <td><code>204 No Content</code></td>
+              <td><code>new Response(null, { status: 204 })</code> (strictly null body)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- BOTTOM NAVIGATION -->
+    <div class="bottom-nav">
+      <a href="../08_integrating-get-and-post-todo-api/integrating_get_post_guide.html" class="nav-btn"><i class="fa-solid fa-arrow-left"></i> Chapter 08</a>
+      <a href="../index.html" class="nav-btn primary">
+        <i class="fa-solid fa-house"></i> Back to Section 7 Master Hub
+      </a>
+    </div>
+
+    <script>
+      let stateTodos = [
+        { id: "1", text: "Learn Next.js 15 App Router", completed: true },
+        { id: "2", text: "Build Route Handlers API", completed: true },
+        { id: "3", text: "Integrate Full CRUD with React State", completed: false }
+      ];
+
+      function logHttp(method, url, status, detail) {
+        const log = document.getElementById('app-traffic-log');
+        const color = method === 'GET' ? '#10b981' : method === 'POST' ? '#38bdf8' : method === 'PUT' ? '#fbbf24' : '#f43f5e';
+        log.innerHTML += `\n<span style="color:${color}; font-weight:700;">${method}</span> <span style="color:#cbd5e1;">${url}</span> -> <span style="color:#fff;">${status}</span>\n  <span style="color:#64748b;">${detail}</span>`;
+        log.scrollTop = log.scrollHeight;
+      }
+
+      function renderAppTodos() {
+        const c = document.getElementById('app-todos-container');
+        c.innerHTML = '';
+        stateTodos.forEach(todo => {
+          const item = document.createElement('div');
+          item.style.cssText = 'background: #0f172a; border: 1px solid #1e293b; padding: 0.6rem 0.85rem; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;';
+          item.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 0.6rem;">
+              <input type="checkbox" ${todo.completed ? 'checked' : ''} onchange="appToggleTodo('${todo.id}')" style="cursor: pointer;">
+              <span style="font-size: 0.88rem; color: ${todo.completed ? '#64748b' : '#f8fafc'}; text-decoration: ${todo.completed ? 'line-through' : 'none'};">${todo.text}</span>
+            </div>
+            <button onclick="appDeleteTodo('${todo.id}')" style="background: transparent; border: none; color: #f43f5e; cursor: pointer; padding: 0.2rem 0.5rem; border-radius: 4px;">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          `;
+          c.appendChild(item);
+        });
+      }
+
+      function appAddTodo() {
+        const inp = document.getElementById('app-todo-input');
+        const val = inp.value.trim();
+        if (!val) return;
+        const newId = 'todo_' + Math.floor(Math.random() * 9000 + 1000);
+        const newObj = { id: newId, text: val, completed: false };
+        stateTodos.unshift(newObj);
+        logHttp('POST', '/todos', '201 Created', `Created: "${val}" with ID ${newId}`);
+        renderAppTodos();
+        inp.value = '';
+      }
+
+      function appToggleTodo(id) {
+        const todo = stateTodos.find(t => t.id === id);
+        if (todo) {
+          todo.completed = !todo.completed;
+          logHttp('PUT', `/todos/${id}`, '200 OK', `Toggled completed to: ${todo.completed}`);
+          renderAppTodos();
+        }
+      }
+
+      function appDeleteTodo(id) {
+        const idx = stateTodos.findIndex(t => t.id === id);
+        if (idx !== -1) {
+          const removed = stateTodos.splice(idx, 1)[0];
+          logHttp('DELETE', `/todos/${id}`, '204 No Content', `Removed: "${removed.text}"`);
+          renderAppTodos();
+        }
+      }
+
+      renderAppTodos();
+    </script>
+
+  </div>
+</body>
+</html>

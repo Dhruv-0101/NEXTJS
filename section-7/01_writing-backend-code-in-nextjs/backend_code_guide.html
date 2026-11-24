@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapter 01: Writing Backend Code in Next.js - Route Handlers Mental Model</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-dark: #070a11;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border-color: #334155;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --server-color: #10b981;
+      --server-bg: rgba(16, 185, 129, 0.12);
+      --server-border: rgba(16, 185, 129, 0.35);
+      
+      --client-color: #38bdf8;
+      --client-bg: rgba(56, 189, 248, 0.12);
+      --client-border: rgba(56, 189, 248, 0.35);
+
+      --danger-color: #f43f5e;
+      --danger-bg: rgba(244, 63, 94, 0.12);
+      --danger-border: rgba(244, 63, 94, 0.35);
+      
+      --warning-color: #fbbf24;
+      --warning-bg: rgba(251, 191, 36, 0.12);
+      --warning-border: rgba(251, 191, 36, 0.35);
+      
+      --purple-color: #a855f7;
+      --purple-bg: rgba(168, 85, 247, 0.12);
+      --purple-border: rgba(168, 85, 247, 0.35);
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+    }
+
+    .container { max-width: 1150px; margin: 0 auto; }
+
+    /* NAVBAR */
+    .nav-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.85rem 1.5rem;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-weight: 700;
+      color: var(--text-main);
+      text-decoration: none;
+      font-size: 0.95rem;
+    }
+
+    .nav-brand i { color: var(--client-color); font-size: 1.1rem; }
+
+    .nav-links {
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+    }
+
+    .nav-btn {
+      padding: 0.45rem 0.9rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-decoration: none;
+      color: var(--text-muted);
+      border: 1px solid var(--border-color);
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .nav-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.08);
+      border-color: #475569;
+    }
+
+    .nav-btn.primary {
+      background: var(--client-bg);
+      color: var(--client-color);
+      border-color: var(--client-border);
+    }
+
+    .nav-btn.primary:hover {
+      background: rgba(56, 189, 248, 0.22);
+    }
+
+    /* HERO */
+    header.hero {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      background: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.15) 0%, rgba(7, 10, 17, 0) 70%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 2.5rem;
+    }
+
+    .badge-group {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+    }
+
+    .badge-get { background: var(--server-bg); color: var(--server-color); border-color: var(--server-border); }
+    .badge-post { background: var(--client-bg); color: var(--client-color); border-color: var(--client-border); }
+    .badge-put { background: var(--warning-bg); color: var(--warning-color); border-color: var(--warning-border); }
+    .badge-delete { background: var(--danger-bg); color: var(--danger-color); border-color: var(--danger-border); }
+    .badge-neutral { background: rgba(255, 255, 255, 0.06); color: #cbd5e1; }
+
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #ffffff 40%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      max-width: 820px;
+      margin: 0 auto;
+    }
+
+    /* CARDS */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.6);
+      padding-bottom: 1rem;
+    }
+
+    .badge-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      font-weight: bold;
+    }
+
+    .badge-icon.blue { background: var(--client-bg); color: var(--client-color); border: 1px solid var(--client-border); }
+    .badge-icon.green { background: var(--server-bg); color: var(--server-color); border: 1px solid var(--server-border); }
+    .badge-icon.amber { background: var(--warning-bg); color: var(--warning-color); border: 1px solid var(--warning-border); }
+    .badge-icon.rose { background: var(--danger-bg); color: var(--danger-color); border: 1px solid var(--danger-border); }
+    .badge-icon.purple { background: var(--purple-bg); color: var(--purple-color); border: 1px solid var(--purple-border); }
+
+    .card-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .card-subtitle {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    /* ANALOGY BOXES */
+    .analogy-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin: 1.25rem 0;
+    }
+
+    @media (max-width: 768px) { .analogy-grid { grid-template-columns: 1fr; } }
+
+    .analogy-box {
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      background: rgba(30, 41, 59, 0.35);
+    }
+
+    .analogy-box.highlight {
+      border-color: var(--client-border);
+      background: rgba(56, 189, 248, 0.05);
+    }
+
+    .analogy-title {
+      font-size: 1.08rem;
+      font-weight: 700;
+      margin-bottom: 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* CODE BLOCKS - ALWAYS PRESERVE FORMATTING */
+    .code-block {
+      background: #030712;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      margin: 1.25rem 0;
+      overflow: hidden;
+    }
+
+    .code-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0b1120;
+      padding: 0.65rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-family: 'Fira Code', monospace;
+    }
+
+    .code-file {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+
+    .code-content {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.88rem;
+      padding: 1.25rem 1.5rem;
+      overflow-x: auto;
+      white-space: pre;
+      line-height: 1.6;
+      color: #e2e8f0;
+    }
+
+    .hl-kw { color: #f43f5e; font-weight: 600; }
+    .hl-fn { color: #38bdf8; font-weight: 600; }
+    .hl-str { color: #10b981; }
+    .hl-comment { color: #64748b; font-style: italic; }
+    .hl-num { color: #fbbf24; }
+    .hl-var { color: #cbd5e1; }
+    .hl-obj { color: #a855f7; }
+
+    /* SIMULATOR STYLING */
+    .sim-container {
+      background: #030712;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      margin-top: 1.25rem;
+    }
+
+    .sim-bar {
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+      background: #0f172a;
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .sim-method {
+      font-family: 'Fira Code', monospace;
+      font-weight: 700;
+      font-size: 0.82rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 4px;
+    }
+
+    .sim-url {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      flex-grow: 1;
+      padding: 0.35rem;
+      background: transparent;
+      border: none;
+      outline: none;
+    }
+
+    .sim-btn {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1.2rem;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: background 0.2s ease;
+    }
+
+    .sim-btn:hover { background: #1d4ed8; }
+
+    .sim-response-box {
+      background: #050b18;
+      border: 1px solid #1e293b;
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      margin-top: 0.85rem;
+    }
+
+    .sim-status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 0.6rem;
+      margin-bottom: 0.6rem;
+      border-bottom: 1px solid #1e293b;
+      font-size: 0.8rem;
+    }
+
+    .callout {
+      padding: 1.25rem 1.5rem;
+      border-radius: var(--radius-md);
+      margin: 1.25rem 0;
+      border-left: 4px solid;
+    }
+
+    .callout-info { background: rgba(56, 189, 248, 0.08); border-color: var(--client-color); }
+    .callout-warning { background: rgba(251, 191, 36, 0.08); border-color: var(--warning-color); }
+    .callout-danger { background: rgba(244, 63, 94, 0.08); border-color: var(--danger-color); }
+    .callout-success { background: rgba(16, 185, 129, 0.08); border-color: var(--server-color); }
+
+    .callout-title {
+      font-weight: 700;
+      margin-bottom: 0.35rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      margin: 1.25rem 0;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    th {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      font-weight: 700;
+    }
+
+    td {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+      color: var(--text-muted);
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255, 255, 255, 0.02); }
+
+    .bottom-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem 0;
+      border-top: 1px solid var(--border-color);
+      margin-top: 3rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- TOP NAVIGATION -->
+    <nav class="nav-bar">
+      <a href="../index.html" class="nav-brand">
+        <i class="fa-solid fa-server"></i> Next.js Section 7 Hub
+      </a>
+      <div class="nav-links">
+        <a href="../index.html" class="nav-btn"><i class="fa-solid fa-grid-2"></i> All Chapters</a>
+        <a href="../02_creating-get-route-handler-in-nextjs/get_route_handler_guide.html" class="nav-btn primary">Chapter 02 <i class="fa-solid fa-arrow-right"></i></a>
+      </div>
+    </nav>
+
+    <!-- HERO -->
+    <header class="hero">
+      <div class="badge-group">
+        <span class="badge badge-neutral">Chapter 01</span>
+        <span class="badge badge-post">Architecture</span>
+        <span class="badge badge-get">App Router</span>
+      </div>
+      <h1>Writing Backend Code in Next.js</h1>
+      <p class="hero-subtitle">
+        Understand how Next.js handles server-side logic, why traditional <code>http.createServer</code> is unnecessary, and how Route Handlers unify Frontend & Backend under one port.
+      </p>
+    </header>
+
+    <!-- SECTION 1: THE CORE DILEMMA -->
+    <section class="card">
+      <div class="card-header">
+        <div class="badge-icon blue"><i class="fa-solid fa-lightbulb"></i></div>
+        <div>
+          <h2 class="card-title">The Node.js Mental Model vs The Next.js Way</h2>
+          <p class="card-subtitle">Why traditional server setups break the Next.js mental model</p>
+        </div>
+      </div>
+
+      <p style="color: var(--text-muted); margin-bottom: 1rem;">
+        Agar aap traditional Node.js/Express background se aate hain, toh aapka pehla instinct hota hai ek custom HTTP server create karna using <code>http.createServer()</code> aur kisi port (jaise 4000) par <code>listen()</code> call karna.
+      </p>
+
+      <div class="analogy-grid">
+        <div class="analogy-box">
+          <div class="analogy-title" style="color: var(--danger-color);">
+            <i class="fa-solid fa-server"></i> Traditional Node.js (Port 4000)
+          </div>
+          <p style="font-size: 0.92rem; color: var(--text-muted);">
+            Aapko manually port bind karna padta hai, router setup karna padta hai, aur process lifecycle manage karni padti hai. Agar Next.js file ke andar yeh code likhenge, toh har request ya build par naya port collision hoga!
+          </p>
+        </div>
+
+        <div class="analogy-box highlight">
+          <div class="analogy-title" style="color: var(--server-color);">
+            <i class="fa-solid fa-bolt"></i> Next.js Route Handlers (Port 3000)
+          </div>
+          <p style="font-size: 0.92rem; color: var(--text-muted);">
+            Next.js ke paas already ek powerful server running hai. File system routing ke through bas <code>route.js</code> banaiye aur HTTP method functions (<code>GET</code>, <code>POST</code>, etc.) export kijiye! Zero boilerplate.
+          </p>
+        </div>
+      </div>
+
+      <div class="callout callout-warning">
+        <div class="callout-title" style="color: var(--warning-color);">
+          <i class="fa-solid fa-triangle-exclamation"></i> Instructor's Demonstration in Chapter 01
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.92rem;">
+          Instructor ne <code>app/todos/route.js</code> mein pehle Node ka raw server likh kar test kiya:
+        </p>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-file"><i class="fa-brands fa-js"></i> app/todos/route.js (Node.js Experiment)</span>
+          <span>Experimental</span>
+        </div>
+        <pre class="code-content"><span class="hl-kw">import</span> http <span class="hl-kw">from</span> <span class="hl-str">"http"</span>;
+
+<span class="hl-comment">// ⚠️ Trying to spin up an independent Node server inside Next.js</span>
+<span class="hl-kw">const</span> server = http.<span class="hl-fn">createServer</span>((req, res) => {
+  console.<span class="hl-fn">log</span>(req.url);
+  res.<span class="hl-fn">end</span>(<span class="hl-str">"Hello from new next.js server."</span>);
+});
+
+server.<span class="hl-fn">listen</span>(<span class="hl-num">4000</span>, () => {
+  console.<span class="hl-fn">log</span>(<span class="hl-str">"Server started on port 4000"</span>);
+});</pre>
+      </div>
+
+      <p style="color: var(--text-muted); margin-top: 1rem;">
+        <strong>Kyon yeh production-ready approach nahi hai?</strong>
+      </p>
+      <ul style="color: var(--text-muted); padding-left: 1.5rem; margin-top: 0.5rem; font-size: 0.92rem;">
+        <li><strong>Serverless Environments (Vercel, AWS Lambda):</strong> Serverless functions stateless hote hain. Wahan koi persistent process continuously port 4000 par listen nahi kar sakti.</li>
+        <li><strong>Port Conflict & Hot Reloading:</strong> Development mein file save karte hi code re-evaluate hoga aur error aayega: <code>EADDRINUSE: address already in use :::4000</code>.</li>
+        <li><strong>Unified Port (3000):</strong> Client components ko <code>fetch('http://localhost:4000')</code> karne ki jagah seedha relative URL <code>fetch('/todos')</code> call karna chahiye!</li>
+      </ul>
+    </section>
+
+    <!-- SECTION 2: ARCHITECTURE COMPARISON -->
+    <section class="card">
+      <div class="card-header">
+        <div class="badge-icon green"><i class="fa-solid fa-network-wired"></i></div>
+        <div>
+          <h2 class="card-title">How Next.js App Router Solves This Elegantly</h2>
+          <p class="card-subtitle">Convention over Configuration with <code>route.js</code></p>
+        </div>
+      </div>
+
+      <p style="color: var(--text-muted); margin-bottom: 1rem;">
+        Next.js App Router introduce karta hai <strong>Route Handlers</strong>. Inka simple golden rule hai:
+      </p>
+
+      <div class="callout callout-info">
+        <div class="callout-title" style="color: var(--client-color);">
+          <i class="fa-solid fa-compass"></i> Route Handler Rules:
+        </div>
+        <ul style="color: var(--text-muted); padding-left: 1.25rem; font-size: 0.92rem; margin-top: 0.35rem;">
+          <li>File ka naam exactly <code>route.js</code> ya <code>route.ts</code> hona chahiye.</li>
+          <li>Folder path hi API endpoint ka URL ban jata hai (e.g., <code>app/todos/route.js</code> &rarr; <code>/todos</code>).</li>
+          <li>Ek hi folder ke andar <code>page.js</code> aur <code>route.js</code> saath mein exist nahi kar sakte! (Route conflict: HTML vs API endpoint).</li>
+          <li>Standard HTTP verbs export kiye jaate hain: <code>GET</code>, <code>POST</code>, <code>PUT</code>, <code>PATCH</code>, <code>DELETE</code>, <code>HEAD</code>, <code>OPTIONS</code>.</li>
+        </ul>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>Traditional Express/Node.js</th>
+              <th>Next.js App Router (Route Handlers)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Server Creation</strong></td>
+              <td><code>http.createServer()</code> or <code>express()</code></td>
+              <td>Handled internally by Next.js engine</td>
+            </tr>
+            <tr>
+              <td><strong>Port Management</strong></td>
+              <td>Manual port binding (e.g. <code>app.listen(5000)</code>)</td>
+              <td>Shared on same Next.js port (e.g. <code>3000</code>)</td>
+            </tr>
+            <tr>
+              <td><strong>CORS Issues</strong></td>
+              <td>Needs <code>cors</code> middleware for cross-origin frontend</td>
+              <td>Same-origin! No CORS required for frontend calls</td>
+            </tr>
+            <tr>
+              <td><strong>Standard APIs</strong></td>
+              <td>Node-specific <code>(req, res)</code></td>
+              <td>Web Standard <code>Request</code> and <code>Response</code> APIs</td>
+            </tr>
+            <tr>
+              <td><strong>Deployment</strong></td>
+              <td>Requires VM, Docker, or persistent container</td>
+              <td>Deploys seamlessly as Serverless or Edge Functions</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 3: INTERACTIVE LAB -->
+    <section class="card">
+      <div class="card-header">
+        <div class="badge-icon purple"><i class="fa-solid fa-flask"></i></div>
+        <div>
+          <h2 class="card-title">Interactive Lab: Server Architecture Simulator</h2>
+          <p class="card-subtitle">Experience what happens when requests hit Port 4000 vs Next.js Port 3000</p>
+        </div>
+      </div>
+
+      <div class="sim-container">
+        <div style="display: flex; gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
+          <button id="sim-btn-node" class="sim-btn" style="background: #e11d48;" onclick="simulateNode()">
+            <i class="fa-solid fa-cube"></i> Test Port 4000 (Raw Node Server)
+          </button>
+          <button id="sim-btn-next" class="sim-btn" style="background: #059669;" onclick="simulateNext()">
+            <i class="fa-solid fa-bolt"></i> Test Port 3000 (Next.js Route Handler)
+          </button>
+        </div>
+
+        <div id="sim-result" class="sim-response-box" style="min-height: 120px;">
+          <div style="color: #64748b;">// Click a button above to inspect server behavior and console logs...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 4: HINGLISH RECAP -->
+    <section class="card">
+      <div class="card-header">
+        <div class="badge-icon amber"><i class="fa-solid fa-brain"></i></div>
+        <div>
+          <h2 class="card-title">Summary & "Feel" Concept (Hinglish Recap)</h2>
+          <p class="card-subtitle">Dimag mein bilkul clear picture rakhein</p>
+        </div>
+      </div>
+
+      <div style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.7;">
+        <p>
+          💡 <strong>Bottom Line:</strong> Next.js koi simple React library nahi hai; yeh ek full-stack framework hai. Iska matlab hai ki aapko alag se Express server khada karne ki koi zaroorat nahi hai.
+        </p>
+        <p style="margin-top: 0.75rem;">
+          Jab aap Next.js mein backend code likhna chahte hain, toh aapko bas folder banana hai (jaise <code>app/todos</code>) aur uske andar <code>route.js</code> file create karni hai. Next.js khud hi us folder path ko URL endpoint bana dega aur aapke export kiye huye functions (<code>GET</code>, <code>POST</code>) ko call karega!
+        </p>
+      </div>
+    </section>
+
+    <!-- BOTTOM NAVIGATION -->
+    <div class="bottom-nav">
+      <a href="../index.html" class="nav-btn"><i class="fa-solid fa-arrow-left"></i> Section 7 Hub</a>
+      <a href="../02_creating-get-route-handler-in-nextjs/get_route_handler_guide.html" class="nav-btn primary">
+        Next: Chapter 02 - Creating GET Route Handler <i class="fa-solid fa-arrow-right"></i>
+      </a>
+    </div>
+
+    <script>
+      function simulateNode() {
+        const box = document.getElementById('sim-result');
+        box.innerHTML = `
+          <div class="sim-status-row">
+            <span style="color: #fbbf24;"><i class="fa-solid fa-circle-exclamation"></i> Node.js http.createServer</span>
+            <span style="color: #94a3b8;">Port: 4000 | Custom Daemon</span>
+          </div>
+          <div style="color: #f43f5e; margin-bottom: 0.5rem;">[Server Log] Server started on port 4000</div>
+          <div style="color: #38bdf8;">[Incoming Request] GET http://localhost:4000/todos</div>
+          <div style="color: #10b981; margin-top: 0.5rem;">Response: "Hello from new next.js server."</div>
+          <div style="color: #fbbf24; margin-top: 0.5rem; font-size: 0.8rem;">
+            ⚠️ Issue: In HMR / Fast Refresh, running http.createServer multiple times causes:
+            <br><code>Error: listen EADDRINUSE: address already in use :::4000</code>
+          </div>
+        `;
+      }
+
+      function simulateNext() {
+        const box = document.getElementById('sim-result');
+        box.innerHTML = `
+          <div class="sim-status-row">
+            <span style="color: #10b981;"><i class="fa-solid fa-check-circle"></i> Next.js Route Handler</span>
+            <span style="color: #94a3b8;">Port: 3000 | App Router Native</span>
+          </div>
+          <div style="color: #38bdf8;">[Next.js Internal Router] Matched route: app/todos/route.js</div>
+          <div style="color: #a855f7;">[Executed] export function GET() -> Handled gracefully by Next.js server</div>
+          <div style="color: #10b981; margin-top: 0.5rem;">Response: Status 200 OK | Web Standard Response</div>
+          <div style="color: #94a3b8; margin-top: 0.5rem; font-size: 0.8rem;">
+            ✅ Zero port conflicts. Automatically works in Serverless, Docker, and Edge environments!
+          </div>
+        `;
+      }
+    </script>
+
+  </div>
+</body>
+</html>
