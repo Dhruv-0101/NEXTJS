@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Next.js Handling Client-Side Exceptions &amp; Naming Conventions Guide</title>
+  <title>Next.js Client-Side Exceptions & White Screen of Death: Complete Visual Guide</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
@@ -83,9 +83,10 @@
     .badge-client { background: var(--client-bg); color: var(--client-color); border-color: rgba(56, 189, 248, 0.4); }
     .badge-danger { background: var(--danger-bg); color: var(--danger-color); border-color: var(--danger-border); }
     .badge-server { background: var(--server-bg); color: var(--server-color); border-color: rgba(16, 185, 129, 0.4); }
+    .badge-purple { background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4); }
 
     h1 {
-      font-size: 2.4rem;
+      font-size: 2.3rem;
       font-weight: 800;
       margin-bottom: 0.75rem;
       background: linear-gradient(135deg, #ffffff 40%, #38bdf8 100%);
@@ -94,10 +95,11 @@
     }
 
     .hero-subtitle {
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       color: var(--text-muted);
-      max-width: 800px;
+      max-width: 850px;
       margin: 0 auto;
+      line-height: 1.7;
     }
 
     .card {
@@ -130,35 +132,52 @@
       border: 1px solid rgba(56, 189, 248, 0.4);
     }
 
-    /* ARCHITECTURE GRID */
-    .arch-grid {
+    /* COMPARISON GRIDS */
+    .compare-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 1.5rem;
     }
 
-    @media (max-width: 768px) { .arch-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 850px) { .compare-grid { grid-template-columns: 1fr; } }
 
-    .arch-box {
+    .compare-box {
       border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
       padding: 1.5rem;
-      background: rgba(30, 41, 59, 0.4);
+      background: rgba(15, 23, 42, 0.6);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
 
-    .arch-box.wrong { border-color: var(--danger-border); background: var(--danger-bg); }
-    .arch-box.right { border-color: rgba(16, 185, 129, 0.4); background: var(--server-bg); }
+    .compare-box.server { border-top: 4px solid var(--server-color); }
+    .compare-box.client { border-top: 4px solid var(--client-color); }
+    .compare-box.non-fatal { border-top: 4px solid var(--warning-color); }
+    .compare-box.fatal { border-top: 4px solid var(--danger-color); }
 
-    .arch-title {
+    .compare-title {
       font-size: 1.15rem;
       font-weight: 700;
       margin-bottom: 0.75rem;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      justify-content: space-between;
     }
 
-    /* SIMULATOR */
+    .prod-error-preview {
+      background: #000000;
+      border: 1px solid #334155;
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.82rem;
+      margin: 0.75rem 0;
+      color: #f8fafc;
+      line-height: 1.5;
+    }
+
+    /* INTERACTIVE SIMULATOR */
     .simulator-container {
       background: #030712;
       border: 1px solid var(--border-color);
@@ -167,35 +186,75 @@
       margin-top: 1rem;
     }
 
+    .mode-switch-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #0d1322;
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .mode-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .mode-btn {
+      padding: 0.4rem 1rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      background: transparent;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+    }
+
+    .mode-btn.active {
+      background: #1e293b;
+      color: #38bdf8;
+      border-color: #38bdf8;
+    }
+
     .sim-controls {
       display: flex;
-      gap: 1rem;
-      justify-content: center;
+      gap: 0.75rem;
+      justify-content: flex-start;
       margin-bottom: 1.5rem;
       flex-wrap: wrap;
     }
 
     .sim-btn {
-      padding: 0.75rem 1.5rem;
-      border-radius: 9999px;
-      border: none;
+      padding: 0.65rem 1.25rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
       font-weight: 700;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       cursor: pointer;
       transition: all 0.2s ease;
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      background: #1e293b;
+      color: #f8fafc;
     }
 
-    .sim-btn-starter { background: #f43f5e; color: #fff; }
-    .sim-btn-final { background: #10b981; color: #000; box-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
+    .sim-btn:hover { background: #334155; }
+    .sim-btn.active-action { border-color: var(--client-color); color: var(--client-color); background: rgba(56, 189, 248, 0.1); }
 
+    /* MOCK BROWSER DISPLAY */
     .mock-browser {
       border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
       overflow: hidden;
       background: #0b0f19;
+      position: relative;
     }
 
     .mock-browser-bar {
@@ -207,6 +266,7 @@
       font-family: 'Fira Code', monospace;
       font-size: 0.8rem;
       color: var(--text-muted);
+      border-bottom: 1px solid var(--border-color);
     }
 
     .mock-dots { display: flex; gap: 6px; }
@@ -215,22 +275,66 @@
     .dot-yellow { background: #fbbf24; }
     .dot-green { background: #10b981; }
 
-    .mock-browser-content { padding: 1.5rem; min-height: 200px; }
-
-    .mock-page-success {
-      background: rgba(16, 185, 129, 0.1);
-      border: 1px solid var(--server-color);
-      border-radius: var(--radius-sm);
-      padding: 1.25rem;
-      color: #a7f3d0;
+    .mock-browser-content {
+      padding: 1.75rem;
+      min-height: 240px;
+      position: relative;
     }
 
-    .mock-page-error {
-      background: rgba(244, 63, 94, 0.1);
-      border: 1px solid var(--danger-color);
-      border-radius: var(--radius-sm);
-      padding: 1.25rem;
-      color: #fca5a5;
+    /* NEXT.JS WHITE SCREEN OF DEATH EMULATOR */
+    .white-screen-death {
+      background: #ffffff;
+      color: #000000;
+      padding: 3rem 2rem;
+      border-radius: 4px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      text-align: left;
+      min-height: 200px;
+    }
+
+    .white-screen-death h2 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .white-screen-death p {
+      font-size: 0.9rem;
+      color: #4b5563;
+    }
+
+    /* DEV POPUP MODAL OVERLAY */
+    .dev-modal-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90%;
+      max-width: 580px;
+      background: #000000;
+      border: 1px solid #ef4444;
+      box-shadow: 0 10px 40px rgba(239, 68, 68, 0.4);
+      border-radius: 8px;
+      z-index: 10;
+      font-family: 'Fira Code', monospace;
+      color: #f8fafc;
+      overflow: hidden;
+    }
+
+    .dev-modal-header {
+      background: #7f1d1d;
+      padding: 0.5rem 1rem;
+      font-size: 0.8rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: bold;
+    }
+
+    .dev-modal-body {
+      padding: 1rem;
+      font-size: 0.82rem;
+      line-height: 1.5;
     }
 
     .console-box {
@@ -244,14 +348,33 @@
       line-height: 1.6;
     }
 
-    /* CODE TABS */
-    .code-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.25rem;
+    /* CODE TABS & CODE PANEL */
+    .code-tab-buttons {
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.75rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
     }
 
-    @media (max-width: 850px) { .code-grid { grid-template-columns: 1fr; } }
+    .code-tab-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-sm);
+      font-family: 'Fira Code', monospace;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+
+    .code-tab-btn.active {
+      background: var(--bg-card-hover);
+      color: var(--client-color);
+      border-color: var(--border-color);
+      font-weight: 600;
+    }
 
     .code-panel {
       background: #050811;
@@ -318,66 +441,215 @@
 <body>
 
   <div class="container">
-    <!-- HERO -->
+    <!-- HERO HEADER -->
     <header class="hero">
       <div class="badge-group">
         <span class="badge badge-client">Client-Side Exceptions</span>
-        <span class="badge badge-danger">Strict File Naming</span>
-        <span class="badge badge-server">error.js Convention</span>
+        <span class="badge badge-danger">White Screen of Death</span>
+        <span class="badge badge-server">Rendering vs Event Errors</span>
+        <span class="badge badge-purple">error.js &amp; reset()</span>
       </div>
-      <h1>Handling Client-Side Exceptions &amp; Strict Conventions</h1>
+      <h1>Next.js Client-Side Exceptions &amp; Recovery Guide</h1>
       <p class="hero-subtitle">
-        Understand how Next.js App Router handles client-side runtime errors and why strict file naming (<code>error.js</code> vs <code>errors.js</code>) determines whether React Error Boundaries are created.
+        Understand why unhandled client-side runtime errors turn your Next.js application completely white in production, how React rendering errors differ from event handler errors, and how to recover effortlessly using <code>error.js</code> and <code>reset()</code> without any server trips!
       </p>
     </header>
 
-    <!-- SECTION 1: STRICT CONVENTION EXPLANATION -->
+    <!-- SECTION 1: THE CORE DISTINCTION -->
     <div class="card">
       <div class="card-header">
-        <div class="badge-icon">⚙️</div>
-        <h2>1. Next.js Strict Convention: <code>error.js</code> vs <code>errors.js</code></h2>
+        <div class="badge-icon">⚖️</div>
+        <h2>1. Server-Side Exception vs Client-Side Exception (Production Reality)</h2>
       </div>
 
-      <div class="arch-grid">
-        <div class="arch-box wrong">
-          <div class="arch-title">
-            <span>❌ Starter Typo: errors.js (Unrecognized)</span>
+      <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem; line-height: 1.7;">
+        Next.js production mode (<code>npm run build &amp;&amp; npm start</code>) me jab koi unhandled error aata hai, toh Next.js user ko ek default <strong>White Screen of Death</strong> dikhata hai. Lekin donon ke error message aur investigation me aasmaan-zameen ka farq hota hai:
+      </p>
+
+      <div class="compare-grid">
+        <!-- SERVER EXCEPTION -->
+        <div class="compare-box server">
+          <div>
+            <div class="compare-title">
+              <span style="color: var(--server-color);">🖥️ Server-Side Exception</span>
+              <span class="badge badge-server">Server Component / SSR</span>
+            </div>
+            <p style="font-size: 0.9rem; color: #cbd5e1; margin-bottom: 0.75rem;">
+              Yeh error tab aata hai jab Node.js server component ko render kar raha hota hai (jaise database fail ho gaya ya random throw error ho gaya).
+            </p>
+            <div class="prod-error-preview">
+              <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 4px;">// Production Screen Output:</div>
+              <span style="color: #f87171;">Application error: a server-side exception has occurred</span><br>
+              <span style="color: #94a3b8;">(see the server logs for more information).</span><br>
+              <span style="color: #fbbf24;">Digest: 2948294719</span>
+            </div>
+            <ul style="font-size: 0.85rem; color: var(--text-muted); margin-left: 1.25rem; line-height: 1.6;">
+              <li><strong>Hidden for Security:</strong> Browser console me koi stack trace nahi milegi taaki DB credentials leak na ho.</li>
+              <li><strong>Digest ID:</strong> Ek hash number milta hai jise aapko <code>server.log</code> me match karna padta hai.</li>
+            </ul>
           </div>
-          <p>
-            In starter code, the developer named the file <code>errors.js</code> (plural with an 's'). 
-            <strong>Next.js treats this as a regular helper file and DOES NOT create a React Error Boundary!</strong> Unhandled errors cause the page to crash or unmount completely.
+        </div>
+
+        <!-- CLIENT EXCEPTION -->
+        <div class="compare-box client">
+          <div>
+            <div class="compare-title">
+              <span style="color: var(--client-color);">🌐 Client-Side Exception</span>
+              <span class="badge badge-client">Client Component / Browser</span>
+            </div>
+            <p style="font-size: 0.9rem; color: #cbd5e1; margin-bottom: 0.75rem;">
+              Yeh error browser ke JavaScript engine me React rendering cycle ke dauran aata hai (jaise <code>null.map()</code> ya undefined object render karna).
+            </p>
+            <div class="prod-error-preview">
+              <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 4px;">// Production Screen Output:</div>
+              <span style="color: #f87171;">Application error: a client-side exception has occurred</span><br>
+              <span style="color: #38bdf8;">(see the browser console for more information).</span>
+            </div>
+            <ul style="font-size: 0.85rem; color: var(--text-muted); margin-left: 1.25rem; line-height: 1.6;">
+              <li><strong>NO Digest Masking:</strong> Yeh error client ke browser me hua hai, isliye browser Console (<code>F12</code>) me <strong>exact stack trace</strong> aur line number dikhta hai!</li>
+              <li><strong>Fatal Rendering Block:</strong> Jab tak hard reload na karein ya error boundary na ho, poori app white ho jaati hai!</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: THE 2 TYPES OF CLIENT ERRORS -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🔬</div>
+        <h2>2. Client-Side ke Do Alag Chehre: Event Error vs Rendering Error</h2>
+      </div>
+
+      <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem; line-height: 1.7;">
+        Instructor ne video me ek bohot hi shaandaar difference samjhaya: <strong>Har client-side error aapki app ko crash karke White Screen nahi banata!</strong> Client me do tarah ke errors hote hain:
+      </p>
+
+      <div class="compare-grid">
+        <!-- NON-FATAL EVENT ERROR -->
+        <div class="compare-box non-fatal">
+          <div>
+            <div class="compare-title">
+              <span style="color: var(--warning-color);">1️⃣ Event Handler Error (Non-Fatal)</span>
+              <span class="badge" style="background: var(--warning-bg); color: var(--warning-color); border-color: rgba(251, 191, 36, 0.4);">App Chalti Rahegi</span>
+            </div>
+            <div style="font-family: 'Fira Code', monospace; font-size: 0.82rem; background: #000; padding: 0.75rem; border-radius: 6px; margin: 0.5rem 0;">
+              &lt;button onClick={() =&gt; {<br>
+              &nbsp;&nbsp;<span style="color: #f87171;">console.log(anurag);</span> <span style="color: #64748b;">// ❌ anurag is not defined</span><br>
+              }}&gt;Click Me&lt;/button&gt;
+            </div>
+            <ul style="font-size: 0.85rem; color: #cbd5e1; margin-left: 1.25rem; line-height: 1.7;">
+              <li><strong>Kyun nahi crash hoti app?</strong> Kyunki component ka JSX pehle hi render ho chuka hai! Button click karne par function fail hua, lekin React ka DOM tree safe hai.</li>
+              <li><strong>Dev Mode:</strong> Corner me red popup aayega, lekin popup close karne par saari navigation, dark mode, buttons smoothly chalte rahenge.</li>
+              <li><strong>Production Mode:</strong> User ko koi white screen nahi dikhegi, sirf DevTools console me red log aayega.</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- FATAL RENDERING ERROR -->
+        <div class="compare-box fatal">
+          <div>
+            <div class="compare-title">
+              <span style="color: var(--danger-color);">2️⃣ Component Rendering Error (Fatal Crash)</span>
+              <span class="badge badge-danger">White Screen of Death</span>
+            </div>
+            <div style="font-family: 'Fira Code', monospace; font-size: 0.82rem; background: #000; padding: 0.75rem; border-radius: 6px; margin: 0.5rem 0;">
+              const [fruits, setFruits] = useState(['Mango']);<br>
+              <span style="color: #64748b;">// User clicks button: setFruits(null);</span><br>
+              <span style="color: #f87171;">{fruits.map(f =&gt; &lt;p&gt;{f}&lt;/p&gt;)}</span> <span style="color: #64748b;">// 💥 null.map() crashes!</span>
+            </div>
+            <ul style="font-size: 0.85rem; color: #cbd5e1; margin-left: 1.25rem; line-height: 1.7;">
+              <li><strong>Kyun crash ho gayi app?</strong> Yeh error <strong>React ke Render Cycle</strong> ke dauran hua hai. React jab JSX evaluate kar raha tha, tabhi error aa gaya. React DOM construct nahi kar paya!</li>
+              <li><strong>Dev Mode:</strong> Center me Red Modal khulega aur piche ka background <strong>poora blank WHITE</strong> ho jayega. Modal close karne par bhi page dead rahega.</li>
+              <li><strong>Production Mode:</strong> Poora screen Next.js ke generic White Screen Client Exception me tabdeel ho jayega!</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: INSTRUCTOR CHALLENGE & SIMULATION -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🎯</div>
+        <h2>3. The Instructor's Challenge: Simulating Pure Client-Side Exception</h2>
+      </div>
+
+      <div style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: var(--radius-md); padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;">
+        <h4 style="color: var(--client-color); margin-bottom: 0.5rem;">🤔 The Problem Statement Given in the Video:</h4>
+        <p style="font-size: 0.92rem; color: #cbd5e1; line-height: 1.7;">
+          <em>"Aapko About page (Client Component) me ek aisa error lana hai jisse initial page load par koi error na aaye (SSR smoothly pass ho jaye), lekin jab user client par button click kare, tab React ke rendering cycle me exception throw ho aur poori application white crash ho jaye!"</em>
+        </p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+        <div style="background: #050811; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem;">
+          <div style="color: var(--server-color); font-weight: 700; font-size: 0.9rem; margin-bottom: 0.35rem;">Step 1: Initial Array State</div>
+          <p style="font-size: 0.82rem; color: var(--text-muted);">
+            <code>useState(["Mango", "Apple"])</code>. Initial server render ke waqt array valid hai, isliye SSR bina kisi error ke HTML produce karta hai.
           </p>
         </div>
 
-        <div class="arch-box right">
-          <div class="arch-title">
-            <span>✅ Final Fix: error.js (Recognized Convention)</span>
-          </div>
-          <p>
-            Naming the file strictly <code>error.js</code> (singular) instructs Next.js compiler to automatically wrap the route segment inside a React <code>&lt;ErrorBoundary&gt;</code>. 
-            Client-side runtime exceptions are caught gracefully!
+        <div style="background: #050811; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem;">
+          <div style="color: var(--warning-color); font-weight: 700; font-size: 0.9rem; margin-bottom: 0.35rem;">Step 2: User Click Event</div>
+          <p style="font-size: 0.82rem; color: var(--text-muted);">
+            Button click par <code>setFruits(null)</code> trigger hota hai. React component ko re-render queue me daal deta hai.
+          </p>
+        </div>
+
+        <div style="background: #050811; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem;">
+          <div style="color: var(--danger-color); font-weight: 700; font-size: 0.9rem; margin-bottom: 0.35rem;">Step 3: Rendering Breakdown</div>
+          <p style="font-size: 0.82rem; color: var(--text-muted);">
+            Re-render me React <code>fruits.map()</code> run karta hai. <code>null.map()</code> throws <code>TypeError: Cannot read properties of null</code>!
+          </p>
+        </div>
+
+        <div style="background: #050811; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem;">
+          <div style="color: var(--purple-color); font-weight: 700; font-size: 0.9rem; margin-bottom: 0.35rem;">Step 4: error.js Recovery</div>
+          <p style="font-size: 0.82rem; color: var(--text-muted);">
+            <code>app/about/error.js</code> catch karta hai. User "Try Again" dabata hai $ightarrow$ <code>reset()</code> component ko re-mount karke default fruits le aata hai!
           </p>
         </div>
       </div>
     </div>
 
-    <!-- SECTION 2: LIVE SIMULATOR -->
+    <!-- SECTION 4: LIVE INTERACTIVE SIMULATOR -->
     <div class="card">
       <div class="card-header">
         <div class="badge-icon">🎮</div>
-        <h2>2. Live Interactive Convention &amp; Exception Simulator</h2>
+        <h2>4. Live Interactive Exception Simulator (Dev vs Prod + Recovery)</h2>
       </div>
 
       <div class="simulator-container">
+        <!-- MODE TOGGLE -->
+        <div class="mode-switch-bar">
+          <div style="font-size: 0.9rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
+            <span>🌐 Environment Mode:</span>
+            <span id="current-mode-label" style="color: var(--client-color);">Development Mode (npm run dev)</span>
+          </div>
+          <div class="mode-buttons">
+            <button class="mode-btn active" id="btn-mode-dev" onclick="setEnvironment('dev')">Development</button>
+            <button class="mode-btn" id="btn-mode-prod" onclick="setEnvironment('prod')">Production (build &amp; start)</button>
+          </div>
+        </div>
+
+        <!-- SIMULATOR CONTROLS -->
         <div class="sim-controls">
-          <button class="sim-btn sim-btn-starter" onclick="runScenario('starter')">
-            ❌ Starter Scenario: errors.js (Typo in Filename)
+          <button class="sim-btn" id="btn-act-event" onclick="triggerEventError()">
+            1️⃣ Event Error: console.log(anurag)
           </button>
-          <button class="sim-btn sim-btn-final" onclick="runScenario('final')">
-            ✅ Final Scenario: error.js (Correct Convention)
+          <button class="sim-btn" id="btn-act-render" onclick="triggerRenderCrash()">
+            2️⃣ Rendering Crash: setFruits(null)
+          </button>
+          <button class="sim-btn" id="btn-act-boundary" onclick="triggerBoundaryCatch()">
+            3️⃣ With error.js Boundary Active
+          </button>
+          <button class="sim-btn" onclick="resetSim()" style="background: rgba(255,255,255,0.05); margin-left: auto;">
+            🔄 Full Reload (Reset)
           </button>
         </div>
 
+        <!-- MOCK BROWSER -->
         <div class="mock-browser">
           <div class="mock-browser-bar">
             <div class="mock-dots">
@@ -385,145 +657,443 @@
               <span class="dot dot-yellow"></span>
               <span class="dot dot-green"></span>
             </div>
-            <span style="margin-left: 10px;">http://localhost:3000/blogs/1</span>
+            <span style="margin-left: 0.5rem; color: #38bdf8;">http://localhost:3000/about</span>
+            <span id="browser-mode-tag" style="margin-left: auto; font-size: 0.75rem; background: #334155; padding: 2px 8px; border-radius: 4px; color: #f8fafc;">DEV MODE</span>
           </div>
 
-          <div class="mock-browser-content">
-            <div id="sim-display">
-              <div class="mock-page-success">
-                <h3>Welcome to Our Blog 1</h3>
-                <p>Click a button above to test how Next.js responds when an exception occurs!</p>
+          <div class="mock-browser-content" id="browser-screen">
+            <!-- Normal Clean Initial State -->
+            <div id="about-normal-ui">
+              <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">About Us</h2>
+              <p style="color: #94a3b8; font-size: 0.95rem; margin-bottom: 1rem;">We are a company dedicated to providing quality services.</p>
+              <button style="padding: 0.5rem 1rem; background: #38bdf8; color: #000; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-bottom: 1rem;">
+                Click Me
+              </button>
+              <div id="fruits-list">
+                <p style="background: rgba(255,255,255,0.04); padding: 4px 8px; border-radius: 4px; display: inline-block; margin-right: 8px;">🥭 Mango</p>
+                <p style="background: rgba(255,255,255,0.04); padding: 4px 8px; border-radius: 4px; display: inline-block;">🍎 Apple</p>
               </div>
+            </div>
+
+            <!-- Dev Modal Placeholder -->
+            <div id="dev-error-overlay" class="dev-modal-overlay" style="display: none;">
+              <div class="dev-modal-header">
+                <span id="dev-modal-title">Unhandled Runtime Error</span>
+                <span style="cursor: pointer; padding: 0 4px;" onclick="closeDevModal()">✖ Close</span>
+              </div>
+              <div class="dev-modal-body" id="dev-modal-text"></div>
             </div>
           </div>
         </div>
 
-        <div id="console-output" class="console-box">
-          Console Log: System initialized. Choose Starter vs Final scenario above.
+        <!-- CONSOLE & EXPLANATION -->
+        <div class="console-box" id="sim-console-output">
+          <span style="color: #64748b;">// Browser Console (F12) output will appear here...</span>
         </div>
       </div>
     </div>
 
-    <!-- SECTION 3: CODE COMPARISON -->
+    <!-- SECTION 5: CODE BREAKDOWN & ARCHITECTURAL COMPARISON -->
     <div class="card">
       <div class="card-header">
-        <div class="badge-icon">🔍</div>
-        <h2>3. Side-by-Side Code Comparison: Starter vs Final</h2>
+        <div class="badge-icon">💻</div>
+        <h2>5. Code Breakdown: How error.js Handles Client Exceptions</h2>
       </div>
 
-      <div class="code-grid">
+      <div class="code-tab-buttons">
+        <button class="code-tab-btn active" onclick="showCodeTab('tab-about-page')">app/about/page.js (Client Component)</button>
+        <button class="code-tab-btn" onclick="showCodeTab('tab-about-error')">app/about/error.js (Client Boundary)</button>
+        <button class="code-tab-btn" onclick="showCodeTab('tab-server-vs-client-reset')">Server reset() vs Client reset() 💡</button>
+      </div>
+
+      <!-- TAB 1: ABOUT PAGE -->
+      <div id="tab-about-page" class="code-tab-content">
         <div class="code-panel">
           <div class="code-panel-header">
-            <span style="color: var(--danger-color);">Starter: Incorrect Filename</span>
-            <span>app/blogs/[blogID]/errors.js</span>
+            <span>app/about/page.js — Client Component with Intentional Rendering Error</span>
+            <span style="color: var(--client-color);">Client Component</span>
           </div>
-          <div class="code-content"><span class="hl-comment">// ❌ FILENAME: errors.js (Plural - TYPO!)</span>
-<span class="hl-str">"use client"</span>;
+          <div class="code-content"><span class="hl-str">"use client"</span>;
+
+<span class="hl-imp">import</span> { useState } <span class="hl-imp">from</span> <span class="hl-str">"react"</span>;
+
+<span class="hl-kw">const</span> <span class="hl-func">About</span> = () =&gt; {
+  <span class="hl-comment">// 1. Initial State: Valid array so Initial SSR renders smoothly!</span>
+  <span class="hl-kw">const</span> [fruits, setFruits] = <span class="hl-func">useState</span>([<span class="hl-str">"Mango"</span>, <span class="hl-str">"Apple"</span>]);
+
+  <span class="hl-kw">return</span> (
+    &lt;<span class="hl-tag">div</span>&gt;
+      &lt;<span class="hl-tag">h1</span>&gt;About Us&lt;/<span class="hl-tag">h1</span>&gt;
+      &lt;<span class="hl-tag">p</span>&gt;We are a company dedicated to providing quality services.&lt;/<span class="hl-tag">p</span>&gt;
+      
+      &lt;<span class="hl-tag">button</span>
+        onClick={() =&gt; {
+          <span class="hl-comment">// 💥 Setting fruits to null triggers re-render!</span>
+          <span class="hl-danger">setFruits(null);</span>
+          <span class="hl-comment">// console.log(anurag); // &lt;- Event error (non-fatal)</span>
+        }}
+      &gt;
+        Click Me
+      &lt;/<span class="hl-tag">button</span>&gt;
+
+      <span class="hl-comment">// 💥 During re-render: null.map() causes FATAL Rendering Crash!</span>
+      {fruits.<span class="hl-func">map</span>((fruit) =&gt; (
+        &lt;<span class="hl-tag">p</span> key={fruit}&gt;{fruit}&lt;/<span class="hl-tag">p</span>&gt;
+      ))}
+    &lt;/<span class="hl-tag">div</span>&gt;
+  );
+};
+
+<span class="hl-kw">export default</span> About;</div>
+        </div>
+      </div>
+
+      <!-- TAB 2: ABOUT ERROR.JS -->
+      <div id="tab-about-error" class="code-tab-content" style="display: none;">
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span style="color: var(--danger-color);">app/about/error.js — Client Error Boundary</span>
+            <span style="color: var(--server-color);">React Error Boundary</span>
+          </div>
+          <div class="code-content"><span class="hl-str">"use client"</span>; <span class="hl-comment">// 👈 error.js must ALWAYS be a Client Component!</span>
 
 <span class="hl-kw">export default function</span> <span class="hl-func">Error</span>({ error, reset }) {
-  <span class="hl-comment">// Next.js ignores this file as an Error Boundary!</span>
-  <span class="hl-kw">return</span> &lt;<span class="hl-tag">div</span>&gt;<span class="hl-danger">Something went wrong</span>&lt;/<span class="hl-tag">div</span>&gt;;
+  <span class="hl-comment">// In Client Exceptions, error has the EXACT unmasked message &amp; stack!</span>
+  console.<span class="hl-func">dir</span>(error);
+
+  <span class="hl-kw">return</span> (
+    &lt;<span class="hl-tag">div</span> className=<span class="hl-str">"error-container"</span>&gt;
+      &lt;<span class="hl-tag">h2</span>&gt;Something went wrong in client side&lt;/<span class="hl-tag">h2</span>&gt;
+      &lt;<span class="hl-tag">p</span>&gt;{error.message}&lt;/<span class="hl-tag">p</span>&gt;
+      
+      &lt;<span class="hl-tag">button</span>
+        onClick={() =&gt; {
+          <span class="hl-comment">// 🟢 For Client Errors: reset() alone is 100% sufficient!</span>
+          <span class="hl-func">reset</span>();
+        }}
+      &gt;
+        Try Again
+      &lt;/<span class="hl-tag">button</span>&gt;
+    &lt;/<span class="hl-tag">div</span>&gt;
+  );
 }</div>
         </div>
+      </div>
 
-        <div class="code-panel">
-          <div class="code-panel-header">
-            <span style="color: var(--server-color);">Final: Correct Convention</span>
-            <span>app/blogs/[blogID]/error.js</span>
+      <!-- TAB 3: SERVER VS CLIENT RESET -->
+      <div id="tab-server-vs-client-reset" class="code-tab-content" style="display: none;">
+        <div style="background: #020617; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.5rem;">
+          <h3 style="color: var(--purple-color); margin-bottom: 1rem; font-size: 1.15rem;">
+            ⚡ Why Client Components DO NOT Need <code>router.refresh()</code>:
+          </h3>
+          <div class="compare-grid" style="margin-bottom: 1rem;">
+            <div style="background: #050811; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1rem;">
+              <h4 style="color: var(--server-color); margin-bottom: 0.5rem; font-size: 0.95rem;">Server Component Error (Lesson 02):</h4>
+              <p style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.6;">
+                Server Component me data server se fetch hota hai. Agar server par API fail hui thi, toh sirf client <code>reset()</code> karne se naya HTML nahi aayega! Isliye humein Next.js router ko server se fresh payload mangne ke liye <code>startTransition(() =&gt; { router.refresh(); reset(); })</code> karna padta tha.
+              </p>
+            </div>
+
+            <div style="background: #050811; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1rem;">
+              <h4 style="color: var(--client-color); margin-bottom: 0.5rem; font-size: 0.95rem;">Client Component Error (This Lesson):</h4>
+              <p style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.6;">
+                Client Component ka error browser ke state me hota hai (<code>setFruits(null)</code>). Iska server se koi lena-dena nahi hai! Jab aap <code>reset()</code> call karte ho, toh React ErrorBoundary component tree ko re-mount karta hai. Re-mount hote hi <code>useState(["Mango", "Apple"])</code> wapas apne initial value se shuru hota hai aur UI instantly theek ho jaati hai!
+              </p>
+            </div>
           </div>
-          <div class="code-content"><span class="hl-comment">// ✅ FILENAME: error.js (Singular - EXACT!)</span>
-<span class="hl-str">"use client"</span>;
-
-<span class="hl-kw">export default function</span> <span class="hl-func">Error</span>({ error, reset }) {
-  <span class="hl-comment">// Next.js recognizes this file &amp; wraps page in Error Boundary!</span>
-  <span class="hl-kw">return</span> &lt;<span class="hl-tag">div</span>&gt;<span class="hl-green">Something went wrong</span>&lt;/<span class="hl-tag">div</span>&gt;;
-}</div>
         </div>
       </div>
     </div>
 
-    <!-- SECTION 4: KNOWLEDGE CHECK -->
+    <!-- SECTION 6: KNOWLEDGE CHECK QUIZ -->
     <div class="card">
       <div class="card-header">
         <div class="badge-icon">❓</div>
-        <h2>4. Quick Knowledge Check</h2>
+        <h2>6. Quick Knowledge Check</h2>
       </div>
 
       <div>
-        <h4 style="margin-bottom: 0.75rem;">Q1: What happens if you name your error boundary file <code>errors.jsx</code> instead of <code>error.jsx</code>?</h4>
+        <h4 style="margin-bottom: 0.75rem;">Q1: Production me Client-Side Exception aane par error details kahan milti hain?</h4>
         <div class="quiz-option" onclick="checkAnswer(this, false)">
           <span class="radio-circle"></span>
-          <span>A) Next.js automatically renames it during build time.</span>
+          <span>A) Server logs (server.log) me Digest ID ke sath.</span>
         </div>
         <div class="quiz-option" onclick="checkAnswer(this, true)">
           <span class="radio-circle"></span>
-          <span>B) Next.js ignores it as an Error Boundary because convention requires the exact singular name error.js!</span>
+          <span>B) Browser ke Developer Tools Console (F12) me poori unmasked stack trace ke sath!</span>
         </div>
         <div class="quiz-option" onclick="checkAnswer(this, false)">
           <span class="radio-circle"></span>
-          <span>C) It works identically; plural names are also supported.</span>
+          <span>C) Kahi nahi milti, production me saare errors completely strip ho jaate hain.</span>
+        </div>
+
+        <h4 style="margin: 1.5rem 0 0.75rem 0;">Q2: Button onClick ke andar <code>console.log(undefinedVariable)</code> karne par app White Screen kyon nahi banti?</h4>
+        <div class="quiz-option" onclick="checkAnswer(this, true)">
+          <span class="radio-circle"></span>
+          <span>A) Kyunki yeh Event Handler error hai; component ka JSX pehle hi render ho chuka hai aur DOM tree safe hai!</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>B) Kyunki Next.js console.log ke errors ko ignore kar deta hai.</span>
+        </div>
+
+        <h4 style="margin: 1.5rem 0 0.75rem 0;">Q3: Client Component me error aane par <code>router.refresh()</code> ki zaroorat kyon nahi hoti?</h4>
+        <div class="quiz-option" onclick="checkAnswer(this, true)">
+          <span class="radio-circle"></span>
+          <span>A) Kyunki error client-side state me tha, <code>reset()</code> se component re-mount hokar initial state restore kar leta hai.</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>B) Kyunki router.refresh() Client Components me chalta hi nahi hai.</span>
         </div>
       </div>
     </div>
 
-    <!-- SECTION 5: POORA SAAR / HINGLISH GOLDEN RULE -->
+    <!-- SECTION 7: POORA SAAR & HINGLISH GOLDEN RULES -->
     <div class="card">
       <div class="card-header">
         <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4);">💡</div>
-        <h2>5. Poora Saar &amp; Golden Master Rule (Hinglish)</h2>
+        <h2>7. Poora Saar &amp; Golden Master Rules (Hinglish)</h2>
       </div>
 
       <div style="padding: 1.5rem; background: #020617; border-left: 5px solid var(--purple-color); border-radius: var(--radius-md);">
-        <h3 style="color: var(--purple-color); margin-bottom: 0.75rem; font-size: 1.15rem;">💡 Client-Side Exceptions &amp; Convention Ka Poora Saar:</h3>
+        <h3 style="color: var(--purple-color); margin-bottom: 0.75rem; font-size: 1.15rem;">💡 Client-Side Exceptions Ka Complete Formula:</h3>
 
         <p style="font-size: 0.98rem; color: var(--text-main); line-height: 1.8; margin-bottom: 1rem;">
-          Next.js App Router me file names ka <strong>Strict Convention</strong> hota hai! 
-          Jab aap file ka naam <code>errors.js</code> (plural with an 's') rakh dete ho, toh Next.js use ek normal utility file samajhta hai aur **React Error Boundary** create nahi karta!
+          Jab browser me React ke <strong>Rendering Lifecycle</strong> me aisa error aata hai jisse DOM ban hi na sake (jaise <code>null.map()</code>), toh React fail ho jata hai aur Next.js fallback screen na hone par poora page <strong>White Screen of Death</strong> me convert kar deta hai!
         </p>
 
-        <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 1.25rem;">
-          Jaise hi aap naam <code>error.js</code> (singular) karte ho, Next.js ka compiler automatically route segment ko React <code>&lt;ErrorBoundary&gt;</code> me wrap kar deta hai. 
-          Ab chahe Server Error aaye ya Browser me Client-Side Exception (JS Error) phate, aapka fallback UI screen par smoothly render ho jayega!
-        </p>
-
-        <div style="background: rgba(168, 85, 247, 0.1); border: 1px dashed var(--purple-color); padding: 1rem; border-radius: var(--radius-sm); font-size: 0.9rem;">
-          <strong style="color: var(--purple-color); display: block; margin-bottom: 0.5rem;">🔥 3 Rules to Remember Forever:</strong>
-          <ul style="padding-left: 1.2rem; line-height: 1.8; color: var(--text-main);">
-            <li><strong>1. Strict Name 🎯</strong> ➔ File ka naam ALWAYS <code>error.js</code> or <code>error.jsx</code> hona chahiye (NOT <code>errors.js</code>!).</li>
-            <li><strong>2. Client Boundary 🌐</strong> ➔ <code>error.js</code> ke top par ALWAYS <code>"use client"</code> hona chahiye!</li>
-            <li><strong>3. Instant Client Catch ⚡</strong> ➔ Client-Side Exceptions (Browser JS Errors) immediate Catch hote hain aur client boundary UI load ho jata hai.</li>
+        <div style="background: rgba(168, 85, 247, 0.1); border: 1px dashed var(--purple-color); padding: 1.25rem; border-radius: var(--radius-sm); font-size: 0.92rem;">
+          <strong style="color: var(--purple-color); display: block; margin-bottom: 0.75rem; font-size: 1rem;">🔥 4 Golden Rules Jo Kabhi Mat Bhoolna:</strong>
+          <ul style="padding-left: 1.2rem; line-height: 1.9; color: var(--text-main);">
+            <li><strong>1. Event Error $
+eq$ White Screen:</strong> Button click ya function me undefined variable hone se app crash nahi hoti. Sirf console me error aata hai aur app chalti rehti hai.</li>
+            <li><strong>2. Rendering Error = Fatal Crash:</strong> Agar JSX me evaluation fail hua (bad state, null properties), toh React poori app unmount kar deta hai aur White Screen ban jaati hai.</li>
+            <li><strong>3. Client Errors Are Never Hidden:</strong> Server errors me security ke liye <code>Digest</code> hota hai, lekin Client errors browser Console (<code>F12</code>) me pure exact stack trace ke sath aate hain.</li>
+            <li><strong>4. Clean Recovery with <code>reset()</code>:</strong> Client components me <code>router.refresh()</code> ki koi zaroorat nahi hoti! Sirf <code>reset()</code> call karo, React component ko fresh re-mount karega aur initial state wapas aa jayegi.</li>
           </ul>
         </div>
       </div>
     </div>
 
     <footer>
-      Next.js Client Exceptions &amp; Conventions Guide &bull; Section 5 Lesson 04
+      Next.js Error Handling Deep Dive &bull; Section 5 Lesson 04 &bull; Client-Side Exceptions
     </footer>
   </div>
 
   <script>
-    function runScenario(type) {
-      const display = document.getElementById('sim-display');
-      const consoleBox = document.getElementById('console-output');
+    let currentEnv = 'dev'; // 'dev' or 'prod'
+    let lastAction = 'normal';
 
-      if (type === 'starter') {
-        display.innerHTML = `
-          <div class="mock-page-error" style="border-color: var(--danger-color);">
-            <h3 style="color: var(--danger-color); margin-bottom: 0.5rem;">💥 UNCAUGHT CRASH (White Screen of Death)</h3>
-            <p style="font-size: 0.9rem;">Filename was errors.js! Next.js did NOT create an Error Boundary. Exception unhandled in browser!</p>
-          </div>
-        `;
-        consoleBox.innerHTML = `<span style="color: var(--danger-color)">[CONVENTION ERROR] 'errors.js' unrecognized by Next.js App Router compiler! React Error Boundary was NOT created.</span>`;
+    function setEnvironment(env) {
+      currentEnv = env;
+      document.getElementById('btn-mode-dev').classList.toggle('active', env === 'dev');
+      document.getElementById('btn-mode-prod').classList.toggle('active', env === 'prod');
+      
+      const modeLabel = document.getElementById('current-mode-label');
+      const tag = document.getElementById('browser-mode-tag');
+
+      if (env === 'dev') {
+        modeLabel.innerText = 'Development Mode (npm run dev)';
+        modeLabel.style.color = 'var(--client-color)';
+        tag.innerText = 'DEV MODE';
+        tag.style.background = '#334155';
       } else {
-        display.innerHTML = `
-          <div class="mock-page-error" style="border-color: var(--server-color); background: rgba(16, 185, 129, 0.1);">
-            <h3 style="color: var(--server-color); margin-bottom: 0.5rem;">🛡️ Error Boundary Active (Handled Gracefully)</h3>
-            <p style="font-size: 0.9rem; color: #a7f3d0;">Filename is error.js! Next.js created ErrorBoundary. Client exception caught smoothly!</p>
+        modeLabel.innerText = 'Production Mode (npm run build && npm start)';
+        modeLabel.style.color = 'var(--server-color)';
+        tag.innerText = 'PROD BUILD';
+        tag.style.background = '#065f46';
+      }
+
+      // Re-run last action in new environment
+      if (lastAction === 'event') triggerEventError();
+      else if (lastAction === 'render') triggerRenderCrash();
+      else if (lastAction === 'boundary') triggerBoundaryCatch();
+      else resetSim();
+    }
+
+    function clearActiveButtons() {
+      document.querySelectorAll('#btn-act-event, #btn-act-render, #btn-act-boundary').forEach(b => {
+        b.classList.remove('active-action');
+      });
+    }
+
+    function triggerEventError() {
+      lastAction = 'event';
+      clearActiveButtons();
+      document.getElementById('btn-act-event').classList.add('active-action');
+
+      const screen = document.getElementById('browser-screen');
+      const consoleBox = document.getElementById('sim-console-output');
+
+      // Keep normal UI running!
+      screen.innerHTML = `
+        <div id="about-normal-ui">
+          <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">About Us</h2>
+          <p style="color: #94a3b8; font-size: 0.95rem; margin-bottom: 1rem;">We are a company dedicated to providing quality services.</p>
+          <button style="padding: 0.5rem 1rem; background: #38bdf8; color: #000; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-bottom: 1rem;">
+            Click Me
+          </button>
+          <div id="fruits-list">
+            <p style="background: rgba(255,255,255,0.04); padding: 4px 8px; border-radius: 4px; display: inline-block; margin-right: 8px;">🥭 Mango</p>
+            <p style="background: rgba(255,255,255,0.04); padding: 4px 8px; border-radius: 4px; display: inline-block;">🍎 Apple</p>
+          </div>
+          <div style="margin-top: 1rem; padding: 0.5rem 0.75rem; background: rgba(251, 191, 36, 0.1); border-left: 3px solid var(--warning-color); font-size: 0.85rem; color: #fef08a;">
+            ℹ️ Notice: App is 100% alive! Buttons, links, and layout are still functioning normally!
+          </div>
+        </div>
+      `;
+
+      if (currentEnv === 'dev') {
+        screen.innerHTML += `
+          <div id="dev-error-overlay" class="dev-modal-overlay">
+            <div class="dev-modal-header">
+              <span>Unhandled Runtime Error (Dev Overlay)</span>
+              <span style="cursor: pointer;" onclick="closeDevModal()">✖ Close</span>
+            </div>
+            <div class="dev-modal-body">
+              <span style="color: #f87171; font-weight: bold;">ReferenceError: anurag is not defined</span><br>
+              <span style="color: #94a3b8; font-size: 0.78rem;">at onClick (app/about/page.js:14:23)</span>
+              <p style="margin-top: 0.5rem; font-size: 0.75rem; color: #cbd5e1;">(Closing this modal allows you to continue using the application normally!)</p>
+            </div>
           </div>
         `;
-        consoleBox.innerHTML = `<span style="color: var(--server-color)">[CONVENTION SUCCESS] 'error.js' recognized! React Error Boundary wrapped route segment and rendered fallback UI.</span>`;
+        consoleBox.innerHTML = `
+          <span style="color: #f87171;">❌ Uncaught ReferenceError: anurag is not defined</span><br>
+          <span style="color: #94a3b8;">&nbsp;&nbsp;at onClick (app/about/page.js:14:23)</span><br>
+          <span style="color: var(--warning-color);">[DEV OBSERVATION] Event error occurred inside onClick callback. DOM rendering was NOT affected!</span>
+        `;
+      } else {
+        consoleBox.innerHTML = `
+          <span style="color: #f87171;">❌ Uncaught ReferenceError: anurag is not defined</span><br>
+          <span style="color: #94a3b8;">&nbsp;&nbsp;at onClick (app/about/page.js:14:23)</span><br>
+          <span style="color: var(--server-color);">[PROD OBSERVATION] No popup shown! Page did NOT crash into white screen! Error safely logged to browser console.</span>
+        `;
       }
+    }
+
+    function triggerRenderCrash() {
+      lastAction = 'render';
+      clearActiveButtons();
+      document.getElementById('btn-act-render').classList.add('active-action');
+
+      const screen = document.getElementById('browser-screen');
+      const consoleBox = document.getElementById('sim-console-output');
+
+      if (currentEnv === 'dev') {
+        // Dev mode shows modal, but behind it is BLANK WHITE!
+        screen.innerHTML = `
+          <div style="background: #ffffff; min-height: 200px; padding: 2rem; border-radius: 4px; position: relative;">
+            <div id="dev-error-overlay" class="dev-modal-overlay" style="position: absolute;">
+              <div class="dev-modal-header">
+                <span>TypeError: Cannot read properties of null (reading 'map')</span>
+                <span style="cursor: pointer;" onclick="closeDevModal()">✖ Close</span>
+              </div>
+              <div class="dev-modal-body">
+                <span style="color: #f87171; font-weight: bold;">TypeError: Cannot read properties of null (reading 'map')</span><br>
+                <span style="color: #94a3b8; font-size: 0.78rem;">at About (app/about/page.js:21:14)</span>
+                <p style="margin-top: 0.5rem; font-size: 0.75rem; color: #fca5a5;">
+                  ⚠️ NOTICE THE BACKGROUND: It is completely WHITE! Once you close this modal, the app is dead because rendering failed!
+                </p>
+              </div>
+            </div>
+          </div>
+        `;
+        consoleBox.innerHTML = `
+          <span style="color: #f87171;">❌ TypeError: Cannot read properties of null (reading 'map')</span><br>
+          <span style="color: #94a3b8;">&nbsp;&nbsp;at About (app/about/page.js:21:14)</span><br>
+          <span style="color: var(--danger-color);">[DEV OBSERVATION] Rendering cycle crashed! React failed to construct DOM. Background is dead white.</span>
+        `;
+      } else {
+        // Production mode shows Next.js White Screen of Death!
+        screen.innerHTML = `
+          <div class="white-screen-death">
+            <h2>Application error: a client-side exception has occurred</h2>
+            <p>(see the browser console for more information).</p>
+          </div>
+        `;
+        consoleBox.innerHTML = `
+          <span style="color: #f87171;">❌ TypeError: Cannot read properties of null (reading 'map')</span><br>
+          <span style="color: #94a3b8;">&nbsp;&nbsp;at About (http://localhost:3000/_next/static/chunks/app/about/page.js:21:14)</span><br>
+          <span style="color: var(--client-color);">[PROD OBSERVATION] EXACT error is visible in browser console! Server errors hide with Digest, but client errors reveal everything here.</span>
+        `;
+      }
+    }
+
+    function triggerBoundaryCatch() {
+      lastAction = 'boundary';
+      clearActiveButtons();
+      document.getElementById('btn-act-boundary').classList.add('active-action');
+
+      const screen = document.getElementById('browser-screen');
+      const consoleBox = document.getElementById('sim-console-output');
+
+      screen.innerHTML = `
+        <div style="background: rgba(244, 63, 94, 0.08); border: 1px solid var(--danger-border); border-radius: 8px; padding: 2rem; text-align: center;">
+          <h3 style="color: var(--danger-color); font-size: 1.3rem; margin-bottom: 0.5rem;">⚠️ Something went wrong in client side</h3>
+          <p style="color: #cbd5e1; font-size: 0.95rem; margin-bottom: 1.25rem;">
+            Caught by <code>app/about/error.js</code> React Error Boundary!
+          </p>
+          <p style="font-family: monospace; font-size: 0.85rem; background: rgba(0,0,0,0.4); padding: 6px 12px; border-radius: 4px; display: inline-block; margin-bottom: 1.5rem; color: #fca5a5;">
+            Error: Cannot read properties of null (reading 'map')
+          </p>
+          <br>
+          <button onclick="recoverWithReset()" style="padding: 0.65rem 1.5rem; background: #10b981; color: #000; font-weight: 800; border: none; border-radius: 9999px; cursor: pointer; box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);">
+            Try Again (Calls reset())
+          </button>
+        </div>
+      `;
+
+      consoleBox.innerHTML = `
+        <span style="color: var(--server-color);">[ERROR BOUNDARY ACTIVE] 'error.js' intercepted the client rendering exception!</span><br>
+        <span style="color: #38bdf8;">console.dir(error) ➔ TypeError: Cannot read properties of null (reading 'map')</span><br>
+        <span style="color: var(--text-muted);">Notice: White Screen was prevented! Fallback UI rendered smoothly.</span>
+      `;
+    }
+
+    function recoverWithReset() {
+      const screen = document.getElementById('browser-screen');
+      const consoleBox = document.getElementById('sim-console-output');
+
+      screen.innerHTML = `
+        <div id="about-normal-ui">
+          <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">About Us</h2>
+          <p style="color: #94a3b8; font-size: 0.95rem; margin-bottom: 1rem;">We are a company dedicated to providing quality services.</p>
+          <button style="padding: 0.5rem 1rem; background: #38bdf8; color: #000; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-bottom: 1rem;">
+            Click Me
+          </button>
+          <div id="fruits-list">
+            <p style="background: rgba(255,255,255,0.04); padding: 4px 8px; border-radius: 4px; display: inline-block; margin-right: 8px;">🥭 Mango</p>
+            <p style="background: rgba(255,255,255,0.04); padding: 4px 8px; border-radius: 4px; display: inline-block;">🍎 Apple</p>
+          </div>
+          <div style="margin-top: 1rem; padding: 0.5rem 0.75rem; background: rgba(16, 185, 129, 0.1); border-left: 3px solid var(--server-color); font-size: 0.85rem; color: #a7f3d0;">
+            🎉 RECOVERED SUCCESSFULLY! Calling reset() re-mounted the component and restored useState(['Mango', 'Apple']) default values!
+          </div>
+        </div>
+      `;
+
+      consoleBox.innerHTML = `
+        <span style="color: var(--server-color);">✅ reset() executed! React re-mounted &lt;About /&gt;. State initialized to ['Mango', 'Apple']. UI restored 100%!</span>
+      `;
+    }
+
+    function closeDevModal() {
+      const modal = document.getElementById('dev-error-overlay');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function resetSim() {
+      lastAction = 'normal';
+      clearActiveButtons();
+      recoverWithReset();
+    }
+
+    function showCodeTab(tabId) {
+      document.querySelectorAll('.code-tab-content').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.code-tab-btn').forEach(el => el.classList.remove('active'));
+
+      document.getElementById(tabId).style.display = 'block';
+      event.currentTarget.classList.add('active');
     }
 
     function checkAnswer(element, isCorrect) {

@@ -272,6 +272,7 @@
             padding: 0.35rem 0.75rem;
             border-radius: var(--radius-sm);
             border: 1px solid var(--border-color);
+            white-space: pre;
         }
 
         .line-explanation {
@@ -327,6 +328,7 @@
             overflow-x: auto;
             margin: 1rem 0;
             line-height: 1.5;
+            white-space: pre;
         }
 
         .kw { color: #f472b6; }
@@ -537,8 +539,7 @@
                 <h4 style="color: var(--static-green); font-size: 1.1rem; margin-top: 1.25rem; margin-bottom: 0.5rem;">
                     🛠️ 4 Solutions to Fix Hydration Mismatches:
                 </h4>
-                <div class="code-block">
-<span class="cm">// Solution 1: Use useEffect() for Client-Only Rendering</span>
+                <div class="code-block"><span class="cm">// Solution 1: Use useEffect() for Client-Only Rendering</span>
 <span class="kw">const</span> [isClient, setIsClient] = useState(<span class="kw">false</span>);
 useEffect(() => { setIsClient(<span class="kw">true</span>); }, []);
 <span class="kw">if</span> (!isClient) <span class="kw">return</span> <span class="kw">null</span>;
@@ -548,8 +549,7 @@ useEffect(() => { setIsClient(<span class="kw">true</span>); }, []);
 
 <span class="cm">// Solution 3: Disable SSR for Client Component using next/dynamic</span>
 <span class="kw">import</span> dynamic <span class="kw">from</span> <span class="str">'next/dynamic'</span>;
-<span class="kw">const</span> ClientOnlyComp = dynamic(() => import(<span class="str">'@/components/ClientOnly'</span>), { ssr: <span class="kw">false</span> });
-                </div>
+<span class="kw">const</span> ClientOnlyComp = dynamic(() => import(<span class="str">'@/components/ClientOnly'</span>), { ssr: <span class="kw">false</span> });</div>
             </div>
         </section>
 

@@ -281,6 +281,7 @@
             padding: 0.35rem 0.75rem;
             border-radius: var(--radius-sm);
             border: 1px solid var(--border-color);
+            white-space: pre;
         }
 
         .line-explanation {
@@ -406,6 +407,7 @@
             overflow-x: auto;
             margin: 1rem 0;
             line-height: 1.5;
+            white-space: pre;
         }
 
         .kw { color: #f472b6; }
@@ -468,16 +470,14 @@
                     <i class="fa-solid fa-laptop-code"></i> Deep-Dive: Screenshot Code Example Breakdown
                 </h3>
 
-                <div class="code-block" style="border: 2px solid var(--accent-amber);">
-<span class="kw">"use client"</span>;
+                <div class="code-block" style="border: 2px solid var(--accent-amber);"><span class="kw">"use client"</span>;
 
 <span class="kw">export default function</span> <span class="fn">Comments</span>() {
   <span class="kw">if</span> (<span class="kw">typeof</span> window === <span class="str">"undefined"</span>) {
     <span class="kw">return</span> &lt;<span class="fn">div</span>&gt;500 Comments Client.&lt;/<span class="fn">div</span>&gt;; <span class="cm">// 🔴 Notice the DOT "." at the end!</span>
   }
   <span class="kw">return</span> &lt;<span class="fn">div</span>&gt;500 Comments Client&lt;/<span class="fn">div</span>&gt;;   <span class="cm">// 🔴 Notice NO dot at the end!</span>
-}
-                </div>
+}</div>
 
                 <div style="background: rgba(0, 0, 0, 0.4); border-left: 4px solid var(--dynamic-rose); padding: 1.25rem; border-radius: var(--radius-md); margin-top: 1.25rem;">
                     <h4 style="color: var(--dynamic-rose); margin-bottom: 0.5rem;">🔍 Why does this cause a Hydration Error?</h4>
@@ -510,16 +510,12 @@
                 <div class="grid-2">
                     <div style="background: rgba(0, 0, 0, 0.4); border-left: 4px solid var(--server-blue); padding: 1.25rem; border-radius: var(--radius-md);">
                         <h4 style="color: var(--server-blue); margin-bottom: 0.5rem;">🖥️ Server HTML (Pre-rendered on Node.js at 10:00:00.100)</h4>
-                        <div class="code-block" style="margin: 0.5rem 0;">
-&lt;<span class="fn">div</span>&gt;500 Comments 1730192345223&lt;/<span class="fn">div</span>&gt;
-                        </div>
+                        <div class="code-block" style="margin: 0.5rem 0;">&lt;<span class="fn">div</span>&gt;500 Comments 1730192345223&lt;/<span class="fn">div</span>&gt;</div>
                     </div>
 
                     <div style="background: rgba(0, 0, 0, 0.4); border-left: 4px solid var(--dynamic-rose); padding: 1.25rem; border-radius: var(--radius-md);">
                         <h4 style="color: var(--dynamic-rose); margin-bottom: 0.5rem;">🌐 Client Initial Hydration (Executed in Browser at 10:00:00.250)</h4>
-                        <div class="code-block" style="margin: 0.5rem 0;">
-&lt;<span class="fn">div</span>&gt;500 Comments 1730192345298&lt;/<span class="fn">div</span>&gt;
-                        </div>
+                        <div class="code-block" style="margin: 0.5rem 0;">&lt;<span class="fn">div</span>&gt;500 Comments 1730192345298&lt;/<span class="fn">div</span>&gt;</div>
                     </div>
                 </div>
 
@@ -541,14 +537,12 @@
                 <h4 style="color: var(--dynamic-rose); font-size: 1.2rem; margin-bottom: 0.5rem;">
                     📄 File: <code>components/Comments.js</code> (Causes Mismatch Error)
                 </h4>
-                <div class="code-block">
-<span class="kw">"use client"</span>;
+                <div class="code-block"><span class="kw">"use client"</span>;
 
 <span class="kw">export default function</span> <span class="fn">Comments</span>() {
   <span class="cm">// ❌ Date.now() returns different millisecond values on Server vs Client hydration!</span>
   <span class="kw">return</span> &lt;<span class="fn">div</span>&gt;500 Comments {Date.now()}&lt;/<span class="fn">div</span>&gt;;
-}
-                </div>
+}</div>
             </div>
         </section>
 
@@ -569,8 +563,7 @@
                     <p style="font-size: 0.88rem; color: #cbd5e1; margin-bottom: 0.75rem;">
                         Renders `null` or loading state on Server & Initial Hydration (matching HTML), then updates dynamic value inside `useEffect()` AFTER client mount!
                     </p>
-                    <div class="code-block" style="font-size: 0.8rem;">
-<span class="kw">"use client"</span>;
+                    <div class="code-block" style="font-size: 0.8rem;"><span class="kw">"use client"</span>;
 <span class="kw">import</span> { useState, useEffect } <span class="kw">from</span> <span class="str">"react"</span>;
 
 <span class="kw">export default function</span> <span class="fn">Comments</span>() {
@@ -582,8 +575,7 @@
 
   <span class="kw">if</span> (time === <span class="kw">null</span>) <span class="kw">return</span> &lt;<span class="fn">div</span>&gt;Loading...&lt;/<span class="fn">div</span>&gt;;
   <span class="kw">return</span> &lt;<span class="fn">div</span>&gt;500 Comments {time}&lt;/<span class="fn">div</span>&gt;;
-}
-                    </div>
+}</div>
                 </div>
 
                 <!-- Solution 2 -->
@@ -594,11 +586,9 @@
                     <p style="font-size: 0.88rem; color: #cbd5e1; margin-bottom: 0.75rem;">
                         Disables hydration warning logs for expected single-element dynamic differences (like live timestamps).
                     </p>
-                    <div class="code-block" style="font-size: 0.8rem;">
-&lt;<span class="fn">span</span> <span class="kw">suppressHydrationWarning</span>&gt;
+                    <div class="code-block" style="font-size: 0.8rem;">&lt;<span class="fn">span</span> <span class="kw">suppressHydrationWarning</span>&gt;
   {<span class="kw">new</span> Date().toLocaleTimeString()}
-&lt;/<span class="fn">span</span>&gt;
-                    </div>
+&lt;/<span class="fn">span</span>&gt;</div>
                 </div>
 
                 <!-- Solution 3 -->
@@ -609,14 +599,12 @@
                     <p style="font-size: 0.88rem; color: #cbd5e1; margin-bottom: 0.75rem;">
                         Disables Server-Side Rendering entirely for client-only components that heavily depend on browser APIs.
                     </p>
-                    <div class="code-block" style="font-size: 0.8rem;">
-<span class="kw">import</span> dynamic <span class="kw">from</span> <span class="str">'next/dynamic'</span>;
+                    <div class="code-block" style="font-size: 0.8rem;"><span class="kw">import</span> dynamic <span class="kw">from</span> <span class="str">'next/dynamic'</span>;
 
 <span class="kw">const</span> Comments = dynamic(
   () => import(<span class="str">'@/components/Comments'</span>),
   { ssr: <span class="kw">false</span> }
-);
-                    </div>
+);</div>
                 </div>
             </div>
         </section>

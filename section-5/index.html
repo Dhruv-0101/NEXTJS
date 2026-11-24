@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Section 5: Next.js Error Handling & Recovery - Master Learning Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-dark: #070a11;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border-color: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --server-color: #10b981;
+      --server-bg: rgba(16, 185, 129, 0.12);
+      --server-border: rgba(16, 185, 129, 0.4);
+      --client-color: #38bdf8;
+      --client-bg: rgba(56, 189, 248, 0.12);
+      --client-border: rgba(56, 189, 248, 0.4);
+      --danger-color: #f43f5e;
+      --danger-bg: rgba(244, 63, 94, 0.12);
+      --danger-border: rgba(244, 63, 94, 0.4);
+      --warning-color: #fbbf24;
+      --warning-bg: rgba(251, 191, 36, 0.12);
+      --purple-color: #a855f7;
+      --purple-bg: rgba(168, 85, 247, 0.12);
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2.5rem 1rem;
+      min-height: 100vh;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    header.hero {
+      text-align: center;
+      padding: 3.5rem 1.5rem;
+      background: radial-gradient(circle at 50% 0%, rgba(244, 63, 94, 0.18) 0%, rgba(7, 10, 17, 0) 70%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 2.5rem;
+    }
+    .badge-group {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+    }
+    .badge-next { background: rgba(255, 255, 255, 0.05); color: #fff; }
+    .badge-danger { background: var(--danger-bg); color: var(--danger-color); border-color: var(--danger-border); }
+    h1 {
+      font-size: 2.6rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #ffffff 30%, #f43f5e 70%, #fbbf24 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-subtitle { font-size: 1.15rem; color: var(--text-muted); max-width: 820px; margin: 0 auto; }
+
+    /* CHAPTER GRID */
+    .chapter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+    .chapter-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .chapter-card:hover {
+      border-color: #475569;
+      transform: translateY(-3px);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+    }
+    .chapter-top { margin-bottom: 1.25rem; }
+    .chapter-num {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .chapter-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.6rem;
+      line-height: 1.35;
+    }
+    .chapter-desc {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+    .chapter-tags {
+      display: flex;
+      gap: 0.5rem;
+      margin: 1rem 0;
+      flex-wrap: wrap;
+    }
+    .tag {
+      font-size: 0.72rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      font-family: 'Fira Code', monospace;
+      background: rgba(255, 255, 255, 0.06);
+      color: #cbd5e1;
+    }
+    .btn-open {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      font-size: 0.92rem;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      background: var(--bg-card-hover);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+    }
+    .btn-open:hover { background: #334155; color: #fff; }
+    .btn-open.danger-accent {
+      background: rgba(244, 63, 94, 0.15);
+      color: #f43f5e;
+      border-color: rgba(244, 63, 94, 0.4);
+    }
+    .btn-open.danger-accent:hover {
+      background: rgba(244, 63, 94, 0.3);
+    }
+
+    /* VISUAL ARCHITECTURE BOX */
+    .arch-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      margin-bottom: 2.5rem;
+    }
+    .arch-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+      margin-top: 1.25rem;
+    }
+    @media (max-width: 850px) { .arch-grid { grid-template-columns: 1fr; } }
+    .arch-item {
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      background: #050811;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="hero">
+      <div class="badge-group">
+        <span class="badge badge-next">Next.js 15+ Master Series</span>
+        <span class="badge badge-danger">Section 5: Error Handling</span>
+        <span class="badge" style="background: rgba(251, 191, 36, 0.15); color: #fbbf24;">5 Interactive Guides</span>
+      </div>
+      <h1>Section 5: Error Boundaries & Recovery in Next.js</h1>
+      <p class="hero-subtitle">
+        Master <code>error.js</code>, <code>reset()</code>, error bubbling in nested routes, client event exceptions, and <code>global-error.js</code> with interactive visual guides!
+      </p>
+    </header>
+
+    <!-- ARCHITECTURE SUMMARY -->
+    <section class="arch-card">
+      <h2 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 0.5rem; color: #fff;">
+        <i class="fa-solid fa-shield-halved" style="color: var(--danger-color);"></i> The 3 Levels of Error Handling in App Router
+      </h2>
+      <p style="color: var(--text-muted); font-size: 0.95rem;">
+        Next.js provides isolated error boundaries so an error in one section never crashes the entire website:
+      </p>
+
+      <div class="arch-grid">
+        <div class="arch-item" style="border-color: rgba(56, 189, 248, 0.4);">
+          <div style="font-size: 0.8rem; color: var(--client-color); font-weight: bold; text-transform: uppercase;">Level 1: Nested Route</div>
+          <h4 style="color: #fff; margin: 0.35rem 0;"><code>app/blogs/error.js</code></h4>
+          <p style="font-size: 0.85rem; color: var(--text-muted);">
+            Catches errors inside <code>/blogs</code> page only! Main layout, header, footer, and other tabs remain fully functional.
+          </p>
+        </div>
+
+        <div class="arch-item" style="border-color: rgba(251, 191, 36, 0.4);">
+          <div style="font-size: 0.8rem; color: var(--warning-color); font-weight: bold; text-transform: uppercase;">Level 2: Root Route</div>
+          <h4 style="color: #fff; margin: 0.35rem 0;"><code>app/error.js</code></h4>
+          <p style="font-size: 0.85rem; color: var(--text-muted);">
+            Catches unhandled errors from any page under root. Wrapped inside <code>app/layout.js</code> so root navigation still shows.
+          </p>
+        </div>
+
+        <div class="arch-item" style="border-color: rgba(244, 63, 94, 0.4);">
+          <div style="font-size: 0.8rem; color: var(--danger-color); font-weight: bold; text-transform: uppercase;">Level 3: Root Layout</div>
+          <h4 style="color: #fff; margin: 0.35rem 0;"><code>app/global-error.js</code></h4>
+          <p style="font-size: 0.85rem; color: var(--text-muted);">
+            Catches catastrophic errors inside <code>app/layout.js</code> itself! Must define its own <code>&lt;html&gt;</code> and <code>&lt;body&gt;</code> tags.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAPTER CARDS -->
+    <div class="chapter-grid">
+      <!-- Chapter 01 -->
+      <div class="chapter-card">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--danger-color);">
+            <span>Chapter 01</span>
+            <span class="tag" style="color: #f43f5e;">error.js</span>
+          </div>
+          <h2 class="chapter-title">Using <code>error.js</code> File to Handle Errors</h2>
+          <p class="chapter-desc">
+            How Next.js automatically creates a React Error Boundary around your route, why it MUST be a Client Component (`"use client"`), and props received.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">"use client"</span>
+            <span class="tag">&lt;ErrorBoundary&gt;</span>
+            <span class="tag">{ error, reset }</span>
+          </div>
+        </div>
+        <a href="01_using-error.js-file-to-handle-errors-final/error_handling_guide.html" class="btn-open danger-accent">
+          Open Guide 01 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- Chapter 02 -->
+      <div class="chapter-card">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--warning-color);">
+            <span>Chapter 02</span>
+            <span class="tag" style="color: #fbbf24;">Recovery</span>
+          </div>
+          <h2 class="chapter-title">How to Recover from Errors (reset + refresh)</h2>
+          <p class="chapter-desc">
+            Why <code>reset()</code> alone fails for Server Component errors, and why <code>startTransition(() =&gt; { router.refresh(); reset(); })</code> is the golden recovery pattern.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">router.refresh()</span>
+            <span class="tag">reset()</span>
+            <span class="tag">startTransition</span>
+          </div>
+        </div>
+        <a href="02_how-to-recover-from-errors/error_recovery_guide.html" class="btn-open danger-accent">
+          Open Guide 02 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- Chapter 03 -->
+      <div class="chapter-card">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--client-color);">
+            <span>Chapter 03</span>
+            <span class="tag" style="color: #38bdf8;">Bubbling</span>
+          </div>
+          <h2 class="chapter-title">Handling Errors in Nested Routes</h2>
+          <p class="chapter-desc">
+            Granular error containment! How placing <code>error.js</code> inside <code>/blogs</code> keeps navigation alive, and how errors bubble up when a folder has no error file.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">Nested Routes</span>
+            <span class="tag">Error Bubbling</span>
+            <span class="tag">UI Isolation</span>
+          </div>
+        </div>
+        <a href="03_handling-errors-in-nested-routes/nested_errors_guide.html" class="btn-open danger-accent">
+          Open Guide 03 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- Chapter 04 -->
+      <div class="chapter-card">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--purple-color);">
+            <span>Chapter 04</span>
+            <span class="tag" style="color: #c084fc;">Client Exceptions</span>
+          </div>
+          <h2 class="chapter-title">Handling Client-Side Exceptions</h2>
+          <p class="chapter-desc">
+            Why <code>error.js</code> does NOT catch exceptions inside <code>onClick</code> event listeners! Understanding rendering errors vs event handlers with try/catch.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">onClick Events</span>
+            <span class="tag">try...catch</span>
+            <span class="tag">Render vs Event</span>
+          </div>
+        </div>
+        <a href="04_handling-client-side-exceptions-final/client_exceptions_guide.html" class="btn-open danger-accent">
+          Open Guide 04 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- Chapter 05 -->
+      <div class="chapter-card">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--danger-color);">
+            <span>Chapter 05</span>
+            <span class="tag" style="color: #f43f5e;">global-error.js</span>
+          </div>
+          <h2 class="chapter-title">Handling Root Layout Errors</h2>
+          <p class="chapter-desc">
+            When <code>app/layout.js</code> crashes, <code>app/error.js</code> cannot catch it. How <code>global-error.js</code> provides the ultimate fallback with custom html &amp; body tags.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">global-error.js</span>
+            <span class="tag">&lt;html&gt;&lt;body&gt;</span>
+            <span class="tag">Production Only</span>
+          </div>
+        </div>
+        <a href="05_handling-root-layout-errors/global_error_guide.html" class="btn-open danger-accent">
+          Open Guide 05 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

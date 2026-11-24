@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Section 4: Data Fetching, Streaming & Patterns - Master Learning Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-dark: #070a11;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border-color: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --server-color: #10b981;
+      --server-bg: rgba(16, 185, 129, 0.12);
+      --server-border: rgba(16, 185, 129, 0.4);
+      --client-color: #38bdf8;
+      --client-bg: rgba(56, 189, 248, 0.12);
+      --client-border: rgba(56, 189, 248, 0.4);
+      --danger-color: #f43f5e;
+      --warning-color: #fbbf24;
+      --purple-color: #c084fc;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2.5rem 1rem;
+      min-height: 100vh;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    header.hero {
+      text-align: center;
+      padding: 3.5rem 1.5rem;
+      background: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.15) 0%, rgba(7, 10, 17, 0) 70%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 2.5rem;
+    }
+    .badge-group {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+    }
+    .badge-next { background: rgba(255, 255, 255, 0.05); color: #fff; }
+    h1 {
+      font-size: 2.6rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #ffffff 30%, #38bdf8 70%, #10b981 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-subtitle { font-size: 1.15rem; color: var(--text-muted); max-width: 820px; margin: 0 auto; }
+
+    /* CHAPTER GRID */
+    .chapter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+    .chapter-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .chapter-card:hover {
+      border-color: #475569;
+      transform: translateY(-3px);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+    }
+    .chapter-top {
+      margin-bottom: 1.25rem;
+    }
+    .chapter-num {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .chapter-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.6rem;
+      line-height: 1.35;
+    }
+    .chapter-desc {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+    .chapter-tags {
+      display: flex;
+      gap: 0.5rem;
+      margin: 1rem 0;
+      flex-wrap: wrap;
+    }
+    .tag {
+      font-size: 0.72rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      font-family: 'Fira Code', monospace;
+      background: rgba(255, 255, 255, 0.06);
+      color: #cbd5e1;
+    }
+    .btn-open {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      font-size: 0.92rem;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      background: var(--bg-card-hover);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+    }
+    .btn-open:hover {
+      background: #334155;
+      color: #fff;
+    }
+    .btn-open.primary {
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+    .btn-open.primary:hover {
+      background: rgba(56, 189, 248, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="hero">
+      <div class="badge-group">
+        <span class="badge badge-next">Next.js 15+ Master Series</span>
+        <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">Complete Section 4</span>
+        <span class="badge" style="background: rgba(192, 132, 252, 0.15); color: #c084fc;">7 Interactive Guides</span>
+      </div>
+      <h1>Section 4: Data Fetching, Streaming & Architecture</h1>
+      <p class="hero-subtitle">
+        Every topic in Section 4 with comprehensive visual interactive guides, analogies, line-by-line code breakdowns, and real-time simulators.
+      </p>
+    </header>
+
+    <div class="chapter-grid">
+      <!-- Chapter 01 -->
+      <div class="chapter-card">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--client-color);">
+            <span>Chapter 01</span>
+            <span class="tag">CSR</span>
+          </div>
+          <h2 class="chapter-title">Data Fetching in Client Components</h2>
+          <p class="chapter-desc">
+            How <code>useState</code> + <code>useEffect</code> fetches data in browser, why View Page Source gives empty HTML, and why it hurts SEO and performance.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">"use client"</span>
+            <span class="tag">useEffect</span>
+            <span class="tag">Empty HTML Shell</span>
+          </div>
+        </div>
+        <a href="01_data-fetching-in-client-components-final/client_data_fetching_guide.html" class="btn-open primary">
+          Open Guide 01 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- Chapter 02 -->
+      <div class="chapter-card">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--server-color);">
+            <span>Chapter 02</span>
+            <span class="tag" style="color: #34d399;">RSC</span>
+          </div>
+          <h2 class="chapter-title">Data Fetching in Server Components</h2>
+          <p class="chapter-desc">
+            Direct <code>async / await</code> inside components! 0 KB client JS sent for data fetching, secret API security, and 100% pre-rendered SEO HTML.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">async function</span>
+            <span class="tag">0 KB JS</span>
+            <span class="tag">SEO Pre-rendering</span>
+          </div>
+        </div>
+        <a href="02_data-fetching-in-server-components/server_data_fetching_guide.html" class="btn-open primary">
+          Open Guide 02 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- Chapter 03 -->
+      <div class="chapter-card">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--warning-color);">
+            <span>Chapter 03</span>
+            <span class="tag" style="color: #fbbf24;">loading.js</span>
+          </div>
+          <h2 class="chapter-title">Handling Loading State in RSC</h2>
+          <p class="chapter-desc">
+            How Next.js automatically injects React Suspense via <code>loading.js</code>, streaming instant Shimmer skeletons while waiting for slow 5s API responses.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">loading.js</span>
+            <span class="tag">Shimmer Animation</span>
+            <span class="tag">Instant Feedback</span>
+          </div>
+        </div>
+        <a href="03_handling-loading-state-in-server-components/loading_state_guide.html" class="btn-open primary">
+          Open Guide 03 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- Chapter 04 -->
+      <div class="chapter-card">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--purple-color);">
+            <span>Chapter 04</span>
+            <span class="tag" style="color: #c084fc;">Suspense</span>
+          </div>
+          <h2 class="chapter-title">Using Suspense for Loading State</h2>
+          <p class="chapter-desc">
+            Breaking down page-level blocking: wrapping individual components in <code>&lt;Suspense&gt;</code> so 2s & 3s components stream immediately without waiting 5s!
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">&lt;Suspense&gt;</span>
+            <span class="tag">Component Streaming</span>
+            <span class="tag">Granular Fallbacks</span>
+          </div>
+        </div>
+        <a href="04_using-suspense-to-handle-loading-state/suspense_loading_guide.html" class="btn-open primary">
+          Open Guide 04 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- Chapter 05 -->
+      <div class="chapter-card">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--server-color);">
+            <span>Chapter 05</span>
+            <span class="tag" style="color: #34d399;">Parallelization</span>
+          </div>
+          <h2 class="chapter-title">Parallel Data Fetching</h2>
+          <p class="chapter-desc">
+            Eliminating accidental waterfalls! Compare sequential <code>await</code> (5.5s wait) vs <code>Promise.all()</code> (3.0s total) with an interactive animated race.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">Promise.all()</span>
+            <span class="tag">Waterfall Fix</span>
+            <span class="tag">Concurrent Fetch</span>
+          </div>
+        </div>
+        <a href="05_parallel-data-fetching/05_parallel-data-fetching-final/parallel_data_fetching_guide.html" class="btn-open primary">
+          Open Guide 05 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- Chapter 06 -->
+      <div class="chapter-card">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--client-color);">
+            <span>Chapter 06</span>
+            <span class="tag" style="color: #38bdf8;">Composition</span>
+          </div>
+          <h2 class="chapter-title">RSC Inside Client Components</h2>
+          <p class="chapter-desc">
+            The Children Pattern! Why direct imports turn server components into client components, and how passing as <code>{children}</code> keeps them on the server.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">{children} Prop</span>
+            <span class="tag">Server Boundary</span>
+            <span class="tag">Kitchen Analogy</span>
+          </div>
+        </div>
+        <a href="06_rendering-server-components-in-client-components-final/rsc_rendering_guide.html" class="btn-open primary">
+          Open Guide 06 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- Chapter 07 -->
+      <div class="chapter-card">
+        <div class="chapter-top">
+          <div class="chapter-num" style="color: var(--purple-color);">
+            <span>Chapter 07</span>
+            <span class="tag" style="color: #c084fc;">Context API</span>
+          </div>
+          <h2 class="chapter-title">Using Context API in Next.js</h2>
+          <p class="chapter-desc">
+            Providing global state (Theme, Auth) across your app while keeping <code>RootLayout</code> and child pages as 100% Server Components using the Provider Children Pattern.
+          </p>
+          <div class="chapter-tags">
+            <span class="tag">ThemeProvider</span>
+            <span class="tag">createContext</span>
+            <span class="tag">Layout Architecture</span>
+          </div>
+        </div>
+        <a href="07_using-context-api-in-nextjs-final/07_using-context-api-in-next-app-final/context_api_guide.html" class="btn-open primary">
+          Open Guide 07 <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

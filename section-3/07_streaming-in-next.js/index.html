@@ -263,6 +263,7 @@
             padding: 0.35rem 0.75rem;
             border-radius: var(--radius-sm);
             border: 1px solid var(--border-color);
+            white-space: pre;
         }
 
         .line-explanation {
@@ -360,6 +361,7 @@
             overflow-x: auto;
             margin: 1rem 0;
             line-height: 1.5;
+            white-space: pre;
         }
 
         .kw { color: #f472b6; }
@@ -498,8 +500,7 @@
                     <h4 style="color: var(--stream-cyan); font-size: 1.15rem; margin-bottom: 0.5rem;">
                         📄 Main Page: <code>app/blogs/page.js</code>
                     </h4>
-                    <div class="code-block">
-<span class="kw">import</span> { Suspense } <span class="kw">from</span> <span class="str">"react"</span>;
+                    <div class="code-block"><span class="kw">import</span> { Suspense } <span class="kw">from</span> <span class="str">"react"</span>;
 <span class="kw">import</span> Views <span class="kw">from</span> <span class="str">"@/components/Views"</span>;
 <span class="kw">import</span> Likes <span class="kw">from</span> <span class="str">"@/components/Likes"</span>;
 <span class="kw">import</span> Comments <span class="kw">from</span> <span class="str">"@/components/Comments"</span>;
@@ -523,16 +524,14 @@
       &lt;/<span class="fn">Suspense</span>&gt;
     &lt;/<span class="fn">div</span>&gt;
   );
-};
-                    </div>
+};</div>
                 </div>
 
                 <div class="card">
                     <h4 style="color: var(--accent-amber); font-size: 1.15rem; margin-bottom: 0.5rem;">
                         ⚙️ Async Components Delays:
                     </h4>
-                    <div class="code-block">
-<span class="cm">// components/Views.js (5s Delay)</span>
+                    <div class="code-block"><span class="cm">// components/Views.js (5s Delay)</span>
 <span class="kw">export default async function</span> <span class="fn">Views</span>() {
   <span class="kw">await new</span> Promise((res) => setTimeout(res, <span class="str">5000</span>));
   <span class="kw">return</span> &lt;<span class="fn">div</span>&gt;10k Views&lt;/<span class="fn">div</span>&gt;;
@@ -548,8 +547,7 @@
 <span class="kw">export default async function</span> <span class="fn">Comments</span>() {
   <span class="kw">await new</span> Promise((res) => setTimeout(res, <span class="str">15000</span>));
   <span class="kw">return</span> &lt;<span class="fn">div</span>&gt;500 Comments&lt;/<span class="fn">div</span>&gt;;
-}
-                    </div>
+}</div>
                 </div>
             </div>
         </section>

@@ -604,7 +604,8 @@
         overflow-x: auto;
         margin: 1rem 0;
         line-height: 1.5;
-      }
+            white-space: pre;
+        }
 
       .code-keyword {
         color: #f472b6;
@@ -1446,15 +1447,8 @@
               <code>localStorage</code> directly during initial component
               execution. Server doesn't have <code>window</code>!
             </p>
-            <div class="code-block">
-              <span class="code-comment"
-                >// ❌ BAD: Mismatch error on server</span
-              >
-              <span class="code-keyword">const</span> theme =
-              window.localStorage.getItem(<span class="code-string"
-                >'theme'</span
-              >);
-            </div>
+            <div class="code-block"><span class="code-comment">// ❌ BAD: Mismatch error on server</span>
+<span class="code-keyword">const</span> theme = window.localStorage.getItem(<span class="code-string">'theme'</span>);</div>
             <p
               style="
                 font-size: 0.85rem;
@@ -1465,13 +1459,11 @@
               <strong>✅ Fix:</strong> Read inside <code>useEffect</code> or
               state after mounting:
             </p>
-            <div class="code-block">
-              <span class="code-keyword">const</span> [theme, setTheme] =
-              useState(<span class="code-string">'light'</span>); useEffect(()
-              => { setTheme(localStorage.getItem(<span class="code-string"
-                >'theme'</span
-              >) || <span class="code-string">'light'</span>); }, []);
-            </div>
+            <div class="code-block"><span class="code-keyword">const</span> [theme, setTheme] = useState(<span class="code-string">'light'</span>);
+
+useEffect(() => {
+  setTheme(localStorage.getItem(<span class="code-string">'theme'</span>) || <span class="code-string">'light'</span>);
+}, []);</div>
           </div>
 
           <div class="mismatch-card">
@@ -1489,18 +1481,8 @@
               <code>new Date().toLocaleTimeString()</code> evaluates at
               different milliseconds on the server vs client.
             </p>
-            <div class="code-block">
-              <span class="code-comment"
-                >// ❌ BAD: Server & Client show different times</span
-              >
-              &lt;<span class="code-keyword">div</span>&gt;Time: {<span
-                class="code-keyword"
-                >new</span
-              >
-              Date().toLocaleTimeString()}&lt;/<span class="code-keyword"
-                >div</span
-              >&gt;
-            </div>
+            <div class="code-block"><span class="code-comment">// ❌ BAD: Server & Client show different times</span>
+&lt;<span class="code-keyword">div</span>&gt;Time: {<span class="code-keyword">new</span> Date().toLocaleTimeString()}&lt;/<span class="code-keyword">div</span>&gt;</div>
             <p
               style="
                 font-size: 0.85rem;
@@ -1511,14 +1493,9 @@
               <strong>✅ Fix:</strong> Use
               <code>suppressHydrationWarning</code> attribute for dynamic text:
             </p>
-            <div class="code-block">
-              &lt;<span class="code-keyword">div</span>
-              <span class="code-attr">suppressHydrationWarning</span>&gt; Time:
-              {<span class="code-keyword">new</span>
-              Date().toLocaleTimeString()} &lt;/<span class="code-keyword"
-                >div</span
-              >&gt;
-            </div>
+            <div class="code-block">&lt;<span class="code-keyword">div</span> <span class="code-attr">suppressHydrationWarning</span>&gt;
+  Time: {<span class="code-keyword">new</span> Date().toLocaleTimeString()}
+&lt;/<span class="code-keyword">div</span>&gt;</div>
           </div>
         </div>
 
@@ -1539,17 +1516,16 @@
               Create an <code>isMounted</code> hook to defer rendering
               browser-dependent components until hydration completes.
             </p>
-            <div class="code-block">
-              <span class="code-keyword">function</span> ClientOnly({ children
-              }) { <span class="code-keyword">const</span> [hasMounted,
-              setHasMounted] = useState(<span class="code-keyword">false</span
-              >); useEffect(() => setHasMounted(<span class="code-keyword"
-                >true</span
-              >), []); <span class="code-keyword">if</span> (!hasMounted)
-              <span class="code-keyword">return</span>
-              <span class="code-keyword">null</span>;
-              <span class="code-keyword">return</span> children; }
-            </div>
+            <div class="code-block"><span class="code-keyword">function</span> ClientOnly({ children }) {
+  <span class="code-keyword">const</span> [hasMounted, setHasMounted] = useState(<span class="code-keyword">false</span>);
+
+  useEffect(() => {
+    setHasMounted(<span class="code-keyword">true</span>);
+  }, []);
+
+  <span class="code-keyword">if</span> (!hasMounted) <span class="code-keyword">return</span> <span class="code-keyword">null</span>;
+  <span class="code-keyword">return</span> children;
+}</div>
           </div>
 
           <div class="mismatch-card" style="border-color: var(--next-purple)">
@@ -1567,18 +1543,12 @@
               Disable Server-Side Rendering completely for a single component
               that relies heavily on window DOM.
             </p>
-            <div class="code-block">
-              <span class="code-keyword">import</span> dynamic
-              <span class="code-keyword">from</span>
-              <span class="code-string">'next/dynamic'</span>;
+            <div class="code-block"><span class="code-keyword">import</span> dynamic <span class="code-keyword">from</span> <span class="code-string">'next/dynamic'</span>;
 
-              <span class="code-keyword">const</span> ThemeToggle = dynamic( ()
-              => <span class="code-keyword">import</span>(<span
-                class="code-string"
-                >'../components/ThemeToggle'</span
-              >), { <span class="code-attr">ssr</span>:
-              <span class="code-keyword">false</span> } );
-            </div>
+<span class="code-keyword">const</span> ThemeToggle = dynamic(
+  () => <span class="code-keyword">import</span>(<span class="code-string">'../components/ThemeToggle'</span>),
+  { <span class="code-attr">ssr</span>: <span class="code-keyword">false</span> }
+);</div>
           </div>
         </div>
       </section>
@@ -1603,8 +1573,7 @@
                     <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1rem;">
                         Standard React approach. Browser fetches JS and builds UI client-side. Good for private dashboards, admin panels, and apps behind login where SEO is irrelevant.
                     </p>
-                    <div class="code-block">
-<span class="code-comment">// Next.js App Router (Client Component)</span>
+                    <div class="code-block"><span class="code-comment">// Next.js App Router (Client Component)</span>
 <span class="code-string">'use client'</span>;
 
 <span class="code-keyword">import</span> { useState, useEffect } <span class="code-keyword">from</span> <span class="code-string">'react'</span>;
@@ -1615,8 +1584,7 @@
     fetch(<span class="code-string">'/api/user'</span>).then(res => res.json()).then(setData);
   }, []);
   <span class="code-keyword">return</span> &lt;<span class="code-keyword">div</span>&gt;Welcome {data?.name}&lt;/<span class="code-keyword">div</span>&gt;;
-}
-                    </div>
+}</div>
                 </div>
 
                 <div id="tab-ssr" class="tab-content">
@@ -1624,14 +1592,12 @@
                     <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1rem;">
                         HTML is generated dynamically on the server for <strong>every single request</strong>. Perfect for live feeds, stock updates, e-commerce product pages with real-time pricing.
                     </p>
-                    <div class="code-block">
-<span class="code-comment">// Pages Router: getServerSideProps</span>
+                    <div class="code-block"><span class="code-comment">// Pages Router: getServerSideProps</span>
 <span class="code-keyword">export async function</span> getServerSideProps(context) {
   <span class="code-keyword">const</span> res = <span class="code-keyword">await</span> fetch(<span class="code-string">`https://api.example.com/data`</span>);
   <span class="code-keyword">const</span> data = <span class="code-keyword">await</span> res.json();
   <span class="code-keyword">return</span> { <span class="code-attr">props</span>: { data } };
-}
-                    </div>
+}</div>
                 </div>
 
                 <div id="tab-ssg" class="tab-content">
@@ -1639,13 +1605,11 @@
                     <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1rem;">
                         HTML is pre-built ONCE at build time (<code>npm run build</code>). Served blazing fast via CDN. Ideal for blogs, documentation, marketing landing pages.
                     </p>
-                    <div class="code-block">
-<span class="code-comment">// Pages Router: getStaticProps</span>
+                    <div class="code-block"><span class="code-comment">// Pages Router: getStaticProps</span>
 <span class="code-keyword">export async function</span> getStaticProps() {
   <span class="code-keyword">const</span> posts = <span class="code-keyword">await</span> getBlogPosts();
   <span class="code-keyword">return</span> { <span class="code-attr">props</span>: { posts } };
-}
-                    </div>
+}</div>
                 </div>
 
                 <div id="tab-isr" class="tab-content">
@@ -1653,16 +1617,14 @@
                     <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1rem;">
                         Re-generate static pages in the background after a specific timeout without re-deploying the entire site!
                     </p>
-                    <div class="code-block">
-<span class="code-comment">// Revalidate every 60 seconds</span>
+                    <div class="code-block"><span class="code-comment">// Revalidate every 60 seconds</span>
 <span class="code-keyword">export async function</span> getStaticProps() {
   <span class="code-keyword">const</span> products = <span class="code-keyword">await</span> getProducts();
   <span class="code-keyword">return</span> {
     <span class="code-attr">props</span>: { products },
     <span class="code-attr">revalidate</span>: <span class="code-number">60</span> <span class="code-comment">// Rebuild page in background every 60s</span>
   };
-}
-                    </div>
+}</div>
                 </div>
             </div>
         </section> -->

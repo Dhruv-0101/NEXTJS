@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Next.js Handling Root Layout Errors &amp; global-error.js Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #070a11;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border-color: #334155;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --server-color: #10b981;
+      --server-bg: rgba(16, 185, 129, 0.12);
+      
+      --client-color: #38bdf8;
+      --client-bg: rgba(56, 189, 248, 0.12);
+
+      --danger-color: #f43f5e;
+      --danger-bg: rgba(244, 63, 94, 0.15);
+      --danger-border: rgba(244, 63, 94, 0.4);
+      
+      --warning-color: #fbbf24;
+      --warning-bg: rgba(251, 191, 36, 0.12);
+      
+      --purple-color: #a855f7;
+      --purple-bg: rgba(168, 85, 247, 0.12);
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+    }
+
+    .container { max-width: 1150px; margin: 0 auto; }
+
+    /* HERO HEADER */
+    header.hero {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      background: radial-gradient(circle at 50% 0%, rgba(244, 63, 94, 0.15) 0%, rgba(7, 10, 17, 0) 70%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 2.5rem;
+    }
+
+    .badge-group {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+    }
+
+    .badge-danger { background: var(--danger-bg); color: var(--danger-color); border-color: var(--danger-border); }
+    .badge-purple { background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4); }
+    .badge-client { background: var(--client-bg); color: var(--client-color); border-color: rgba(56, 189, 248, 0.4); }
+
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #ffffff 40%, #f43f5e 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .badge-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+      background: var(--danger-bg);
+      color: var(--danger-color);
+      border: 1px solid var(--danger-border);
+    }
+
+    /* ARCHITECTURE GRID */
+    .arch-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 768px) { .arch-grid { grid-template-columns: 1fr; } }
+
+    .arch-box {
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      background: rgba(30, 41, 59, 0.4);
+    }
+
+    .arch-box.fail { border-color: var(--danger-border); background: var(--danger-bg); }
+    .arch-box.global { border-color: rgba(168, 85, 247, 0.4); background: var(--purple-bg); }
+
+    .arch-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* SIMULATOR */
+    .simulator-container {
+      background: #030712;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    .sim-controls {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .sim-btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 9999px;
+      border: none;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .sim-btn-page { background: #38bdf8; color: #000; }
+    .sim-btn-layout { background: #f43f5e; color: #fff; box-shadow: 0 0 15px rgba(244, 63, 94, 0.4); }
+
+    .mock-browser {
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      background: #0b0f19;
+    }
+
+    .mock-browser-bar {
+      background: #1e293b;
+      padding: 0.5rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .mock-dots { display: flex; gap: 6px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-red { background: #f43f5e; }
+    .dot-yellow { background: #fbbf24; }
+    .dot-green { background: #10b981; }
+
+    .mock-browser-content { padding: 1.5rem; min-height: 220px; }
+
+    .mock-layout {
+      border: 2px dashed #38bdf8;
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+      background: rgba(56, 189, 248, 0.05);
+    }
+
+    .mock-page-success {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid var(--server-color);
+      border-radius: var(--radius-sm);
+      padding: 1.25rem;
+      color: #a7f3d0;
+    }
+
+    .mock-page-error {
+      background: rgba(244, 63, 94, 0.1);
+      border: 1px solid var(--danger-color);
+      border-radius: var(--radius-sm);
+      padding: 1.25rem;
+      color: #fca5a5;
+    }
+
+    .mock-global-error {
+      background: rgba(168, 85, 247, 0.15);
+      border: 2px solid var(--purple-color);
+      border-radius: var(--radius-sm);
+      padding: 1.5rem;
+      color: #e9d5ff;
+    }
+
+    .console-box {
+      background: #020617;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      font-family: 'Fira Code', monospace;
+      padding: 1rem;
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+
+    /* CODE TABS */
+    .code-tab-buttons {
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.75rem;
+      margin-bottom: 1.25rem;
+      overflow-x: auto;
+    }
+
+    .code-tab-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-sm);
+      font-family: 'Fira Code', monospace;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+
+    .code-tab-btn.active {
+      background: var(--bg-card-hover);
+      color: var(--danger-color);
+      border-color: var(--border-color);
+      font-weight: 600;
+    }
+
+    .code-panel {
+      background: #050811;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .code-panel-header {
+      padding: 0.65rem 1rem;
+      background: #0d1322;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .code-content {
+      padding: 1.25rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      white-space: pre;
+      overflow-x: auto;
+      line-height: 1.6;
+    }
+
+    .hl-kw { color: #f472b6; }
+    .hl-imp { color: #38bdf8; }
+    .hl-str { color: #a3e635; }
+    .hl-func { color: #fbbf24; }
+    .hl-comment { color: var(--text-dim); font-style: italic; }
+    .hl-tag { color: #818cf8; }
+    .hl-danger { color: #f43f5e; font-weight: bold; }
+    .hl-purple { color: #a855f7; font-weight: bold; }
+
+    /* QUIZ */
+    .quiz-option {
+      background: var(--bg-card-hover);
+      border: 1px solid var(--border-color);
+      padding: 1rem;
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .quiz-option.correct { background: var(--server-bg) !important; border-color: var(--server-color) !important; color: var(--server-color); }
+    .quiz-option.incorrect { background: var(--danger-bg) !important; border-color: var(--danger-color) !important; color: var(--danger-color); }
+    .radio-circle { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--text-dim); }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--text-dim);
+      font-size: 0.875rem;
+      border-top: 1px solid var(--border-color);
+      margin-top: 3rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- HERO -->
+    <header class="hero">
+      <div class="badge-group">
+        <span class="badge badge-danger">Root Layout Errors</span>
+        <span class="badge badge-purple">global-error.js</span>
+        <span class="badge badge-client">&lt;html&gt; &amp; &lt;body&gt; Required</span>
+      </div>
+      <h1>Handling Root Layout Errors with global-error.js</h1>
+      <p class="hero-subtitle">
+        Understand why <code>app/error.js</code> cannot catch errors in <code>app/layout.js</code>, and how <code>global-error.js</code> serves as the ultimate fallback for your entire application.
+      </p>
+    </header>
+
+    <!-- SECTION 1: TECHNICAL ARCHITECTURE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">⚙️</div>
+        <h2>1. Why <code>app/error.js</code> Fails for Root Layout Errors</h2>
+      </div>
+
+      <div class="arch-grid">
+        <div class="arch-box fail">
+          <div class="arch-title">
+            <span>❌ app/error.js Sits INSIDE Root Layout</span>
+          </div>
+          <p>
+            In Next.js component nesting: <code>&lt;RootLayout&gt;</code> ➔ <code>&lt;app/error.js&gt;</code> ➔ <code>&lt;Page&gt;</code>.<br>
+            Because <code>app/layout.js</code> wraps <code>app/error.js</code>, <strong>if <code>app/layout.js</code> throws an error, <code>app/error.js</code> is BYPASSED!</strong>
+          </p>
+        </div>
+
+        <div class="arch-box global">
+          <div class="arch-title">
+            <span>🔮 global-error.js Replaces Entire Document</span>
+          </div>
+          <p>
+            When <code>app/layout.js</code> fails, the root <code>&lt;html&gt;</code> and <code>&lt;body&gt;</code> tags are completely destroyed!<br>
+            <strong><code>global-error.js</code> MUST explicitly define its own <code>&lt;html&gt;</code> and <code>&lt;body&gt;</code> tags.</strong>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: LIVE SIMULATOR -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🎮</div>
+        <h2>2. Live Interactive Root Layout Error Simulator</h2>
+      </div>
+
+      <div class="simulator-container">
+        <div class="sim-controls">
+          <button class="sim-btn sim-btn-page" onclick="runScenario('page')">
+            📄 Trigger Error in app/page.js (Caught by app/error.js)
+          </button>
+          <button class="sim-btn sim-btn-layout" onclick="runScenario('layout')">
+            💥 Trigger Error in app/layout.js (Caught by global-error.js)
+          </button>
+        </div>
+
+        <div class="mock-browser">
+          <div class="mock-browser-bar">
+            <div class="mock-dots">
+              <span class="dot dot-red"></span>
+              <span class="dot dot-yellow"></span>
+              <span class="dot dot-green"></span>
+            </div>
+            <span style="margin-left: 10px;">http://localhost:3000/</span>
+          </div>
+
+          <div class="mock-browser-content">
+            <div id="sim-display">
+              <div class="mock-layout">
+                <div style="font-size: 0.8rem; color: #38bdf8; font-weight: bold; margin-bottom: 0.5rem;">🌐 app/layout.js (Root Layout &amp; Header Active)</div>
+                <div class="mock-page-success">
+                  <h3>Home Page</h3>
+                  <p>Welcome to our website! Rendered smoothly.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="console-output" class="console-box">
+          Console Log: System initialized. Click a button above to test error boundaries.
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: CODE BREAKDOWN TABS -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">🔍</div>
+        <h2>3. Code Breakdown: Lesson Files</h2>
+      </div>
+
+      <div class="code-tab-buttons">
+        <button class="code-tab-btn active" onclick="showCodeTab('tab-layout')">app/layout.js</button>
+        <button class="code-tab-btn" onclick="showCodeTab('tab-global')">app/global-error.js</button>
+        <button class="code-tab-btn" onclick="showCodeTab('tab-error')">app/error.js</button>
+      </div>
+
+      <!-- TAB 1: LAYOUT -->
+      <div id="tab-layout" class="code-tab-content">
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span style="color: var(--danger-color);">app/layout.js (Root Layout throwing 50% random error)</span>
+          </div>
+          <div class="code-content"><span class="hl-kw">export default function</span> <span class="hl-func">RootLayout</span>({ children }) {
+  <span class="hl-kw">const</span> randomNumber = Math.random();
+
+  <span class="hl-comment">// 🎲 50% Random Error in Root Layout:</span>
+  <span class="hl-kw">if</span> (randomNumber &gt; <span class="hl-str">0.5</span>) {
+    <span class="hl-danger">throw new Error("Error occurred in Root Layout");</span>
+  }
+
+  <span class="hl-kw">return</span> (
+    &lt;<span class="hl-tag">html</span> lang=<span class="hl-str">"en"</span> className=<span class="hl-str">"dark"</span>&gt;
+      &lt;<span class="hl-tag">body</span>&gt;
+        &lt;<span class="hl-tag">Header</span> /&gt;
+        {children}
+      &lt;/<span class="hl-tag">body</span>&gt;
+    &lt;/<span class="hl-tag">html</span>&gt;
+  );
+}</div>
+        </div>
+      </div>
+
+      <!-- TAB 2: GLOBAL ERROR -->
+      <div id="tab-global" class="code-tab-content" style="display: none;">
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span style="color: var(--purple-color);">app/global-error.js (Root Layout Error Fallback)</span>
+          </div>
+          <div class="code-content"><span class="hl-str">"use client"</span>;
+
+<span class="hl-kw">export default function</span> <span class="hl-func">GlobalError</span>({ error, reset }) {
+  <span class="hl-kw">return</span> (
+    <span class="hl-purple">&lt;<span class="hl-tag">html</span> lang=<span class="hl-str">"en"</span> className=<span class="hl-str">"dark"</span>&gt;</span> <span class="hl-comment">// 👈 MANDATORY: Must define html &amp; body!</span>
+      <span class="hl-purple">&lt;<span class="hl-tag">body</span>&gt;</span>
+        &lt;<span class="hl-tag">div</span>&gt;
+          &lt;<span class="hl-tag">h2</span>&gt;Something went wrong in root layout&lt;/<span class="hl-tag">h2</span>&gt;
+          &lt;<span class="hl-tag">button</span> onClick={() =&gt; window.location.reload()}&gt;Try Again&lt;/<span class="hl-tag">button</span>&gt;
+        &lt;/<span class="hl-tag">div</span>&gt;
+      <span class="hl-purple">&lt;/<span class="hl-tag">body</span>&gt;</span>
+    <span class="hl-purple">&lt;/<span class="hl-tag">html</span>&gt;</span>
+  );
+}</div>
+        </div>
+      </div>
+
+      <!-- TAB 3: APP ERROR -->
+      <div id="tab-error" class="code-tab-content" style="display: none;">
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span>app/error.js (Page Level Error Boundary)</span>
+          </div>
+          <div class="code-content"><span class="hl-str">"use client"</span>;
+
+<span class="hl-kw">export default function</span> <span class="hl-func">Error</span>({ error, reset }) {
+  <span class="hl-comment">// Catches errors in app/page.js, but NOT app/layout.js!</span>
+  <span class="hl-kw">return</span> &lt;<span class="hl-tag">div</span>&gt;Something went wrong in home page&lt;/<span class="hl-tag">div</span>&gt;;
+}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: KNOWLEDGE CHECK -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon">❓</div>
+        <h2>4. Quick Knowledge Check</h2>
+      </div>
+
+      <div>
+        <h4 style="margin-bottom: 0.75rem;">Q1: Why MUST <code>global-error.js</code> define its own <code>&lt;html&gt;</code> and <code>&lt;body&gt;</code> tags?</h4>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>A) To override Google Fonts CSS styling.</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, true)">
+          <span class="radio-circle"></span>
+          <span>B) Because when app/layout.js fails, its &lt;html&gt; and &lt;body&gt; tags are completely destroyed!</span>
+        </div>
+        <div class="quiz-option" onclick="checkAnswer(this, false)">
+          <span class="radio-circle"></span>
+          <span>C) It is optional; html and body can be omitted.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 5: POORA SAAR / HINGLISH GOLDEN RULE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4);">💡</div>
+        <h2>5. Poora Saar &amp; Golden Master Rule (Hinglish)</h2>
+      </div>
+
+      <div style="padding: 1.5rem; background: #020617; border-left: 5px solid var(--purple-color); border-radius: var(--radius-md);">
+        <h3 style="color: var(--purple-color); margin-bottom: 0.75rem; font-size: 1.15rem;">💡 Root Layout Errors Ka Poora Saar:</h3>
+
+        <p style="font-size: 0.98rem; color: var(--text-main); line-height: 1.8; margin-bottom: 1rem;">
+          Next.js App Router me <code>app/layout.js</code> sabse top level (Root Layout) hota hai. Uske ANDAR <code>app/error.js</code> aur <code>app/page.js</code> baithte hain.
+        </p>
+
+        <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 1.25rem;">
+          Agar <code>app/layout.js</code> (Root Layout) phat jaye (error de de), toh <code>app/error.js</code> usko **NAHI bacha sakta**, kyunki `app/error.js` khud layout ke andar rehta hai! 
+          Jab Root Layout phatta hai, toh poore document ke <code>&lt;html&gt;</code> aur <code>&lt;body&gt;</code> tags tabah (destroy) ho jaate hain. 
+          Iske liye Next.js ne special <code>app/global-error.js</code> diya hai, jo poore HTML page ko replace karta hai aur jisme <code>&lt;html&gt;</code> &amp; <code>&lt;body&gt;</code> likhna **MANDATORY** hota hai!
+        </p>
+
+        <div style="background: rgba(168, 85, 247, 0.1); border: 1px dashed var(--purple-color); padding: 1rem; border-radius: var(--radius-sm); font-size: 0.9rem;">
+          <strong style="color: var(--purple-color); display: block; margin-bottom: 0.5rem;">🔥 The Ultimate Root Error Formula:</strong>
+          <ul style="padding-left: 1.2rem; line-height: 1.8; color: var(--text-main);">
+            <li><strong>1. 📄 <code>app/page.js</code> Phata 💥</strong> ➔ <code>app/error.js</code> bacha lega! Root Layout intact rahega. ✅</li>
+            <li><strong>2. 🌐 <code>app/layout.js</code> (Root Layout) Phata 💥</strong> ➔ <code>app/error.js</code> BYPASS ho jayega! Sirf <code>app/global-error.js</code> bacha sakta hai! 🛡️</li>
+            <li><strong>3. 🏷️ Mandatory Tags in <code>global-error.js</code> ⚠️</strong> ➔ <code>&lt;html&gt;</code> aur <code>&lt;body&gt;</code> tags likhna FARZ (Mandatory) hai!</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Next.js Root Layout Errors &amp; global-error.js Guide &bull; Section 5 Lesson 05
+    </footer>
+  </div>
+
+  <script>
+    function runScenario(type) {
+      const display = document.getElementById('sim-display');
+      const consoleBox = document.getElementById('console-output');
+
+      if (type === 'page') {
+        display.innerHTML = `
+          <div class="mock-layout">
+            <div style="font-size: 0.8rem; color: #38bdf8; font-weight: bold; margin-bottom: 0.5rem;">🌐 app/layout.js &amp; Header (STAYS 100% INTACT &amp; ALIVE!)</div>
+            <div class="mock-page-error">
+              <h3 style="color: var(--danger-color); margin-bottom: 0.5rem;">⚠️ Something went wrong in home page</h3>
+              <p style="font-size: 0.9rem;">Caught by app/error.js! Root layout structure remained intact.</p>
+            </div>
+          </div>
+        `;
+        consoleBox.innerHTML = `<span style="color: var(--client-color)">[PAGE ERROR] Error in app/page.js caught by app/error.js! Root Layout & Header stayed alive.</span>`;
+      } else {
+        display.innerHTML = `
+          <div class="mock-global-error">
+            <h2 style="color: var(--purple-color); margin-bottom: 0.5rem;">💥 Global Error: Root Layout Failed!</h2>
+            <p style="font-size: 0.95rem; margin-bottom: 1rem;">app/error.js was BYPASSED because app/layout.js failed! app/global-error.js replaced the entire &lt;html&gt; &amp; &lt;body&gt; document.</p>
+            <button style="padding: 0.5rem 1rem; border-radius: 6px; border: none; background: var(--purple-color); color: #fff; font-weight: bold; cursor: pointer;" onclick="runScenario('page')">Try Again (Reload)</button>
+          </div>
+        `;
+        consoleBox.innerHTML = `<span style="color: var(--danger-color)">[ROOT LAYOUT ERROR] Error in app/layout.js! app/error.js BYPASSED. Caught by app/global-error.js (Replaced entire &lt;html&gt; & &lt;body&gt; document).</span>`;
+      }
+    }
+
+    function showCodeTab(tabId) {
+      document.querySelectorAll('.code-tab-content').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.code-tab-btn').forEach(el => el.classList.remove('active'));
+
+      document.getElementById(tabId).style.display = 'block';
+      event.currentTarget.classList.add('active');
+    }
+
+    function checkAnswer(element, isCorrect) {
+      const parent = element.parentElement;
+      parent.querySelectorAll('.quiz-option').forEach(el => {
+        el.classList.remove('correct', 'incorrect');
+      });
+
+      if (isCorrect) {
+        element.classList.add('correct');
+      } else {
+        element.classList.add('incorrect');
+      }
+    }
+  </script>
+</body>
+</html>

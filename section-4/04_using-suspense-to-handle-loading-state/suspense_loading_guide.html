@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapter 04: Using Suspense to Handle Loading State - Next.js Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-dark: #070a11;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border-color: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --server-color: #10b981;
+      --server-bg: rgba(16, 185, 129, 0.12);
+      --server-border: rgba(16, 185, 129, 0.4);
+      --client-color: #38bdf8;
+      --client-bg: rgba(56, 189, 248, 0.12);
+      --client-border: rgba(56, 189, 248, 0.4);
+      --danger-color: #f43f5e;
+      --warning-color: #fbbf24;
+      --purple-color: #c084fc;
+      --purple-bg: rgba(192, 132, 252, 0.12);
+      --purple-border: rgba(192, 132, 252, 0.4);
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+    }
+    .container { max-width: 1150px; margin: 0 auto; }
+    header.hero {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      background: radial-gradient(circle at 50% 0%, rgba(192, 132, 252, 0.18) 0%, rgba(7, 10, 17, 0) 70%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 2.5rem;
+    }
+    .badge-group {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+    }
+    .badge-next { background: rgba(255, 255, 255, 0.05); color: #fff; }
+    .badge-purple { background: var(--purple-bg); color: var(--purple-color); border-color: var(--purple-border); }
+    h1 {
+      font-size: 2.3rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #ffffff 40%, #c084fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-subtitle { font-size: 1.1rem; color: var(--text-muted); max-width: 800px; margin: 0 auto; }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .card-header h2 { font-size: 1.5rem; font-weight: 700; }
+    .badge-icon {
+      width: 40px; height: 40px; border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; background: var(--purple-bg); color: var(--purple-color);
+      border: 1px solid var(--purple-border);
+    }
+    pre, code { font-family: 'Fira Code', monospace; }
+    .code-block {
+      background: #050811;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      font-size: 0.9rem;
+      overflow-x: auto;
+      line-height: 1.6;
+      color: #cbd5e1;
+            white-space: pre;
+        }
+    .kw { color: #c084fc; font-weight: 600; }
+    .fn { color: #38bdf8; }
+    .str { color: #4ade80; }
+    .cm { color: #64748b; font-style: italic; }
+    .btn {
+      padding: 0.75rem 1.4rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card-hover);
+      color: var(--text-main);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+    }
+    .btn:hover { background: #334155; transform: translateY(-1px); }
+    .btn-purple { background: var(--purple-bg); color: var(--purple-color); border-color: var(--purple-border); }
+    .btn-purple:hover { background: rgba(192, 132, 252, 0.25); }
+
+    /* MULTI COMPONENT RACE GRID */
+    .comp-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+      margin-top: 1.5rem;
+    }
+    @media (max-width: 850px) { .comp-grid { grid-template-columns: 1fr; } }
+    .comp-box {
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      background: #050811;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 180px;
+      transition: all 0.3s ease;
+    }
+    .comp-box.done {
+      border-color: var(--server-color);
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+    }
+    .comp-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+    .comp-status {
+      font-size: 0.8rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+    .status-wait { background: rgba(251, 191, 36, 0.2); color: var(--warning-color); }
+    .status-done { background: var(--server-bg); color: var(--server-color); }
+    .progress-bar-bg {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 9999px;
+      overflow: hidden;
+      margin-top: 0.75rem;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--purple-color);
+      transition: width 0.1s linear;
+    }
+    .nav-btn-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 2rem;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="hero">
+      <div class="badge-group">
+        <span class="badge badge-next">Next.js 15+ App Router</span>
+        <span class="badge badge-purple">&lt;Suspense&gt; Granular Boundaries</span>
+        <span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">Component Streaming</span>
+      </div>
+      <h1>04. Using Suspense to Handle Loading State</h1>
+      <p class="hero-subtitle">
+        Why route-level <code>loading.js</code> is not enough, and how wrapping individual async components in <code>&lt;Suspense&gt;</code> streams fast components without waiting for slow ones!
+      </p>
+    </header>
+
+    <!-- SECTION 1: THE PROBLEM WITH LOADING.JS -->
+    <section class="card">
+      <div class="card-header">
+        <div class="badge-icon"><i class="fa-solid fa-circle-question"></i></div>
+        <h2>The Core Problem: All-or-Nothing with <code>loading.js</code></h2>
+      </div>
+
+      <div style="background: rgba(244, 63, 94, 0.08); border-left: 4px solid var(--danger-color); padding: 1.25rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+        <h4 style="color: var(--danger-color); margin-bottom: 0.5rem;"><i class="fa-solid fa-triangle-exclamation"></i> Ek Slow Component Poore Page Ko Block Kar Deta Hai!</h4>
+        <p style="font-size: 0.95rem; color: #cbd5e1; line-height: 1.6;">
+          Agar aapke page me 3 components hain:
+          <br>&bull; <code>SlowComponent2s</code> (2 seconds)
+          <br>&bull; <code>SlowComponent3s</code> (3 seconds)
+          <br>&bull; <code>TodoItems</code> (5 seconds)
+          <br><br>
+          Agar aap sirf <code>loading.js</code> use karte ho, toh Next.js poore page ko ek sath rok leta hai. User ko <strong>5 full seconds</strong> tak skeleton dikhta rahega, bhale hi 2s wala component 2 second me ready ho chuka tha!
+        </p>
+      </div>
+
+      <h3 style="margin-bottom: 0.75rem; color: #fff;">✅ The Solution: Granular <code>&lt;Suspense&gt;</code> Boundaries</h3>
+      <div class="code-block"><span class="kw">import</span> SlowComponent2s <span class="kw">from</span> <span class="str">"@/components/SlowComponent2s"</span>;
+<span class="kw">import</span> SlowComponent3s <span class="kw">from</span> <span class="str">"@/components/SlowComponent3s"</span>;
+<span class="kw">import</span> TodoItems <span class="kw">from</span> <span class="str">"@/components/TodoItems"</span>;
+<span class="kw">import</span> { Suspense } <span class="kw">from</span> <span class="str">"react"</span>;
+
+<span class="kw">const</span> <span class="fn">Todos</span> = <span class="kw">async</span> () =&gt; {
+  <span class="kw">return</span> (
+    &lt;&gt;
+      &lt;<span class="fn">h1</span>&gt;Todos&lt;/<span class="fn">h1</span>&gt;
+
+      {/* Component 1 (5s Delay) */}
+      &lt;<span class="fn">Suspense</span> <span class="kw">fallback</span>={&lt;<span class="fn">ShimmerSkeleton</span> /&gt;}&gt;
+        &lt;<span class="fn">TodoItems</span> /&gt;
+      &lt;/<span class="fn">Suspense</span>&gt;
+
+      {/* Component 2 (2s Delay) - Loads at 2s independently! */}
+      &lt;<span class="fn">Suspense</span> <span class="kw">fallback</span>={&lt;<span class="fn">div</span>&gt;Loading data 1...&lt;/<span class="fn">div</span>&gt;}&gt;
+        &lt;<span class="fn">SlowComponent2s</span> /&gt;
+      &lt;/<span class="fn">Suspense</span>&gt;
+
+      {/* Component 3 (3s Delay) - Loads at 3s independently! */}
+      &lt;<span class="fn">Suspense</span> <span class="kw">fallback</span>={&lt;<span class="fn">div</span>&gt;Loading data 2...&lt;/<span class="fn">div</span>&gt;}&gt;
+        &lt;<span class="fn">SlowComponent3s</span> /&gt;
+      &lt;/<span class="fn">Suspense</span>&gt;
+    &lt;/&gt;
+  );
+};
+
+<span class="kw">export default</span> Todos;</div>
+    </section>
+
+    <!-- SECTION 2: TIMELINE BREAKDOWN FROM YOUR NOTES -->
+    <section class="card">
+      <div class="card-header">
+        <div class="badge-icon"><i class="fa-solid fa-list-check"></i></div>
+        <h2>Project Notes: Exact Execution Timeline</h2>
+      </div>
+
+      <div style="background: #050811; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.5rem; font-family: 'Fira Code', monospace; font-size: 0.9rem; color: #cbd5e1; line-height: 1.8;">
+        <span style="color: var(--purple-color); font-weight: bold;">Time 0s:</span> Sabka fetch ek sath start hota hai (Parallel initiation) 🚀<br>
+        &bull; <code>Slow2s</code>: waiting (2s)<br>
+        &bull; <code>Slow3s</code>: waiting (3s)<br>
+        &bull; <code>TodoItems</code>: waiting (5s)<br>
+        <hr style="border: none; border-top: 1px dashed var(--border-color); margin: 0.75rem 0;">
+        <span style="color: var(--server-color); font-weight: bold;">Time 2s:</span><br>
+        &bull; <code>Slow2s</code>: <span style="color: var(--server-color);">✅ DONE &rarr; Instant HTML chunk streamed & UI updated!</span><br>
+        &bull; <code>Slow3s</code>: waiting (fallback active)<br>
+        &bull; <code>TodoItems</code>: waiting (fallback active)<br>
+        <hr style="border: none; border-top: 1px dashed var(--border-color); margin: 0.75rem 0;">
+        <span style="color: var(--client-color); font-weight: bold;">Time 3s:</span><br>
+        &bull; <code>Slow3s</code>: <span style="color: var(--client-color);">✅ DONE &rarr; Second HTML chunk streamed & UI updated!</span><br>
+        &bull; <code>TodoItems</code>: waiting (fallback active)<br>
+        <hr style="border: none; border-top: 1px dashed var(--border-color); margin: 0.75rem 0;">
+        <span style="color: var(--warning-color); font-weight: bold;">Time 5s:</span><br>
+        &bull; <code>TodoItems</code>: <span style="color: var(--warning-color);">✅ DONE &rarr; Final chunk streamed & Todos rendered!</span>
+      </div>
+    </section>
+
+    <!-- SECTION 3: INTERACTIVE MULTI-COMPONENT RACE SIMULATOR -->
+    <section class="card">
+      <div class="card-header">
+        <div class="badge-icon"><i class="fa-solid fa-bolt"></i></div>
+        <h2>Live Simulator: Component-Level Streaming Race</h2>
+      </div>
+
+      <p style="color: var(--text-muted); margin-bottom: 1rem;">
+        Click below to watch how all 3 components start together at 0s, and stream in one-by-one as each completes:
+      </p>
+
+      <button class="btn btn-purple" id="raceBtn" onclick="startStreamingRace()">
+        <i class="fa-solid fa-play"></i> Run Streaming Simulation
+      </button>
+      <span id="globalTimer" style="font-family: 'Fira Code', monospace; margin-left: 1rem; font-weight: 700; color: var(--purple-color);">0.0s</span>
+
+      <div class="comp-grid">
+        <!-- Comp 2s -->
+        <div class="comp-box" id="box2s">
+          <div>
+            <div class="comp-header">
+              <h4 style="color: #38bdf8;">SlowComponent2s</h4>
+              <span class="comp-status status-wait" id="tag2s">Waiting (2s)</span>
+            </div>
+            <p id="content2s" style="color: var(--text-muted); font-size: 0.88rem;">Showing Fallback: <code>Loading data 1...</code></p>
+          </div>
+          <div>
+            <div class="progress-bar-bg"><div class="progress-bar-fill" id="bar2s"></div></div>
+          </div>
+        </div>
+
+        <!-- Comp 3s -->
+        <div class="comp-box" id="box3s">
+          <div>
+            <div class="comp-header">
+              <h4 style="color: #c084fc;">SlowComponent3s</h4>
+              <span class="comp-status status-wait" id="tag3s">Waiting (3s)</span>
+            </div>
+            <p id="content3s" style="color: var(--text-muted); font-size: 0.88rem;">Showing Fallback: <code>Loading data 2...</code></p>
+          </div>
+          <div>
+            <div class="progress-bar-bg"><div class="progress-bar-fill" id="bar3s"></div></div>
+          </div>
+        </div>
+
+        <!-- Comp 5s -->
+        <div class="comp-box" id="box5s">
+          <div>
+            <div class="comp-header">
+              <h4 style="color: #10b981;">TodoItems</h4>
+              <span class="comp-status status-wait" id="tag5s">Waiting (5s)</span>
+            </div>
+            <p id="content5s" style="color: var(--text-muted); font-size: 0.88rem;">Showing Fallback: <code>Shimmer Skeletons...</code></p>
+          </div>
+          <div>
+            <div class="progress-bar-bg"><div class="progress-bar-fill" id="bar5s"></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NAVIGATION FOOTER -->
+    <div class="nav-btn-row">
+      <a href="../03_handling-loading-state-in-server-components/loading_state_guide.html" class="btn"><i class="fa-solid fa-arrow-left"></i> Previous: 03. Loading State</a>
+      <a href="../05_parallel-data-fetching/05_parallel-data-fetching-final/parallel_data_fetching_guide.html" class="btn btn-purple">Next: 05. Parallel Data Fetching <i class="fa-solid fa-arrow-right"></i></a>
+    </div>
+  </div>
+
+  <script>
+    let raceTimer = null;
+
+    function startStreamingRace() {
+      const btn = document.getElementById('raceBtn');
+      const timer = document.getElementById('globalTimer');
+      btn.disabled = true;
+
+      // Reset components
+      ['2s', '3s', '5s'].forEach(id => {
+        document.getElementById('box' + id).classList.remove('done');
+        document.getElementById('tag' + id).className = 'comp-status status-wait';
+        document.getElementById('bar' + id).style.width = '0%';
+      });
+
+      document.getElementById('tag2s').innerText = 'Waiting (2s)';
+      document.getElementById('content2s').innerHTML = 'Showing Fallback: <code>Loading data 1...</code>';
+      document.getElementById('tag3s').innerText = 'Waiting (3s)';
+      document.getElementById('content3s').innerHTML = 'Showing Fallback: <code>Loading data 2...</code>';
+      document.getElementById('tag5s').innerText = 'Waiting (5s)';
+      document.getElementById('content5s').innerHTML = 'Showing Fallback: <code>Shimmer Skeletons...</code>';
+
+      let elapsed = 0;
+      clearInterval(raceTimer);
+
+      raceTimer = setInterval(() => {
+        elapsed += 0.1;
+        timer.innerText = elapsed.toFixed(1) + 's';
+
+        // Update Progress bars
+        document.getElementById('bar2s').style.width = Math.min(100, (elapsed / 2) * 100) + '%';
+        document.getElementById('bar3s').style.width = Math.min(100, (elapsed / 3) * 100) + '%';
+        document.getElementById('bar5s').style.width = Math.min(100, (elapsed / 5) * 100) + '%';
+
+        // 2s Resolution
+        if (elapsed >= 2.0 && !document.getElementById('box2s').classList.contains('done')) {
+          document.getElementById('box2s').classList.add('done');
+          document.getElementById('tag2s').className = 'comp-status status-done';
+          document.getElementById('tag2s').innerText = '✅ Streamed at 2s';
+          document.getElementById('content2s').innerHTML = '<strong style="color: #38bdf8;">Data from 2s Component arrived!</strong><br><span style="font-size: 0.8rem; color: #cbd5e1;">{"message": "Loaded in 2 seconds"}</span>';
+        }
+
+        // 3s Resolution
+        if (elapsed >= 3.0 && !document.getElementById('box3s').classList.contains('done')) {
+          document.getElementById('box3s').classList.add('done');
+          document.getElementById('tag3s').className = 'comp-status status-done';
+          document.getElementById('tag3s').innerText = '✅ Streamed at 3s';
+          document.getElementById('content3s').innerHTML = '<strong style="color: #c084fc;">Data from 3s Component arrived!</strong><br><span style="font-size: 0.8rem; color: #cbd5e1;">{"message": "Loaded in 3 seconds"}</span>';
+        }
+
+        // 5s Resolution
+        if (elapsed >= 5.0) {
+          document.getElementById('box5s').classList.add('done');
+          document.getElementById('tag5s').className = 'comp-status status-done';
+          document.getElementById('tag5s').innerText = '✅ Streamed at 5s';
+          document.getElementById('content5s').innerHTML = '<strong style="color: #10b981;">5 Todos Loaded!</strong><br><span style="font-size: 0.8rem; color: #cbd5e1;">All 5 Todos rendered in UI</span>';
+          clearInterval(raceTimer);
+          btn.disabled = false;
+        }
+      }, 100);
+    }
+  </script>
+</body>
+</html>

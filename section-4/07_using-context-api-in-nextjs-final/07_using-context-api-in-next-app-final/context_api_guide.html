@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapter 07: Using Context API in Next.js App Router - Master Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-dark: #070a11;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border-color: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --server-color: #10b981;
+      --server-bg: rgba(16, 185, 129, 0.12);
+      --server-border: rgba(16, 185, 129, 0.4);
+      --client-color: #38bdf8;
+      --client-bg: rgba(56, 189, 248, 0.12);
+      --client-border: rgba(56, 189, 248, 0.4);
+      --danger-color: #f43f5e;
+      --warning-color: #fbbf24;
+      --purple-color: #a855f7;
+      --purple-bg: rgba(168, 85, 247, 0.12);
+      --purple-border: rgba(168, 85, 247, 0.4);
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    .container { max-width: 1150px; margin: 0 auto; }
+    header.hero {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      background: radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.18) 0%, rgba(7, 10, 17, 0) 70%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 2.5rem;
+    }
+    .badge-group {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+    }
+    .badge-next { background: rgba(255, 255, 255, 0.05); color: #fff; }
+    .badge-purple { background: var(--purple-bg); color: var(--purple-color); border-color: var(--purple-border); }
+    .badge-client { background: var(--client-bg); color: var(--client-color); border-color: var(--client-border); }
+    h1 {
+      font-size: 2.3rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #ffffff 40%, #a855f7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-subtitle { font-size: 1.1rem; color: var(--text-muted); max-width: 800px; margin: 0 auto; }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .card-header h2 { font-size: 1.5rem; font-weight: 700; }
+    .badge-icon {
+      width: 40px; height: 40px; border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; background: var(--purple-bg); color: var(--purple-color);
+      border: 1px solid var(--purple-border);
+    }
+    pre, code { font-family: 'Fira Code', monospace; }
+    .code-block {
+      background: #050811;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      font-size: 0.9rem;
+      overflow-x: auto;
+      line-height: 1.6;
+      color: #cbd5e1;
+            white-space: pre;
+        }
+    .kw { color: #c084fc; font-weight: 600; }
+    .fn { color: #38bdf8; }
+    .str { color: #4ade80; }
+    .cm { color: #64748b; font-style: italic; }
+    .btn {
+      padding: 0.75rem 1.4rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card-hover);
+      color: var(--text-main);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+    }
+    .btn:hover { background: #334155; transform: translateY(-1px); }
+    .btn-purple { background: var(--purple-bg); color: var(--purple-color); border-color: var(--purple-border); }
+    .btn-purple:hover { background: rgba(168, 85, 247, 0.25); }
+
+    /* INTERACTIVE THEME SIMULATOR */
+    .theme-demo-box {
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.75rem;
+      transition: all 0.3s ease;
+      background: #0b0f19;
+      color: #f8fafc;
+      margin-top: 1rem;
+    }
+    .theme-demo-box.light-mode {
+      background: #ffffff;
+      color: #0f172a;
+      border-color: #cbd5e1;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    .theme-demo-box.light-mode p { color: #475569; }
+    .theme-demo-box.light-mode .code-block { background: #f1f5f9; color: #1e293b; border-color: #cbd5e1;
+            white-space: pre;
+        }
+    .nav-btn-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 2rem;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="hero">
+      <div class="badge-group">
+        <span class="badge badge-next">Next.js 15+ App Router</span>
+        <span class="badge badge-purple">React Context API</span>
+        <span class="badge badge-client">The "Children" Pattern</span>
+      </div>
+      <h1>07. Using Context API in Next.js App Router</h1>
+      <p class="hero-subtitle">
+        How to provide global state (like Theme, Auth, Cart) using React Context without accidentally turning your entire Server-Rendered App into Client Components!
+      </p>
+    </header>
+
+    <!-- SECTION 1: THE DILEMMA -->
+    <section class="card">
+      <div class="card-header">
+        <div class="badge-icon"><i class="fa-solid fa-question"></i></div>
+        <h2>The Core Next.js Dilemma</h2>
+      </div>
+
+      <div style="background: rgba(244, 63, 94, 0.08); border-left: 4px solid var(--danger-color); padding: 1.25rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+        <h4 style="color: var(--danger-color); margin-bottom: 0.5rem;"><i class="fa-solid fa-triangle-exclamation"></i> Server Components Context API Support Nahi Karte!</h4>
+        <p style="font-size: 0.95rem; color: #cbd5e1; line-height: 1.6;">
+          <code>createContext</code> aur <code>useContext</code> React ke client-side hooks hain jo state aur re-rendering par depend karte hain. Next.js ke Server Components me Context direct create ya consume nahi ho sakta.
+          <br><br>
+          <strong>Dilemma:</strong> Agar hum global state ke liye <code>app/layout.js</code> par <code>"use client"</code> laga dein, toh hamari poori application (har page aur har component) Client Component ban jayegi aur Server Components ke saare fayde khatam ho jayenge!
+        </p>
+      </div>
+
+      <div style="background: rgba(16, 185, 129, 0.08); border-left: 4px solid var(--server-color); padding: 1.25rem; border-radius: var(--radius-md);">
+        <h4 style="color: var(--server-color); margin-bottom: 0.5rem;"><i class="fa-solid fa-check-double"></i> The Golden Solution: The "Children" Provider Pattern</h4>
+        <p style="font-size: 0.95rem; color: #cbd5e1; line-height: 1.6;">
+          1. Provider ko ek separate file me banao aur wahan <code>"use client"</code> lagao: <code>context/ThemeContext.js</code>.<br>
+          2. Provider ko <code>{children}</code> accept karne do.<br>
+          3. <code>app/layout.js</code> ko **Server Component hi rehne do**, aur usme <code>&lt;ThemeProvider&gt;{children}&lt;/ThemeProvider&gt;</code> wrap karo!<br>
+          <strong style="color: #34d399;">Kamaal ki baat:</strong> Kyunki <code>{children}</code> ko Server Component (layout) ne as prop pass kiya hai, isliye <strong>saare children Server Components hi rehte hain!</strong>
+        </p>
+      </div>
+    </section>
+
+    <!-- SECTION 2: THE CODE IMPLEMENTATION -->
+    <section class="card">
+      <div class="card-header">
+        <div class="badge-icon"><i class="fa-solid fa-code"></i></div>
+        <h2>Project Code Implementation</h2>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+        <!-- ThemeContext.js -->
+        <div>
+          <h4 style="color: var(--client-color); margin-bottom: 0.5rem;">1. <code>context/ThemeContext.js</code> ("use client")</h4>
+          <div class="code-block" style="font-size: 0.84rem;"><span class="kw">"use client"</span>;
+
+<span class="kw">import</span> { createContext, useContext, useEffect, useState } <span class="kw">from</span> <span class="str">"react"</span>;
+
+<span class="kw">const</span> ThemeContext = <span class="fn">createContext</span>();
+
+<span class="kw">export function</span> <span class="fn">useTheme</span>() {
+  <span class="kw">return</span> <span class="fn">useContext</span>(ThemeContext);
+}
+
+<span class="kw">export default function</span> <span class="fn">ThemeProvider</span>({ children }) {
+  <span class="kw">const</span> [isDark, setIsDark] = <span class="fn">useState</span>(<span class="kw">true</span>);
+
+  <span class="kw">function</span> <span class="fn">toggleTheme</span>() {
+    <span class="fn">setIsDark</span>((prev) =&gt; !prev);
+  }
+
+  <span class="fn">useEffect</span>(() =&gt; {
+    <span class="kw">const</span> saved = localStorage.<span class="fn">getItem</span>(<span class="str">"isDark"</span>) === <span class="str">"true"</span>;
+    <span class="fn">setIsDark</span>(saved);
+  }, []);
+
+  <span class="fn">useEffect</span>(() =&gt; {
+    localStorage.<span class="fn">setItem</span>(<span class="str">"isDark"</span>, isDark);
+    <span class="kw">if</span> (isDark) {
+      document.documentElement.classList.<span class="fn">add</span>(<span class="str">"dark"</span>);
+    } <span class="kw">else</span> {
+      document.documentElement.classList.<span class="fn">remove</span>(<span class="str">"dark"</span>);
+    }
+  }, [isDark]);
+
+  <span class="kw">return</span> (
+    &lt;<span class="fn">ThemeContext.Provider</span> <span class="kw">value</span>={{ isDark, toggleTheme }}&gt;
+      {children}
+    &lt;/<span class="fn">ThemeContext.Provider</span>&gt;
+  );
+}</div>
+        </div>
+
+        <!-- app/layout.js -->
+        <div>
+          <h4 style="color: var(--server-color); margin-bottom: 0.5rem;">2. <code>app/layout.js</code> (Server Component!)</h4>
+          <div class="code-block" style="font-size: 0.84rem;"><span class="cm">// Notice: NO "use client" here!</span>
+<span class="cm">// RootLayout remains a 100% Server Component</span>
+
+<span class="kw">import</span> <span class="str">"./globals.css"</span>;
+<span class="kw">import</span> ThemeProvider <span class="kw">from</span> <span class="str">"@/context/ThemeContext"</span>;
+
+<span class="kw">export default function</span> <span class="fn">RootLayout</span>({ children }) {
+  <span class="kw">return</span> (
+    &lt;<span class="fn">html</span> <span class="kw">lang</span>=<span class="str">"en"</span> <span class="kw">className</span>=<span class="str">"dark"</span>&gt;
+      &lt;<span class="fn">body</span>&gt;
+        {/* Client Provider wraps Server Children */}
+        &lt;<span class="fn">ThemeProvider</span>&gt;
+          {children}
+        &lt;/<span class="fn">ThemeProvider</span>&gt;
+      &lt;/<span class="fn">body</span>&gt;
+    &lt;/<span class="fn">html</span>&gt;
+  );
+}</div>
+
+          <div style="margin-top: 1rem; background: rgba(56, 189, 248, 0.08); border: 1px solid var(--client-border); padding: 1rem; border-radius: var(--radius-sm); font-size: 0.85rem; color: #cbd5e1;">
+            <strong style="color: var(--client-color);">Consuming Context in Components:</strong>
+            <p style="margin-top: 0.25rem;">
+              Header ya Buttons me bas <code>const { isDark, toggleTheme } = useTheme();</code> call karo (un components me <code>"use client"</code> hona chahiye).
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: INTERACTIVE THEME TOGGLER SIMULATOR -->
+    <section class="card">
+      <div class="card-header">
+        <div class="badge-icon"><i class="fa-solid fa-circle-half-stroke"></i></div>
+        <h2>Interactive Simulator: Test Theme Context & Component Tree</h2>
+      </div>
+
+      <p style="color: var(--text-muted); margin-bottom: 1rem;">
+        Click the theme toggle below to see how Context state triggers re-renders only where needed:
+      </p>
+
+      <div class="theme-demo-box" id="demoBox">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; margin-bottom: 1rem;">
+          <h3 style="font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fa-solid fa-palette" style="color: var(--purple-color);"></i>
+            Current Theme: <span id="themeLabel" style="color: var(--purple-color);">Dark 🌙</span>
+          </h3>
+          <button class="btn btn-purple" onclick="toggleDemoTheme()">
+            <i class="fa-solid fa-sun" id="themeIcon"></i> Toggle Theme
+          </button>
+        </div>
+
+        <p style="margin-bottom: 1rem; font-size: 0.95rem;">
+          Yeh box context state se theme change kar raha hai. Niche component tree dekho:
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 0.5rem; font-family: 'Fira Code', monospace; font-size: 0.85rem;">
+          <div style="padding: 0.5rem 0.8rem; background: rgba(16, 185, 129, 0.15); border-left: 3px solid var(--server-color); border-radius: 4px;">
+            🌲 <strong>&lt;RootLayout&gt;</strong> [Server Component - 0 KB JS]
+          </div>
+          <div style="padding: 0.5rem 0.8rem; margin-left: 1.5rem; background: rgba(56, 189, 248, 0.15); border-left: 3px solid var(--client-color); border-radius: 4px;">
+            ⚡ <strong>&lt;ThemeProvider&gt;</strong> [Client Component - Manages isDark state]
+          </div>
+          <div style="padding: 0.5rem 0.8rem; margin-left: 3rem; background: rgba(16, 185, 129, 0.15); border-left: 3px solid var(--server-color); border-radius: 4px;">
+            🌲 <strong>&lt;Page&gt; ({children})</strong> [Server Component - Pre-rendered on server!]
+          </div>
+          <div style="padding: 0.5rem 0.8rem; margin-left: 4.5rem; background: rgba(56, 189, 248, 0.15); border-left: 3px solid var(--client-color); border-radius: 4px;">
+            ⚡ <strong>&lt;Header&gt;</strong> [Client Component - Uses useTheme() hook]
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NAVIGATION FOOTER -->
+    <div class="nav-btn-row">
+      <a href="../06_rendering-server-components-in-client-components-final/rsc_rendering_guide.html" class="btn"><i class="fa-solid fa-arrow-left"></i> Previous: 06. RSC in Client</a>
+      <a href="../index.html" class="btn btn-purple">Back to Section 4 Overview <i class="fa-solid fa-house"></i></a>
+    </div>
+  </div>
+
+  <script>
+    let isDarkMode = true;
+
+    function toggleDemoTheme() {
+      isDarkMode = !isDarkMode;
+      const box = document.getElementById('demoBox');
+      const label = document.getElementById('themeLabel');
+      const icon = document.getElementById('themeIcon');
+
+      if (isDarkMode) {
+        box.classList.remove('light-mode');
+        label.innerText = 'Dark 🌙';
+        label.style.color = 'var(--purple-color)';
+        icon.className = 'fa-solid fa-sun';
+      } else {
+        box.classList.add('light-mode');
+        label.innerText = 'Light ☀️';
+        label.style.color = '#f59e0b';
+        icon.className = 'fa-solid fa-moon';
+      }
+    }
+  </script>
+</body>
+</html>

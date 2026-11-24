@@ -282,6 +282,7 @@
             padding: 0.35rem 0.75rem;
             border-radius: var(--radius-sm);
             border: 1px solid var(--border-color);
+            white-space: pre;
         }
 
         .line-explanation {
@@ -416,6 +417,7 @@
             overflow-x: auto;
             margin: 1rem 0;
             line-height: 1.5;
+            white-space: pre;
         }
 
         .kw { color: #f472b6; }
@@ -600,8 +602,7 @@
                 <h4 style="color: var(--isr-amber); font-size: 1.2rem; margin-bottom: 0.5rem;">
                     📄 File: <code>app/blogs/[blogID]/page.js</code>
                 </h4>
-                <div class="code-block">
-<span class="kw">import</span> Link <span class="kw">from</span> <span class="str">"next/link"</span>;
+                <div class="code-block"><span class="kw">import</span> Link <span class="kw">from</span> <span class="str">"next/link"</span>;
 
 <span class="kw">export const</span> dynamicParams = <span class="kw">false</span>;
 <span class="cm">// export const revalidate = 5; // Option A: Route Segment Level ISR</span>
@@ -630,8 +631,7 @@
   );
 };
 
-<span class="kw">export default</span> Blog;
-                </div>
+<span class="kw">export default</span> Blog;</div>
             </div>
         </section>
 

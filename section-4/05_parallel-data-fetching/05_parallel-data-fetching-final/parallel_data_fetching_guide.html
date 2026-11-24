@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapter 05: Parallel Data Fetching - Next.js Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-dark: #070a11;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border-color: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --server-color: #10b981;
+      --server-bg: rgba(16, 185, 129, 0.12);
+      --server-border: rgba(16, 185, 129, 0.4);
+      --client-color: #38bdf8;
+      --client-bg: rgba(56, 189, 248, 0.12);
+      --client-border: rgba(56, 189, 248, 0.4);
+      --danger-color: #f43f5e;
+      --danger-bg: rgba(244, 63, 94, 0.12);
+      --warning-color: #fbbf24;
+      --purple-color: #c084fc;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+    }
+    .container { max-width: 1150px; margin: 0 auto; }
+    header.hero {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      background: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.18) 0%, rgba(7, 10, 17, 0) 70%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 2.5rem;
+    }
+    .badge-group {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+    }
+    .badge-next { background: rgba(255, 255, 255, 0.05); color: #fff; }
+    .badge-danger { background: var(--danger-bg); color: var(--danger-color); border-color: rgba(244, 63, 94, 0.4); }
+    .badge-server { background: var(--server-bg); color: var(--server-color); border-color: var(--server-border); }
+    h1 {
+      font-size: 2.3rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #ffffff 40%, #10b981 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-subtitle { font-size: 1.1rem; color: var(--text-muted); max-width: 800px; margin: 0 auto; }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .card-header h2 { font-size: 1.5rem; font-weight: 700; }
+    .badge-icon {
+      width: 40px; height: 40px; border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; background: var(--server-bg); color: var(--server-color);
+      border: 1px solid var(--server-border);
+    }
+    pre, code { font-family: 'Fira Code', monospace; }
+    .code-block {
+      background: #050811;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      font-size: 0.9rem;
+      overflow-x: auto;
+      line-height: 1.6;
+      color: #cbd5e1;
+            white-space: pre;
+        }
+    .kw { color: #c084fc; font-weight: 600; }
+    .fn { color: #38bdf8; }
+    .str { color: #4ade80; }
+    .cm { color: #64748b; font-style: italic; }
+    .btn {
+      padding: 0.75rem 1.4rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card-hover);
+      color: var(--text-main);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+    }
+    .btn:hover { background: #334155; transform: translateY(-1px); }
+    .btn-server { background: var(--server-bg); color: var(--server-color); border-color: var(--server-border); }
+    .btn-server:hover { background: rgba(16, 185, 129, 0.25); }
+
+    /* WATERFALL VS PARALLEL VISUALIZER */
+    .compare-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+    @media (max-width: 850px) { .compare-container { grid-template-columns: 1fr; } }
+    .side-box {
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      background: #050811;
+    }
+    .side-box.starter { border-color: rgba(244, 63, 94, 0.4); }
+    .side-box.final { border-color: var(--server-border); }
+    .time-bar {
+      height: 28px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      padding: 0 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+    .nav-btn-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 2rem;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="hero">
+      <div class="badge-group">
+        <span class="badge badge-next">Next.js 15+ App Router</span>
+        <span class="badge badge-danger">Waterfall Elimination</span>
+        <span class="badge badge-server">Promise.all Parallelization</span>
+      </div>
+      <h1>05. Parallel Data Fetching in Next.js</h1>
+      <p class="hero-subtitle">
+        How sequential <code>await</code> creates an accidental 5.5s waterfall, and how <code>Promise.all()</code> runs all requests simultaneously to cut load time to 3.0s!
+      </p>
+    </header>
+
+    <!-- SECTION 1: STARTER VS FINAL COMPARISON -->
+    <section class="card">
+      <div class="card-header">
+        <div class="badge-icon"><i class="fa-solid fa-code-compare"></i></div>
+        <h2>Starter (Sequential Waterfall) vs Final (Promise.all)</h2>
+      </div>
+
+      <div class="compare-container">
+        <!-- Starter Waterfall -->
+        <div class="side-box starter">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <h4 style="color: var(--danger-color);"><i class="fa-solid fa-xmark"></i> Starter: Waterfall Fetching</h4>
+            <span style="font-family: 'Fira Code', monospace; color: var(--danger-color); font-weight: bold;">Total: ~5.5s</span>
+          </div>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+            Each <code>await</code> blocks the execution until it finishes before starting the next one!
+          </p>
+          <div class="code-block" style="font-size: 0.82rem;"><span class="cm">// 1. Wait 0.5s for Todos</span>
+<span class="kw">const</span> res1 = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">".../todos"</span>);
+<span class="kw">const</span> todos = <span class="kw">await</span> res1.<span class="fn">json</span>();
+
+<span class="cm">// 2. THEN wait 2.0s for Slow2s</span>
+<span class="kw">const</span> res2 = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">"...?sleep=2000"</span>);
+<span class="kw">const</span> data2s = <span class="kw">await</span> res2.<span class="fn">json</span>();
+
+<span class="cm">// 3. THEN wait 3.0s for Slow3s</span>
+<span class="kw">const</span> res3 = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">"...?sleep=3000"</span>);
+<span class="kw">const</span> data3s = <span class="kw">await</span> res3.<span class="fn">json</span>();
+
+<span class="cm">// Total Time = 0.5s + 2s + 3s = 5.5s! ❌</span></div>
+        </div>
+
+        <!-- Final Parallel -->
+        <div class="side-box final">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <h4 style="color: var(--server-color);"><i class="fa-solid fa-check"></i> Final: Parallel Fetching</h4>
+            <span style="font-family: 'Fira Code', monospace; color: var(--server-color); font-weight: bold;">Total: ~3.0s</span>
+          </div>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+            All 3 requests fire simultaneously at 0s! The total time is just the single longest request!
+          </p>
+          <div class="code-block" style="font-size: 0.82rem;"><span class="kw">const</span> urls = [
+  <span class="str">"https://jsonplaceholder.typicode.com/todos?_limit=5"</span>,
+  <span class="str">"https://procodrr.vercel.app/?sleep=2000"</span>,
+  <span class="str">"https://procodrr.vercel.app/?sleep=3000"</span>,
+];
+
+<span class="cm">// All 3 fetches start in parallel at 0ms!</span>
+<span class="kw">const</span> [todos, data2s, data3s] = <span class="kw">await</span> Promise.<span class="fn">all</span>(
+  urls.<span class="fn">map</span>((url) =&gt; <span class="fn">fetchData</span>(url))
+);
+
+<span class="cm">// Total Time = max(0.5s, 2s, 3s) = 3.0s! 🚀</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: WATERFALL VS PARALLEL ANIMATED SIMULATOR -->
+    <section class="card">
+      <div class="card-header">
+        <div class="badge-icon"><i class="fa-solid fa-stopwatch-20"></i></div>
+        <h2>Interactive Race: Waterfall vs Parallel Execution</h2>
+      </div>
+
+      <p style="color: var(--text-muted); margin-bottom: 1.25rem;">
+        Click the button below to see a real-time visual simulation comparing the sequential waterfall against parallel execution:
+      </p>
+
+      <button class="btn btn-server" id="raceBtn" onclick="runWaterfallRace()">
+        <i class="fa-solid fa-play"></i> Start Waterfall vs Parallel Race
+      </button>
+
+      <div style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem;">
+        <!-- Waterfall Row -->
+        <div style="background: #050811; border: 1px solid rgba(244, 63, 94, 0.3); border-radius: var(--radius-md); padding: 1.25rem;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+            <strong style="color: var(--danger-color);">Waterfall (Sequential)</strong>
+            <span id="waterfallClock" style="font-family: 'Fira Code', monospace; color: var(--danger-color);">0.0s / 5.5s</span>
+          </div>
+          <div style="display: flex; height: 32px; background: rgba(255,255,255,0.05); border-radius: 6px; overflow: hidden; position: relative;">
+            <div id="wfTodos" style="width: 0%; background: #38bdf8; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; color: #000; transition: width 0.1s linear;">Todos (0.5s)</div>
+            <div id="wf2s" style="width: 0%; background: #fbbf24; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; color: #000; transition: width 0.1s linear;">2s Delay</div>
+            <div id="wf3s" style="width: 0%; background: #f43f5e; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; color: #fff; transition: width 0.1s linear;">3s Delay</div>
+          </div>
+        </div>
+
+        <!-- Parallel Row -->
+        <div style="background: #050811; border: 1px solid var(--server-border); border-radius: var(--radius-md); padding: 1.25rem;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+            <strong style="color: var(--server-color);">Promise.all (Parallel)</strong>
+            <span id="parallelClock" style="font-family: 'Fira Code', monospace; color: var(--server-color);">0.0s / 3.0s</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 0.75rem; width: 80px; color: #cbd5e1;">Todos</span>
+              <div style="flex: 1; height: 18px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
+                <div id="parTodos" style="width: 0%; height: 100%; background: #38bdf8; transition: width 0.1s linear;"></div>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 0.75rem; width: 80px; color: #cbd5e1;">2s API</span>
+              <div style="flex: 1; height: 18px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
+                <div id="par2s" style="width: 0%; height: 100%; background: #fbbf24; transition: width 0.1s linear;"></div>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 0.75rem; width: 80px; color: #cbd5e1;">3s API</span>
+              <div style="flex: 1; height: 18px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
+                <div id="par3s" style="width: 0%; height: 100%; background: var(--server-color); transition: width 0.1s linear;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: PROMISE.ALL VS SUSPENSE COMPARISON -->
+    <section class="card">
+      <div class="card-header">
+        <div class="badge-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+        <h2><code>Promise.all</code> vs <code>&lt;Suspense&gt;</code>: Kab Kaunsa Use Karein?</h2>
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.95rem;">
+        <thead>
+          <tr style="border-bottom: 2px solid var(--border-color); text-align: left;">
+            <th style="padding: 0.75rem; color: var(--server-color);">Pattern</th>
+            <th style="padding: 0.75rem; color: var(--client-color);">Execution</th>
+            <th style="padding: 0.75rem; color: #cbd5e1;">When To Choose?</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom: 1px solid var(--border-color);">
+            <td style="padding: 0.75rem; font-weight: bold; color: var(--server-color);"><code>Promise.all()</code></td>
+            <td style="padding: 0.75rem; color: #cbd5e1;">Single Component me sab parallel fetch hota hai, aur poora component ek sath render hota hai.</td>
+            <td style="padding: 0.75rem; color: #cbd5e1;">Jab saara data ek-dusre par dependent ho ya ek hi table/graph me dikhana ho.</td>
+          </tr>
+          <tr>
+            <td style="padding: 0.75rem; font-weight: bold; color: var(--purple-color);">Component <code>&lt;Suspense&gt;</code></td>
+            <td style="padding: 0.75rem; color: #cbd5e1;">Alag-alag components parallel fetch karte hain aur jaise-jaise ready hote hain, stream hokar UI render karte hain.</td>
+            <td style="padding: 0.75rem; color: #cbd5e1;">Jab page ke alag sections hon (e.g. Comments 15s me aayenge, Profile 1s me turant dikhana hai).</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- NAVIGATION FOOTER -->
+    <div class="nav-btn-row">
+      <a href="../04_using-suspense-to-handle-loading-state/suspense_loading_guide.html" class="btn"><i class="fa-solid fa-arrow-left"></i> Previous: 04. Using Suspense</a>
+      <a href="../06_rendering-server-components-in-client-components-final/rsc_rendering_guide.html" class="btn btn-server">Next: 06. Server in Client Components <i class="fa-solid fa-arrow-right"></i></a>
+    </div>
+  </div>
+
+  <script>
+    let raceInterval = null;
+
+    function runWaterfallRace() {
+      const btn = document.getElementById('raceBtn');
+      btn.disabled = true;
+
+      // Reset
+      ['wfTodos', 'wf2s', 'wf3s', 'parTodos', 'par2s', 'par3s'].forEach(id => {
+        document.getElementById(id).style.width = '0%';
+      });
+
+      let time = 0;
+      clearInterval(raceInterval);
+
+      raceInterval = setInterval(() => {
+        time += 0.1;
+
+        // Parallel Clock & Bars (Max 3.0s)
+        if (time <= 3.0) {
+          document.getElementById('parallelClock').innerText = time.toFixed(1) + 's / 3.0s';
+          document.getElementById('parTodos').style.width = Math.min(100, (time / 0.5) * 100) + '%';
+          document.getElementById('par2s').style.width = Math.min(100, (time / 2.0) * 100) + '%';
+          document.getElementById('par3s').style.width = Math.min(100, (time / 3.0) * 100) + '%';
+        } else {
+          document.getElementById('parallelClock').innerText = '3.0s ✅ (Finished 2.5s Faster!)';
+        }
+
+        // Waterfall Clock & Bars (Total 5.5s)
+        document.getElementById('waterfallClock').innerText = Math.min(5.5, time).toFixed(1) + 's / 5.5s';
+        
+        if (time <= 0.5) {
+          // Todos running
+          const pct = (time / 0.5) * (0.5 / 5.5) * 100;
+          document.getElementById('wfTodos').style.width = pct + '%';
+        } else if (time <= 2.5) {
+          // 2s running
+          document.getElementById('wfTodos').style.width = ((0.5 / 5.5) * 100) + '%';
+          const pct = ((time - 0.5) / 2.0) * (2.0 / 5.5) * 100;
+          document.getElementById('wf2s').style.width = pct + '%';
+        } else if (time <= 5.5) {
+          // 3s running
+          document.getElementById('wfTodos').style.width = ((0.5 / 5.5) * 100) + '%';
+          document.getElementById('wf2s').style.width = ((2.0 / 5.5) * 100) + '%';
+          const pct = ((time - 2.5) / 3.0) * (3.0 / 5.5) * 100;
+          document.getElementById('wf3s').style.width = pct + '%';
+        } else {
+          document.getElementById('waterfallClock').innerText = '5.5s 🐢 (Finally Done)';
+          clearInterval(raceInterval);
+          btn.disabled = false;
+        }
+      }, 100);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapter 03: Handling Loading State in Server Components - Next.js Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-dark: #070a11;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border-color: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --server-color: #10b981;
+      --server-bg: rgba(16, 185, 129, 0.12);
+      --server-border: rgba(16, 185, 129, 0.4);
+      --client-color: #38bdf8;
+      --client-bg: rgba(56, 189, 248, 0.12);
+      --client-border: rgba(56, 189, 248, 0.4);
+      --danger-color: #f43f5e;
+      --warning-color: #fbbf24;
+      --warning-bg: rgba(251, 191, 36, 0.12);
+      --warning-border: rgba(251, 191, 36, 0.4);
+      --purple-color: #a855f7;
+      --purple-bg: rgba(168, 85, 247, 0.12);
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+    }
+    .container { max-width: 1150px; margin: 0 auto; }
+    header.hero {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      background: radial-gradient(circle at 50% 0%, rgba(251, 191, 36, 0.18) 0%, rgba(7, 10, 17, 0) 70%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 2.5rem;
+    }
+    .badge-group {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+    }
+    .badge-next { background: rgba(255, 255, 255, 0.05); color: #fff; }
+    .badge-warning { background: var(--warning-bg); color: var(--warning-color); border-color: var(--warning-border); }
+    .badge-purple { background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4); }
+    h1 {
+      font-size: 2.3rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #ffffff 40%, #fbbf24 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-subtitle { font-size: 1.1rem; color: var(--text-muted); max-width: 800px; margin: 0 auto; }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .card-header h2 { font-size: 1.5rem; font-weight: 700; }
+    .badge-icon {
+      width: 40px; height: 40px; border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; background: var(--warning-bg); color: var(--warning-color);
+      border: 1px solid var(--warning-border);
+    }
+    pre, code { font-family: 'Fira Code', monospace; }
+    .code-block {
+      background: #050811;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      font-size: 0.9rem;
+      overflow-x: auto;
+      line-height: 1.6;
+      color: #cbd5e1;
+            white-space: pre;
+        }
+    .kw { color: #c084fc; font-weight: 600; }
+    .fn { color: #38bdf8; }
+    .str { color: #4ade80; }
+    .cm { color: #64748b; font-style: italic; }
+    .btn {
+      padding: 0.75rem 1.4rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card-hover);
+      color: var(--text-main);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+    }
+    .btn:hover { background: #334155; transform: translateY(-1px); }
+    .btn-warning { background: var(--warning-bg); color: var(--warning-color); border-color: var(--warning-border); }
+    .btn-warning:hover { background: rgba(251, 191, 36, 0.25); }
+
+    /* SHIMMER EFFECT SIMULATION */
+    .shimmer-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      padding: 1rem 0;
+    }
+    .shimmer-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 0;
+    }
+    .shimmer-checkbox {
+      width: 20px;
+      height: 20px;
+      background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+      background-size: 200% 100%;
+      animation: shimmerAnimation 1.5s infinite;
+      border-radius: 4px;
+    }
+    .shimmer-text {
+      height: 18px;
+      background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+      background-size: 200% 100%;
+      animation: shimmerAnimation 1.5s infinite linear;
+      border-radius: 4px;
+    }
+    @keyframes shimmerAnimation {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    .real-todo-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 0;
+      animation: fadeIn 0.4s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .nav-btn-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 2rem;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="hero">
+      <div class="badge-group">
+        <span class="badge badge-next">Next.js 15+ App Router</span>
+        <span class="badge badge-warning">Special File: loading.js</span>
+        <span class="badge badge-purple">Instant Streaming UI</span>
+      </div>
+      <h1>03. Handling Loading State in Server Components</h1>
+      <p class="hero-subtitle">
+        How Next.js uses <code>loading.js</code> to stream instant Shimmer skeletons while waiting for slow server-side API responses.
+      </p>
+    </header>
+
+    <!-- SECTION 1: THE TWO FILES -->
+    <section class="card">
+      <div class="card-header">
+        <div class="badge-icon"><i class="fa-solid fa-folder-tree"></i></div>
+        <h2>The Architecture: <code>page.js</code> + <code>loading.js</code></h2>
+      </div>
+
+      <p style="color: var(--text-muted); margin-bottom: 1.25rem;">
+        Next.js has a special file convention: if you put a <code>loading.js</code> file next to your <code>page.js</code>, Next.js automatically wraps that page inside a <strong>React Suspense Boundary</strong>.
+      </p>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+        <div>
+          <h4 style="color: var(--warning-color); margin-bottom: 0.5rem;">📄 <code>app/todos/loading.js</code></h4>
+          <div class="code-block" style="font-size: 0.85rem;"><span class="kw">export default function</span> <span class="fn">Loading</span>() {
+  <span class="kw">return</span> (
+    &lt;&gt;
+      &lt;<span class="fn">h1</span>&gt;Todos&lt;/<span class="fn">h1</span>&gt;
+      &lt;<span class="fn">div</span> <span class="kw">className</span>=<span class="str">"todos-container"</span>&gt;
+        {Array.<span class="fn">from</span>({ length: 5 }).<span class="fn">map</span>((_, index) =&gt; (
+          &lt;<span class="fn">li</span> <span class="kw">key</span>={index} <span class="kw">className</span>=<span class="str">"shimmer"</span>&gt;
+            &lt;<span class="fn">div</span> <span class="kw">className</span>=<span class="str">"shimmer-checkbox"</span>&gt;&lt;/<span class="fn">div</span>&gt;
+            &lt;<span class="fn">div</span> <span class="kw">className</span>=<span class="str">"shimmer-text"</span>&gt;&lt;/<span class="fn">div</span>&gt;
+          &lt;/<span class="fn">li</span>&gt;
+        ))}
+      &lt;/<span class="fn">div</span>&gt;
+    &lt;/&gt;
+  );
+}</div>
+        </div>
+
+        <div>
+          <h4 style="color: var(--server-color); margin-bottom: 0.5rem;">📄 <code>app/todos/page.js</code> (Slow 5s Fetch)</h4>
+          <div class="code-block" style="font-size: 0.85rem;"><span class="kw">const</span> <span class="fn">Todos</span> = <span class="kw">async</span> () =&gt; {
+  <span class="cm">// Simulates a 5 second slow server delay!</span>
+  <span class="kw">const</span> slowResponse = <span class="kw">await</span> <span class="fn">fetch</span>(
+    <span class="str">"https://procodrr.vercel.app/?sleep=5000"</span>
+  );
+  <span class="kw">const</span> data = <span class="kw">await</span> slowResponse.<span class="fn">json</span>();
+
+  <span class="kw">const</span> response = <span class="kw">await</span> <span class="fn">fetch</span>(
+    <span class="str">"https://jsonplaceholder.typicode.com/todos?_limit=5"</span>
+  );
+  <span class="kw">const</span> todos = <span class="kw">await</span> response.<span class="fn">json</span>();
+
+  <span class="kw">return</span> (
+    &lt;&gt;
+      &lt;<span class="fn">h1</span>&gt;Todos&lt;/<span class="fn">h1</span>&gt;
+      &lt;<span class="fn">div</span> <span class="kw">className</span>=<span class="str">"todos-container"</span>&gt;
+        {todos.<span class="fn">map</span>(({ id, title, completed }) =&gt; (
+          &lt;<span class="fn">div</span> <span class="kw">className</span>=<span class="str">"todo-item"</span> <span class="kw">key</span>={id}&gt;
+            &lt;<span class="fn">input</span> <span class="kw">type</span>=<span class="str">"checkbox"</span> <span class="kw">checked</span>={completed} <span class="kw">readOnly</span> /&gt;
+            &lt;<span class="fn">p</span>&gt;{title}&lt;/<span class="fn">p</span>&gt;
+          &lt;/<span class="fn">div</span>&gt;
+        ))}
+      &lt;/<span class="fn">div</span>&gt;
+    &lt;/&gt;
+  );
+};</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: WHAT NEXT.JS DOES UNDER THE HOOD -->
+    <section class="card">
+      <div class="card-header">
+        <div class="badge-icon"><i class="fa-solid fa-gears"></i></div>
+        <h2>Behind The Scenes: What Next.js Does Under The Hood</h2>
+      </div>
+
+      <div style="background: rgba(168, 85, 247, 0.08); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: var(--radius-md); padding: 1.5rem;">
+        <p style="font-size: 1rem; color: #f3e8ff; margin-bottom: 0.75rem;">
+          Jab aap ek folder ke andar <code>loading.js</code> banate ho, toh Next.js compile time par aapke <code>layout.js</code> aur <code>page.js</code> ke beech me yeh code generate karta hai:
+        </p>
+        <div class="code-block"><span class="cm">// Next.js Internal Code Representation</span>
+&lt;<span class="fn">Layout</span>&gt;
+  &lt;<span class="fn">Suspense</span> <span class="kw">fallback</span>={&lt;<span class="fn">Loading</span> /&gt;}&gt;
+    &lt;<span class="fn">TodosPage</span> /&gt;
+  &lt;/<span class="fn">Suspense</span>&gt;
+&lt;/<span class="fn">Layout</span>&gt;</div>
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 0.75rem;">
+          💡 <strong>Nateeja:</strong> User ko 5 second tak safed (blank) screen nahi dekhni padti! Browser ko 0ms par hi Shimmer animation mil jata hai, aur jaise hi server pe data resolve hota hai, Next.js HTML stream bhej kar skeleton ko real todos se replace kar deta hai.
+        </p>
+      </div>
+    </section>
+
+    <!-- SECTION 3: INTERACTIVE 5S LOADING SIMULATOR -->
+    <section class="card">
+      <div class="card-header">
+        <div class="badge-icon"><i class="fa-solid fa-stopwatch"></i></div>
+        <h2>Interactive Simulator: Test 5s Delay With Shimmer</h2>
+      </div>
+
+      <p style="color: var(--text-muted); margin-bottom: 1rem;">
+        Click the button below to simulate navigating to <code>/todos</code> with a 5-second slow server response:
+      </p>
+
+      <button class="btn btn-warning" id="simBtn" onclick="startLoadingSimulation()">
+        <i class="fa-solid fa-play"></i> Navigate to /todos (Simulate 5s Sleep)
+      </button>
+
+      <div style="margin-top: 1.5rem; background: #050811; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.5rem; min-height: 240px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; margin-bottom: 1rem;">
+          <h3 id="uiHeader">Status: Ready</h3>
+          <span id="timerBadge" style="font-family: 'Fira Code', monospace; font-weight: 700; color: var(--warning-color);">0.0s</span>
+        </div>
+
+        <div id="todosDisplay">
+          <p style="color: var(--text-muted); font-style: italic;">Click button above to test loading state.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- NAVIGATION FOOTER -->
+    <div class="nav-btn-row">
+      <a href="../02_data-fetching-in-server-components/server_data_fetching_guide.html" class="btn"><i class="fa-solid fa-arrow-left"></i> Previous: 02. Server Fetching</a>
+      <a href="../04_using-suspense-to-handle-loading-state/suspense_loading_guide.html" class="btn btn-warning">Next: 04. Using Suspense <i class="fa-solid fa-arrow-right"></i></a>
+    </div>
+  </div>
+
+  <script>
+    let timerInterval = null;
+
+    function startLoadingSimulation() {
+      const btn = document.getElementById('simBtn');
+      const header = document.getElementById('uiHeader');
+      const timer = document.getElementById('timerBadge');
+      const display = document.getElementById('todosDisplay');
+
+      btn.disabled = true;
+      header.innerText = "Status: Showing `loading.js` (Shimmer Skeleton)";
+      header.style.color = "var(--warning-color)";
+
+      // Render Shimmer Skeletons
+      display.innerHTML = `
+        <ul class="shimmer-list">
+          <li class="shimmer-item"><div class="shimmer-checkbox"></div><div class="shimmer-text" style="width: 250px;"></div></li>
+          <li class="shimmer-item"><div class="shimmer-checkbox"></div><div class="shimmer-text" style="width: 190px;"></div></li>
+          <li class="shimmer-item"><div class="shimmer-checkbox"></div><div class="shimmer-text" style="width: 280px;"></div></li>
+          <li class="shimmer-item"><div class="shimmer-checkbox"></div><div class="shimmer-text" style="width: 220px;"></div></li>
+          <li class="shimmer-item"><div class="shimmer-checkbox"></div><div class="shimmer-text" style="width: 170px;"></div></li>
+        </ul>
+      `;
+
+      let elapsed = 0;
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        elapsed += 0.1;
+        timer.innerText = elapsed.toFixed(1) + "s";
+      }, 100);
+
+      // Resolve at 5 seconds
+      setTimeout(() => {
+        clearInterval(timerInterval);
+        timer.innerText = "5.0s (Loaded!)";
+        header.innerText = "Status: HTML Chunk Streamed (Todos Rendered!)";
+        header.style.color = "var(--server-color)";
+
+        display.innerHTML = `
+          <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+            <div class="real-todo-item"><input type="checkbox" checked readonly> <p>delectus aut autem</p></div>
+            <div class="real-todo-item"><input type="checkbox" readonly> <p>quis ut nam facilis et officia qui</p></div>
+            <div class="real-todo-item"><input type="checkbox" readonly> <p>fugiat veniam minus</p></div>
+            <div class="real-todo-item"><input type="checkbox" checked readonly> <p>et porro tempora</p></div>
+            <div class="real-todo-item"><input type="checkbox" readonly> <p>laboriosam mollitia et enim quasi adipisci quia provident illum</p></div>
+          </div>
+        `;
+        btn.disabled = false;
+      }, 5000);
+    }
+  </script>
+</body>
+</html>
