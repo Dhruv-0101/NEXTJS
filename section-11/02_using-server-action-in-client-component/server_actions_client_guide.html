@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Next.js Guide: Using Server Actions in Client Components</title>
+  <title>Chapter 02: Client Components Me Server Actions Ka Use | Complete Hinglish Guide</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
@@ -20,91 +20,115 @@
       
       --server-color: #10b981;
       --server-bg: rgba(16, 185, 129, 0.12);
+      --server-border: rgba(16, 185, 129, 0.35);
       
       --client-color: #38bdf8;
       --client-bg: rgba(56, 189, 248, 0.12);
+      --client-border: rgba(56, 189, 248, 0.35);
 
       --danger-color: #f43f5e;
-      --danger-bg: rgba(244, 63, 94, 0.15);
+      --danger-bg: rgba(244, 63, 94, 0.12);
       --danger-border: rgba(244, 63, 94, 0.4);
-      
-      --warning-color: #fbbf24;
-      --warning-bg: rgba(251, 191, 36, 0.12);
-      
-      --purple-color: #a855f7;
-      --purple-bg: rgba(168, 85, 247, 0.12);
-      
+
+      --purple-color: #c084fc;
+      --purple-bg: rgba(192, 132, 252, 0.12);
+      --purple-border: rgba(192, 132, 252, 0.35);
+
+      --amber-color: #fbbf24;
+      --amber-bg: rgba(251, 191, 36, 0.12);
+      --amber-border: rgba(251, 191, 36, 0.35);
+
       --radius-sm: 8px;
-      --radius-md: 14px;
-      --radius-lg: 20px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
       background-color: var(--bg-dark);
       color: var(--text-main);
-      line-height: 1.6;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.65;
       padding: 2rem 1rem;
-      min-height: 100vh;
     }
 
-    .container { max-width: 1150px; margin: 0 auto; }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
 
-    /* HERO HEADER */
-    header.hero {
+    /* HEADER */
+    .hero {
       text-align: center;
       padding: 3rem 1.5rem;
-      background: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.15) 0%, rgba(7, 10, 17, 0) 70%);
+      background: linear-gradient(180deg, rgba(56, 189, 248, 0.08) 0%, rgba(16, 185, 129, 0.05) 50%, rgba(7, 10, 17, 0) 100%);
       border: 1px solid var(--border-color);
       border-radius: var(--radius-lg);
       margin-bottom: 2.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 70%;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--client-color), var(--purple-color), var(--server-color), transparent);
     }
 
     .badge-group {
       display: flex;
+      gap: 0.6rem;
       justify-content: center;
-      gap: 0.75rem;
-      margin-bottom: 1rem;
       flex-wrap: wrap;
+      margin-bottom: 1.25rem;
     }
 
     .badge {
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      padding: 0.35rem 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 0.9rem;
       border-radius: 9999px;
-      border: 1px solid var(--border-color);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
     }
 
-    .badge-client { background: var(--client-bg); color: var(--client-color); border-color: rgba(56, 189, 248, 0.4); }
-    .badge-server { background: var(--server-bg); color: var(--server-color); border-color: rgba(16, 185, 129, 0.4); }
-    .badge-purple { background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4); }
+    .badge-client { background: var(--client-bg); color: var(--client-color); border: 1px solid var(--client-border); }
+    .badge-server { background: var(--server-bg); color: var(--server-color); border: 1px solid var(--server-border); }
+    .badge-danger { background: var(--danger-bg); color: var(--danger-color); border: 1px solid var(--danger-border); }
+    .badge-purple { background: var(--purple-bg); color: var(--purple-color); border: 1px solid var(--purple-border); }
+    .badge-amber { background: var(--amber-bg); color: var(--amber-color); border: 1px solid var(--amber-border); }
 
     h1 {
       font-size: 2.4rem;
       font-weight: 800;
-      margin-bottom: 0.75rem;
-      background: linear-gradient(135deg, #ffffff 40%, #38bdf8 100%);
+      letter-spacing: -0.03em;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #ffffff 40%, #cbd5e1 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
     .hero-subtitle {
-      font-size: 1.1rem;
+      font-size: 1.15rem;
       color: var(--text-muted);
-      max-width: 800px;
+      max-width: 860px;
       margin: 0 auto;
+      line-height: 1.7;
     }
 
+    /* CARD STYLING */
     .card {
       background: var(--bg-card);
       border: 1px solid var(--border-color);
       border-radius: var(--radius-lg);
-      padding: 2rem;
+      padding: 2.2rem;
       margin-bottom: 2.5rem;
       box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
     }
@@ -112,22 +136,74 @@
     .card-header {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 1rem;
       margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.6);
     }
 
     .badge-icon {
-      width: 40px;
-      height: 40px;
+      width: 48px;
+      height: 48px;
       border-radius: var(--radius-sm);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.2rem;
+      font-size: 1.5rem;
       font-weight: bold;
-      background: var(--client-bg);
+      flex-shrink: 0;
+    }
+
+    /* TEACHER TALK CALLOUT */
+    .teacher-box {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(15, 23, 42, 0.8) 100%);
+      border-left: 4px solid var(--client-color);
+      border-radius: var(--radius-sm);
+      padding: 1.25rem 1.5rem;
+      margin: 1.25rem 0;
+    }
+
+    .teacher-title {
+      font-size: 0.95rem;
+      font-weight: 800;
       color: var(--client-color);
-      border: 1px solid rgba(56, 189, 248, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    /* ERROR CALLOUT BOX */
+    .error-box {
+      background: #18090d;
+      border: 1px solid var(--danger-border);
+      border-left: 5px solid var(--danger-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+    }
+
+    .error-title {
+      color: var(--danger-color);
+      font-weight: 800;
+      font-size: 1.05rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .terminal-snippet {
+      background: #090305;
+      border: 1px solid rgba(244, 63, 94, 0.35);
+      border-radius: var(--radius-sm);
+      padding: 1rem 1.25rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.88rem;
+      color: #fda4af;
+      overflow-x: auto;
+      white-space: pre;
+      line-height: 1.6;
     }
 
     /* ARCHITECTURE GRID */
@@ -135,22 +211,31 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 1.5rem;
+      margin: 1.5rem 0;
     }
 
-    @media (max-width: 768px) { .arch-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 820px) { .arch-grid { grid-template-columns: 1fr; } }
 
     .arch-box {
       border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
       padding: 1.5rem;
-      background: rgba(30, 41, 59, 0.4);
+      background: rgba(30, 41, 59, 0.3);
+      position: relative;
     }
 
-    .arch-box.client-side { border-color: var(--client-color); background: var(--client-bg); }
-    .arch-box.action-side { border-color: rgba(16, 185, 129, 0.4); background: var(--server-bg); }
+    .arch-box.client-side {
+      border-color: var(--client-border);
+      background: linear-gradient(180deg, rgba(56, 189, 248, 0.08) 0%, rgba(15, 23, 42, 0.6) 100%);
+    }
+
+    .arch-box.server-side {
+      border-color: var(--server-border);
+      background: linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, rgba(15, 23, 42, 0.6) 100%);
+    }
 
     .arch-title {
-      font-size: 1.15rem;
+      font-size: 1.1rem;
       font-weight: 700;
       margin-bottom: 0.75rem;
       display: flex;
@@ -158,25 +243,77 @@
       gap: 0.5rem;
     }
 
+    /* CODE COMPARISON PANELS */
+    .code-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin: 1.5rem 0;
+    }
+
+    @media (max-width: 900px) { .code-grid { grid-template-columns: 1fr; } }
+
+    .code-panel {
+      background: #050811;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .code-panel-header {
+      padding: 0.85rem 1.1rem;
+      background: #0d1322;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .code-content {
+      padding: 1.25rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      white-space: pre;
+      overflow-x: auto;
+      line-height: 1.65;
+      flex: 1;
+    }
+
+    /* SYNTAX HIGHLIGHTING */
+    .hl-kw { color: #f472b6; }
+    .hl-imp { color: #38bdf8; }
+    .hl-str { color: #a3e635; }
+    .hl-func { color: #fbbf24; }
+    .hl-comment { color: var(--text-dim); font-style: italic; }
+    .hl-tag { color: #818cf8; }
+    .hl-green { color: #10b981; font-weight: bold; }
+    .hl-purple { color: #c084fc; font-weight: bold; }
+    .hl-danger { color: #f43f5e; font-weight: bold; }
+
     /* SIMULATOR */
     .simulator-container {
       background: #030712;
       border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
-      padding: 1.5rem;
-      margin-top: 1rem;
+      padding: 1.8rem;
+      margin: 1.5rem 0;
     }
 
     .sim-form {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      max-width: 500px;
+      max-width: 540px;
       margin: 0 auto 1.5rem auto;
       background: #0b0f19;
-      padding: 1.5rem;
+      padding: 1.6rem;
       border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      gap: 1.1rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     }
 
     .form-group {
@@ -186,31 +323,68 @@
     }
 
     .form-group label {
-      font-size: 0.85rem;
+      font-size: 0.88rem;
       font-weight: 600;
       color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .form-group label span {
+      font-size: 0.78rem;
+      color: var(--purple-color);
+      font-family: 'Fira Code', monospace;
     }
 
     .form-group input {
-      padding: 0.65rem 0.85rem;
+      padding: 0.75rem 0.9rem;
       border-radius: var(--radius-sm);
       border: 1px solid var(--border-color);
       background: #020617;
       color: var(--text-main);
       font-family: 'Fira Code', monospace;
       font-size: 0.9rem;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--client-color);
     }
 
     .sim-btn-submit {
-      padding: 0.75rem 1.5rem;
+      padding: 0.85rem 1.5rem;
       border-radius: 9999px;
       border: none;
       font-weight: 700;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       cursor: pointer;
       background: linear-gradient(135deg, #38bdf8 0%, #10b981 100%);
-      color: #000;
+      color: #030712;
       transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .sim-btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(56, 189, 248, 0.35);
+    }
+
+    .sim-btn-submit:active {
+      transform: translateY(0);
+    }
+
+    .state-pill {
+      font-size: 0.8rem;
+      color: var(--client-color);
+      font-family: 'Fira Code', monospace;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px dashed var(--client-border);
+      padding: 0.7rem 0.9rem;
+      border-radius: 6px;
     }
 
     .mock-console {
@@ -218,334 +392,533 @@
       border: 1px solid var(--border-color);
       border-radius: var(--radius-sm);
       font-family: 'Fira Code', monospace;
-      padding: 1rem;
+      padding: 1.25rem;
       font-size: 0.85rem;
       line-height: 1.6;
+      min-height: 160px;
     }
 
-    /* CODE COMPARISON */
-    .code-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.25rem;
-    }
-
-    @media (max-width: 850px) { .code-grid { grid-template-columns: 1fr; } }
-
-    .code-panel {
-      background: #050811;
+    /* DEVTOOLS TABS */
+    .devtools-box {
+      background: #040711;
       border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
       overflow: hidden;
+      margin: 1.5rem 0;
     }
 
-    .code-panel-header {
-      padding: 0.65rem 1rem;
-      background: #0d1322;
-      border-bottom: 1px solid var(--border-color);
-      font-size: 0.8rem;
-      font-weight: 700;
+    .devtools-topbar {
       display: flex;
-      justify-content: space-between;
+      background: #0a0f1d;
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.5rem 1rem;
+      gap: 1.5rem;
+      font-size: 0.82rem;
+      color: var(--text-muted);
     }
 
-    .code-content {
+    .devtools-tab {
+      cursor: pointer;
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+    }
+
+    .devtools-tab.active {
+      color: var(--text-main);
+      background: #1e293b;
+      font-weight: 700;
+    }
+
+    .devtools-content {
       padding: 1.25rem;
       font-family: 'Fira Code', monospace;
       font-size: 0.85rem;
-      white-space: pre;
-      overflow-x: auto;
-      line-height: 1.6;
+      color: #94a3b8;
     }
 
-    .hl-kw { color: #f472b6; }
-    .hl-imp { color: #38bdf8; }
-    .hl-str { color: #a3e635; }
-    .hl-func { color: #fbbf24; }
-    .hl-comment { color: var(--text-dim); font-style: italic; }
-    .hl-tag { color: #818cf8; }
-    .hl-green { color: #10b981; font-weight: bold; }
-    .hl-purple { color: #a855f7; font-weight: bold; }
+    /* CLIFFHANGER CALLOUT */
+    .cliffhanger-box {
+      background: linear-gradient(135deg, rgba(192, 132, 252, 0.12) 0%, rgba(56, 189, 248, 0.08) 100%);
+      border: 1px solid var(--purple-border);
+      border-radius: var(--radius-md);
+      padding: 1.7rem;
+      margin: 1.5rem 0;
+      position: relative;
+    }
+
+    .cliffhanger-badge {
+      position: absolute;
+      top: -12px;
+      right: 20px;
+      background: #c084fc;
+      color: #000;
+      font-weight: 800;
+      font-size: 0.78rem;
+      padding: 0.25rem 0.85rem;
+      border-radius: 9999px;
+      letter-spacing: 0.05em;
+    }
 
     /* QUIZ */
     .quiz-option {
       background: var(--bg-card-hover);
       border: 1px solid var(--border-color);
-      padding: 1rem;
+      padding: 1rem 1.25rem;
       border-radius: var(--radius-sm);
       margin-bottom: 0.75rem;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 0.75rem;
+      transition: all 0.2s ease;
     }
 
-    .quiz-option.correct { background: var(--server-bg) !important; border-color: var(--server-color) !important; color: var(--server-color); }
-    .quiz-option.incorrect { background: var(--danger-bg) !important; border-color: var(--danger-color) !important; color: var(--danger-color); }
-    .radio-circle { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--text-dim); }
+    .quiz-option:hover {
+      border-color: var(--text-muted);
+    }
+
+    .quiz-option.correct {
+      background: var(--server-bg) !important;
+      border-color: var(--server-color) !important;
+      color: var(--server-color);
+    }
+
+    .quiz-option.incorrect {
+      background: var(--danger-bg) !important;
+      border-color: var(--danger-color) !important;
+      color: var(--danger-color);
+    }
+
+    .radio-circle {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid var(--text-dim);
+      flex-shrink: 0;
+    }
 
     footer {
       text-align: center;
-      padding: 2rem 0;
+      padding: 2.5rem 0;
       color: var(--text-dim);
-      font-size: 0.875rem;
+      font-size: 0.9rem;
       border-top: 1px solid var(--border-color);
-      margin-top: 3rem;
+      margin-top: 3.5rem;
     }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <!-- HERO -->
+    <!-- HERO HEADER -->
     <header class="hero">
       <div class="badge-group">
-        <span class="badge badge-client">"use client" Component</span>
-        <span class="badge badge-server">app/actions/userAction.js</span>
-        <span class="badge badge-purple">Controlled Forms + FormData</span>
+        <span class="badge badge-client">🌐 Client Component ("use client")</span>
+        <span class="badge badge-server">⚙️ Server Action ("use server")</span>
+        <span class="badge badge-purple">🔥 Pure Hinglish Deep Dive</span>
       </div>
-      <h1>Using Server Actions in Client Components</h1>
+      <h1>Client Components Me Server Actions Ka Use</h1>
       <p class="hero-subtitle">
-        Understand how Client Components with React State (<code>useState</code>) import and trigger Server Actions defined in dedicated <code>"use server"</code> action files.
+        Jab hum page ko interactive banane ke liye <code>"use client"</code> likhte hain, toh Server Action inline kyu fail ho jaata hai? Next.js ka Red Screen Error kya keh raha hai? Aur <code>test.js</code> ka jadoo kya hai? Chalo poore feel ke saath step-by-step samajhte hain!
       </p>
     </header>
 
-    <!-- SECTION 1: ARCHITECTURE -->
+    <!-- SECTION 1: THE COMPILE ERROR -->
     <div class="card">
       <div class="card-header">
-        <div class="badge-icon">⚙️</div>
-        <h2>1. Client-Server Modular Import Architecture</h2>
+        <div class="badge-icon" style="background: var(--danger-bg); color: var(--danger-color); border: 1px solid var(--danger-border);">💥</div>
+        <div>
+          <h2>1. Asli Kahani Shuru: "use client" Lagate Hi Red Screen Kyu Aayi?</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">Pichle video se is video ka sabse pehla dramatic turn</p>
+        </div>
       </div>
 
-      <div class="arch-grid">
-        <div class="arch-box client-side">
-          <div class="arch-title">
-            <span>🌐 app/register/page.js ("use client")</span>
-          </div>
-          <p style="font-size: 0.9rem; color: var(--text-muted);">
-            Has React interactive state (<code>useState</code>, <code>onChange</code>, <code>useRouter</code>).<br>
-            Imports the Server Action: <code>import { registerUser } from "../actions/userAction"</code>.<br>
-            Binds it to <code>&lt;form action={registerUser}&gt;</code>.
-          </p>
-        </div>
+      <div class="teacher-box">
+        <div class="teacher-title">👨‍🏫 Instructor Ki Zubani (Video Recap):</div>
+        <p style="font-size: 0.95rem; color: var(--text-main); line-height: 1.7;">
+          <em>"Pichli video me humne dekha tha ki Server Action aaram se Server Component me inline chal raha tha. Par jaise hi humne video ke end me page ko <strong>Client Component</strong> (<code>\"use client\"</code>) banaya, page par turant ek ganda sa Red Error screen aa gaya!"</em>
+        </p>
+      </div>
 
-        <div class="arch-box action-side">
-          <div class="arch-title">
-            <span>⚙️ app/actions/userAction.js ("use server")</span>
-          </div>
-          <p style="font-size: 0.9rem; color: var(--text-muted);">
-            Marked with <code>"use server"</code> at line 1.<br>
-            Exports <code>export async function registerUser(formData)</code>.<br>
-            Executes strictly on Node.js server with access to MongoDB and server secrets.
-          </p>
+      <div class="error-box">
+        <div class="error-title">
+          <span>🚨 Next.js Compiler Error (Red Screen of Death):</span>
         </div>
+        <div class="terminal-snippet">Failed to compile
+./app/register/page.js
+It is not allowed to define "use server" annotated Server Actions in Client Components.
+To use Server Actions in a Client Component, you can either:
+  1. Export them from a separate file with "use server" at the top
+  2. Pass them down as a prop from a Server Component</div>
+      </div>
+
+      <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1.3rem; margin-top: 1rem;">
+        <h4 style="color: var(--amber-color); margin-bottom: 0.6rem; font-size: 1rem;">🧠 Dil Se Samjho: Next.js ne inline "use server" ko mana kyu kiya?</h4>
+        <p style="font-size: 0.93rem; color: var(--text-muted); line-height: 1.7;">
+          Bhai simple logic hai: Jis file me upar <code>"use client"</code> likh diya, wo poora code browser ke bundle me download hota hai! Agar Next.js allow kar deta ki aap client component ke pet ke andar hi <code>"use server"</code> function likh do, toh wo function browser ke andar chal rahe variables, DOM nodes, ya client state ko close over (closure) kar leta.
+          <br><br>
+          Browser me chalne wale JS engine aur Server (Node.js) me chalne wale runtime ka environment zameen-aasman ka alag hota hai! Isliye Next.js strictly rule banata hai: <strong>"Client component ke andar inline server action kabhi nahi banega!"</strong>
+        </p>
       </div>
     </div>
 
-    <!-- SECTION 2: MANDATORY NAME ATTRIBUTE RULE -->
+    <!-- SECTION 2: THE TWO SOLUTIONS & THE test.js EXPERIMENT -->
     <div class="card">
       <div class="card-header">
-        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4);">📌</div>
-        <h2>2. Controlled Inputs &amp; Mandatory <code>name</code> Attribute Rule</h2>
+        <div class="badge-icon" style="background: var(--server-bg); color: var(--server-color); border: 1px solid var(--server-border);">🛠️</div>
+        <div>
+          <h2>2. Next.js Ne Bataye Do Raste &amp; "test.js" Ka Jadoo!</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">Error message me hi solution chupa tha — Instructor ne kya experiment kiya?</p>
+        </div>
       </div>
 
-      <p style="font-size: 0.95rem; color: var(--text-main); line-height: 1.7; margin-bottom: 1rem;">
-        Even if your Client Component uses React state for controlled inputs (<code>value={email} onChange={...}</code>), HTML forms rely on native input names to construct the <code>FormData</code> payload!
+      <p style="font-size: 0.95rem; color: var(--text-main); line-height: 1.7; margin-bottom: 1.25rem;">
+        Next.js ke error message ne do options diye the:
       </p>
 
-      <div style="font-family: 'Fira Code', monospace; background: #020617; padding: 1rem; border-radius: var(--radius-sm); font-size: 0.85rem; border-left: 4px solid var(--purple-color);">
-        &lt;input<br>
-        &nbsp;&nbsp;type="email"<br>
-        &nbsp;&nbsp;<span style="color: #f472b6; font-weight: bold;">name="email"</span> // 👈 MANDATORY for formData.get("email") to work on Server!<br>
-        &nbsp;&nbsp;value={email}<br>
-        &nbsp;&nbsp;onChange={(e) =&gt; setEmail(e.target.value)}<br>
-        /&gt;
+      <div class="arch-grid">
+        <div class="arch-box" style="border-color: var(--border-color);">
+          <div class="arch-title" style="color: var(--text-dim);">
+            <span>❌ Rasta 1: Server Component se Props pass karo</span>
+          </div>
+          <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6;">
+            Agar <code>page.js</code> Server Component hota aur uske andar koi child component <code>&lt;RegisterForm action={serverAction} /&gt;</code> hota, toh hum props ke through pass kar sakte the. Lekin hamare case me <strong>Register page khud hi Client Component ban chuka hai</strong>, toh props pass karne wala koi parent server component hi nahi bacha!
+          </p>
+        </div>
+
+        <div class="arch-box" style="border-color: var(--server-color); background: var(--server-bg);">
+          <div class="arch-title" style="color: var(--server-color);">
+            <span>✅ Rasta 2: Ek Separate File banao aur Export karo (Superhit Tareeka)</span>
+          </div>
+          <p style="font-size: 0.88rem; color: var(--text-main); line-height: 1.6;">
+            Ek alag file banao, us file ke sabse top (Line 1) par <code>"use server"</code> likh do, aur wahan se function ko export kar do. Phir Client Component me aakar aaram se normal import karo:
+            <code style="display:block; margin-top:0.5rem; color:var(--client-color); font-weight:600;">import { registerUser } from "../actions/userAction";</code>
+          </p>
+        </div>
+      </div>
+
+      <!-- THE TEST.JS EXPERIMENT -->
+      <div style="background: rgba(192, 132, 252, 0.08); border: 1px solid var(--purple-border); border-radius: var(--radius-md); padding: 1.5rem; margin-top: 1.5rem;">
+        <h3 style="color: var(--purple-color); font-size: 1.1rem; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.5rem;">
+          🧪 Instructor Ka Live Experiment: "test.js" File Name Kyu Rakha?
+        </h3>
+        <p style="font-size: 0.92rem; color: var(--text-main); line-height: 1.7;">
+          Video me instructor ne kaha: <em>"Main is file ka naam deliberately <code>test.js</code> rakh raha hoon taaki aapke dimaag se ye myth nikal jaye ki is file ka naam <code>action.js</code> hi hona chahiye!"</em>
+          <br><br>
+          <strong style="color: var(--server-color);">Bada Khulasa (Myth Busted):</strong> Next.js me file ka naam koi magic word nahi hai! Aap file ka naam <code>test.js</code> rakho, <code>kuchbhi.js</code> rakho, ya <code>userAction.js</code> rakho — Next.js ko koi farq nahi padta.
+          <br>
+          Next.js ke liye sirf ek cheez matter karti hai: <strong>File ke Line 1 par <code>"use server"</code> likha hona chahiye!</strong>
+          <br><br>
+          <em>📁 Production Architecture:</em> Real projects me hum safai ke liye <code>app/actions/userAction.js</code> ya <code>app/actions/todoAction.js</code> jaisa folder structure banate hain.
+        </p>
       </div>
     </div>
 
-    <!-- SECTION 3: LIVE SIMULATOR -->
+    <!-- SECTION 3: CODE COMPARISON -->
     <div class="card">
       <div class="card-header">
-        <div class="badge-icon">🎮</div>
-        <h2>3. Live Interactive Controlled Input + Server Action Simulator</h2>
+        <div class="badge-icon" style="background: var(--client-bg); color: var(--client-color); border: 1px solid var(--client-border);">📑</div>
+        <div>
+          <h2>3. Real Code Ka Aamne-Saamne Mukabla (Side-by-Side Comparison)</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">Aapke project ke dono files ka line-by-line postmortem</p>
+        </div>
+      </div>
+
+      <div class="code-grid">
+        <!-- CLIENT COMPONENT -->
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span style="color: var(--client-color);">🌐 app/register/page.js</span>
+            <span class="badge badge-client">Client Component</span>
+          </div>
+          <div class="code-content"><span class="hl-kw">"use client"</span>; <span class="hl-comment">// React useState chala sake</span>
+<span class="hl-imp">import</span> { useState } <span class="hl-imp">from</span> <span class="hl-str">"react"</span>;
+<span class="hl-imp">import</span> { registerUser } <span class="hl-imp">from</span> <span class="hl-str">"../actions/userAction"</span>; <span class="hl-comment">// 👈 Server action imported!</span>
+
+<span class="hl-imp">export default function</span> <span class="hl-func">RegisterPage</span>() {
+  <span class="hl-kw">const</span> [name, setName] = <span class="hl-func">useState</span>(<span class="hl-str">""</span>);
+  <span class="hl-kw">const</span> [email, setEmail] = <span class="hl-func">useState</span>(<span class="hl-str">""</span>);
+  <span class="hl-kw">const</span> [password, setPassword] = <span class="hl-func">useState</span>(<span class="hl-str">""</span>);
+
+  <span class="hl-imp">return</span> (
+    <span class="hl-tag">&lt;form</span> <span class="hl-green">action={registerUser}</span><span class="hl-tag">&gt;</span>
+      <span class="hl-tag">&lt;input</span>
+        <span class="hl-kw">type</span>=<span class="hl-str">"text"</span>
+        <span class="hl-danger">name="name"</span> <span class="hl-comment">// 👈 BHAI YEH ZAROORI HAI!</span>
+        <span class="hl-kw">value</span>={name}
+        <span class="hl-kw">onChange</span>={(e) =&gt; setName(e.target.value)}
+      <span class="hl-tag">/&gt;</span>
+      <span class="hl-tag">&lt;input</span>
+        <span class="hl-kw">type</span>=<span class="hl-str">"email"</span>
+        <span class="hl-danger">name="email"</span> <span class="hl-comment">// 👈 NAHI DIYA TOH SERVER PE NULL MILEGA</span>
+        <span class="hl-kw">value</span>={email}
+        <span class="hl-kw">onChange</span>={(e) =&gt; setEmail(e.target.value)}
+      <span class="hl-tag">/&gt;</span>
+      <span class="hl-tag">&lt;button</span> <span class="hl-kw">type</span>=<span class="hl-str">"submit"</span><span class="hl-tag">&gt;</span>Register<span class="hl-tag">&lt;/button&gt;</span>
+    <span class="hl-tag">&lt;/form&gt;</span>
+  );
+}</div>
+        </div>
+
+        <!-- SERVER ACTION -->
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span style="color: var(--server-color);">⚙️ app/actions/userAction.js</span>
+            <span class="badge badge-server">Pure Server Action</span>
+          </div>
+          <div class="code-content"><span class="hl-kw">"use server"</span>; <span class="hl-comment">// 👈 Line 1 par directive lagana mandatory hai!</span>
+
+<span class="hl-imp">export async function</span> <span class="hl-func">registerUser</span>(formData) {
+  <span class="hl-comment">// 🛑 YEH CODE KABHI BROWSER ME NAHI JAYEGA!</span>
+  <span class="hl-comment">// Yeh direct Node.js server terminal me chalega:</span>
+  <span class="hl-kw">const</span> name = formData.<span class="hl-func">get</span>(<span class="hl-str">"name"</span>);
+  <span class="hl-kw">const</span> email = formData.<span class="hl-func">get</span>(<span class="hl-str">"email"</span>);
+  <span class="hl-kw">const</span> password = formData.<span class="hl-func">get</span>(<span class="hl-str">"password"</span>);
+
+  console.<span class="hl-func">log</span>({ name, email, password });
+
+  <span class="hl-comment">// Database me save karne ke baad response:</span>
+  <span class="hl-imp">return</span> {
+    success: <span class="hl-kw">true</span>,
+    message: <span class="hl-str">"Got the data"</span>
+  };
+}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: THE CONTROLLED INPUT TRAP -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--amber-bg); color: var(--amber-color); border: 1px solid var(--amber-border);">⚠️</div>
+        <div>
+          <h2>4. Sabse Bada Dhokha: Controlled Input Aur "name" Attribute Ka Khel!</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">React Developers ki sabse common galti jo ghanto debug karwati hai</p>
+        </div>
+      </div>
+
+      <p style="font-size: 0.95rem; color: var(--text-main); line-height: 1.7;">
+        React me hum sabki aadat hoti hai <code>useState</code> banane ki aur jab hum pehle <code>fetch('/api/register', { body: JSON.stringify({ email, password }) })</code> karte the, tab hum HTML tag me <code>name</code> attribute nahi dete the.
+      </p>
+
+      <div style="background: #0b1120; border-left: 4px solid var(--amber-color); border-radius: var(--radius-sm); padding: 1.3rem; margin: 1.25rem 0;">
+        <h4 style="color: var(--amber-color); margin-bottom: 0.5rem; font-size: 1rem;">🚨 Server Actions Me "name" Attribute Kyu Jaroori Hai?</h4>
+        <p style="font-size: 0.93rem; color: var(--text-muted); line-height: 1.7;">
+          Jab aap <code>&lt;form action={registerUser}&gt;</code> likhte ho, toh Next.js aapke React state variables ko nahi bhejta! Wo pure browser ka native <strong><code>FormData</code></strong> object banata hai.
+          <br><br>
+          Aur browser ka <code>FormData</code> sirf aur sirf unhi inputs ko pehchanta hai jinme <strong><code>name="..."</code></strong> attribute laga hota hai!
+          <br>
+          Agar aapne <code>name="email"</code> bhool kar chhod diya, toh Server Action ke andar <code>formData.get("email")</code> hamesha <strong><code>null</code></strong> aayega, bhale hi screen par user ne email type kiya ho!
+        </p>
+      </div>
+    </div>
+
+    <!-- SECTION 5: LIVE INTERACTIVE SIMULATOR -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border: 1px solid var(--purple-border);">🎮</div>
+        <div>
+          <h2>5. Live Interactive Simulator: Khel Kar Dekho (Feel Lo)</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">Inputs me type karo, React State dekho, aur Submit dabakar Server Action dispatch hote hue dekho!</p>
+        </div>
       </div>
 
       <div class="simulator-container">
         <div class="sim-form">
           <div class="form-group">
-            <label>Name (React State)</label>
-            <input id="input-name" type="text" value="ProCodrr" oninput="updateStateDisplay()">
+            <label>User Ka Naam <span>name="name"</span></label>
+            <input id="input-name" type="text" value="ProCodrr" oninput="updateLiveState()">
           </div>
           <div class="form-group">
-            <label>Email (React State)</label>
-            <input id="input-email" type="email" value="procodrr@gmail.com" oninput="updateStateDisplay()">
+            <label>Email Address <span>name="email"</span></label>
+            <input id="input-email" type="email" value="procodrr@gmail.com" oninput="updateLiveState()">
           </div>
           <div class="form-group">
-            <label>Password (React State)</label>
-            <input id="input-password" type="password" value="123456" oninput="updateStateDisplay()">
+            <label>Password <span>name="password"</span></label>
+            <input id="input-password" type="password" value="secret123" oninput="updateLiveState()">
           </div>
 
-          <div style="font-size: 0.75rem; color: var(--client-color); font-family: 'Fira Code', monospace; background: rgba(56, 189, 248, 0.1); padding: 0.5rem; border-radius: 4px; margin-bottom: 0.5rem;" id="state-display">
-            Current React Client State: { name: "ProCodrr", email: "procodrr@gmail.com" }
+          <div id="live-state-pill" class="state-pill">
+            🟢 React Client State (Real-time): { name: "ProCodrr", email: "procodrr@gmail.com", password: "secret123" }
           </div>
 
-          <button class="sim-btn-submit" onclick="submitFormAction()">
-            ⚡ Form Submit ➔ Execute registerUser(formData)
+          <button class="sim-btn-submit" onclick="simulateServerActionSubmit()">
+            <span>⚡</span> &lt;form action={registerUser}&gt; Submit Karo
           </button>
         </div>
 
         <div id="sim-console" class="mock-console">
-          Console Log: System initialized. Type into inputs to see state updates, then submit.
+          <span style="color: var(--text-dim);">// Console Ready hai bhai. Upar Submit button par click karo aur dekho parde ke peeche kya hota hai...</span>
         </div>
       </div>
     </div>
 
-    <!-- SECTION 4: CODE BREAKDOWN -->
+    <!-- SECTION 6: THE NETWORK TAB & THE CLIFFHANGER -->
     <div class="card">
       <div class="card-header">
-        <div class="badge-icon">🔍</div>
-        <h2>4. Side-by-Side Code Breakdown: Client Page vs. Server Action File</h2>
+        <div class="badge-icon" style="background: var(--client-bg); color: var(--client-color); border: 1px solid var(--client-border);">🕵️‍♂️</div>
+        <div>
+          <h2>6. DevTools Network Tab &amp; Sabse Bada Suspense: Return Value Kahan Gayi?!</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">Bina page refresh hue data gaya aur server ne response bhi diya... par client me kyu nahi dikha?</p>
+        </div>
       </div>
 
-      <div class="code-grid">
-        <div class="code-panel">
-          <div class="code-panel-header">
-            <span style="color: var(--client-color);">app/register/page.js</span>
-            <span>Client Component ("use client")</span>
-          </div>
-          <div class="code-content"><span class="hl-str">"use client"</span>;
+      <p style="font-size: 0.95rem; color: var(--text-main); line-height: 1.7; margin-bottom: 1rem;">
+        Instructor ne button click karke dikhaya:
+      </p>
 
-<span class="hl-imp">import</span> { useState } <span class="hl-imp">from</span> <span class="hl-str">"react"</span>;
-<span class="hl-imp">import</span> { registerUser } <span class="hl-imp">from</span> <span class="hl-str">"../actions/userAction"</span>;
+      <ul style="margin-left: 1.5rem; margin-bottom: 1.5rem; color: var(--text-muted); font-size: 0.93rem; line-height: 1.8;">
+        <li><strong>No Page Reload (Zero Refresh):</strong> Traditional HTML form submit karne par screen flicker karti thi aur page reload hota tha. Yahan page bilkul reload nahi hua! React ne submission ko smoothly intercept kar liya.</li>
+        <li><strong>Background POST Request:</strong> Browser ne background me chupke se current URL par ek <strong>HTTP POST</strong> request bheji. DevTools ke Headers me ek special header tha: <code>Next-Action: &lt;hash-code&gt;</code>.</li>
+        <li><strong>Server Console me Data Print:</strong> Node.js server terminal me <code>{ name: 'ProCodrr', email: 'procodrr@gmail.com', password: '...' }</code> print ho gaya!</li>
+      </ul>
 
-<span class="hl-kw">export default function</span> <span class="hl-func">RegisterPage</span>() {
-  <span class="hl-kw">const</span> [name, setName] = <span class="hl-func">useState</span>(<span class="hl-str">"ProCodrr"</span>);
-
-  <span class="hl-kw">return</span> (
-    &lt;<span class="hl-tag">form</span> <span class="hl-purple">action={registerUser}</span>&gt;
-      &lt;<span class="hl-tag">input</span>
-        <span class="hl-green">name="name"</span>
-        value={name}
-        onChange={(e) =&gt; setName(e.target.value)}
-      /&gt;
-      &lt;<span class="hl-tag">button</span> type=<span class="hl-str">"submit"</span>&gt;Register&lt;/<span class="hl-tag">button</span>&gt;
-    &lt;/<span class="hl-tag">form</span>&gt;
-  );
-}</div>
+      <!-- DEVTOOLS SIMULATION -->
+      <div class="devtools-box">
+        <div class="devtools-topbar">
+          <span class="devtools-tab active">General</span>
+          <span class="devtools-tab active">Payload (FormData)</span>
+          <span class="devtools-tab active">Preview / Response</span>
         </div>
-
-        <div class="code-panel">
-          <div class="code-panel-header">
-            <span style="color: var(--server-color);">app/actions/userAction.js</span>
-            <span>Server Action ("use server")</span>
+        <div class="devtools-content">
+          <div style="margin-bottom: 0.6rem;"><span style="color: var(--server-color);">Request URL:</span> http://localhost:3000/register</div>
+          <div style="margin-bottom: 0.6rem;"><span style="color: var(--server-color);">Request Method:</span> POST</div>
+          <div style="margin-bottom: 0.6rem;"><span style="color: var(--server-color);">Next-Action Header:</span> d96541f4b0021c7d23a1050e82f7c00e57 (React RPC Stub)</div>
+          <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color);">
+            <span style="color: var(--client-color);">Server Se Aaya Response:</span>
+            <pre style="color: var(--server-color); margin-top: 0.3rem;">{ "message": "Got the data", "success": true }</pre>
           </div>
-          <div class="code-content"><span class="hl-green">"use server"</span>;
-
-<span class="hl-kw">export async function</span> <span class="hl-func">registerUser</span>(formData) {
-  <span class="hl-comment">// Extracts inputs via name attribute:</span>
-  <span class="hl-kw">const</span> name = formData.<span class="hl-func">get</span>(<span class="hl-str">"name"</span>);
-  <span class="hl-kw">const</span> email = formData.<span class="hl-func">get</span>(<span class="hl-str">"email"</span>);
-  <span class="hl-kw">const</span> password = formData.<span class="hl-func">get</span>(<span class="hl-str">"password"</span>);
-
-  console.log(name, email, password);
-
-  <span class="hl-kw">return</span> { <span class="hl-str">message</span>: <span class="hl-str">"Got the data"</span> };
-}</div>
         </div>
+      </div>
+
+      <!-- THE CLIFFHANGER BOX -->
+      <div class="cliffhanger-box">
+        <div class="cliffhanger-badge">🔥 Sabse Bada Suspense (Cliffhanger)</div>
+        <h3 style="color: var(--text-main); font-size: 1.2rem; margin-bottom: 0.75rem;">
+          ❓ "Server ne 'Got the data' bhej toh diya, par Client Component use kaise padhega?"
+        </h3>
+        <p style="font-size: 0.95rem; color: var(--text-main); line-height: 1.75;">
+          Ab yahan video ka sabse mast twist aata hai:
+          <br>
+          Network tab me response saaf dikh raha hai <code>{ message: "Got the data" }</code>. Lekin hamare Client Component ke andar <code>&lt;form action={registerUser}&gt;</code> ek <em>void function</em> ki tarah call hua hai!
+          <br><br>
+          <strong style="color: var(--danger-color);">Problem:</strong> Client Component me hum <code>const res = await registerUser()</code> nahi kar rahe, toh hum screen par Green Success Toast ya Red Error Message kaise dikhayenge? User ko kaise pata chalega ki registration successful hua ya fail?
+          <br><br>
+          <strong style="color: var(--purple-color); font-size: 1.05rem;">👉 Agle Video Ka Teaser:</strong> Is return value ko Client Component me catch karne ke liye React 19 ne ek zabardast hook banaya hai jiska naam hai: <strong><code>useActionState</code></strong> (pehle ise <code>useFormState</code> kehte the)! Agli video me hum is hook ko detail me seekhenge!
+        </p>
       </div>
     </div>
 
-    <!-- SECTION 5: KNOWLEDGE CHECK -->
+    <!-- SECTION 7: QUIZ -->
     <div class="card">
       <div class="card-header">
-        <div class="badge-icon">❓</div>
-        <h2>5. Quick Knowledge Check</h2>
+        <div class="badge-icon" style="background: var(--amber-bg); color: var(--amber-color); border: 1px solid var(--amber-border);">🧠</div>
+        <div>
+          <h2>7. Asli Imtihaan (Quick Quiz): Kitna Samajh Aaya?</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">Sahi option par click karke dekho apna score!</p>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 1.5rem;">
+        <p style="font-weight: 700; margin-bottom: 0.75rem;">Sawaal 1: Client Component ("use client") ke andar inline "use server" likhne par Next.js kyu mana karta hai?</p>
+        <div class="quiz-option" onclick="checkQuizAnswer(this, false)">
+          <div class="radio-circle"></div>
+          <span>Kyunki Next.js sirf TypeScript me server actions support karta hai.</span>
+        </div>
+        <div class="quiz-option" onclick="checkQuizAnswer(this, true)">
+          <div class="radio-circle"></div>
+          <span>Kyunki Client code browser me bundle hota hai; inline server closures se client state/DOM references leak hone ka khatra hota hai.</span>
+        </div>
+        <div class="quiz-option" onclick="checkQuizAnswer(this, false)">
+          <div class="radio-circle"></div>
+          <span>Kyunki Next.js me form tag use karna deprecated ho chuka hai.</span>
+        </div>
       </div>
 
       <div>
-        <h4 style="margin-bottom: 0.75rem;">Q1: How can a Client Component ("use client") safely use a Server Action?</h4>
-        <div class="quiz-option" onclick="checkAnswer(this, false)">
-          <span class="radio-circle"></span>
-          <span>A) By writing "use server" inline inside the Client Component function.</span>
+        <p style="font-weight: 700; margin-bottom: 0.75rem;">Sawaal 2: Kya Server Action file ka naam zaroori hai ki actions.js hi ho?</p>
+        <div class="quiz-option" onclick="checkQuizAnswer(this, false)">
+          <div class="radio-circle"></div>
+          <span>Haan, jaise page.js reserved hota hai waise hi actions.js bhi Next.js ka reserved name hai.</span>
         </div>
-        <div class="quiz-option" onclick="checkAnswer(this, true)">
-          <span class="radio-circle"></span>
-          <span>B) By importing the Server Action from a separate file marked with "use server" at the top.</span>
-        </div>
-        <div class="quiz-option" onclick="checkAnswer(this, false)">
-          <span class="radio-circle"></span>
-          <span>C) Client Components cannot use Server Actions.</span>
+        <div class="quiz-option" onclick="checkQuizAnswer(this, true)">
+          <div class="radio-circle"></div>
+          <span>Nahi! Aap test.js, userAction.js ya kuch bhi naam rakh sakte ho — bas Line 1 par "use server" hona chahiye!</span>
         </div>
       </div>
     </div>
 
-    <!-- SECTION 6: POORA SAAR / HINGLISH GOLDEN RULE -->
-    <div class="card">
+    <!-- SECTION 8: POORA SAAR & SUMMARY -->
+    <div class="card" style="border-color: rgba(16, 185, 129, 0.4); background: linear-gradient(180deg, rgba(16, 185, 129, 0.05) 0%, rgba(15, 23, 42, 0.8) 100%);">
       <div class="card-header">
-        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4);">💡</div>
-        <h2>6. Poora Saar &amp; Golden Master Rule (Hinglish)</h2>
+        <div class="badge-icon" style="background: var(--server-bg); color: var(--server-color); border: 1px solid var(--server-border);">⭐</div>
+        <div>
+          <h2>8. Poora Saar (Golden Key Takeaways in Pure Hinglish)</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">Bas ye 6 baatein dimaag me rakh lo, kabhi galti nahi hogi</p>
+        </div>
       </div>
 
-      <div style="padding: 1.5rem; background: #020617; border-left: 5px solid var(--purple-color); border-radius: var(--radius-md);">
-        <h3 style="color: var(--purple-color); margin-bottom: 0.75rem; font-size: 1.15rem;">💡 Server Actions In Client Components Ka Poora Saar:</h3>
-
-        <p style="font-size: 0.98rem; color: var(--text-main); line-height: 1.8; margin-bottom: 1rem;">
-          Client Components (`"use client"`) me React State (`useState`), `onChange`, `useRouter` jaisi interactive cheezein chalti hain.
-        </p>
-
-        <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 1.25rem;">
-          Lekin Server Action ko Client Component file me inline **NAHI** likha ja sakta! 
-          Iska correct architectural pattern yeh hai:
-          <br>1. Dedicated file banao ➔ <code>app/actions/userAction.js</code> jiske <strong>Line 1 par <code>"use server"</code></strong> likho.
-          <br>2. Client Component (<code>app/register/page.js</code>) me <code>import { registerUser } from "../actions/userAction"</code> karke form me bind kar do!
-          <br>3. Input fields par <code>name="name"</code> attribute DHYAN se lagao, taaki Server Action <code>formData.get("name")</code> se value extract kar sake!
-        </p>
-
-        <div style="background: rgba(168, 85, 247, 0.1); border: 1px dashed var(--purple-color); padding: 1rem; border-radius: var(--radius-sm); font-size: 0.9rem;">
-          <strong style="color: var(--purple-color); display: block; margin-bottom: 0.5rem;">🔥 Client-Server Action Golden Rules:</strong>
-          <ul style="padding-left: 1.2rem; line-height: 1.8; color: var(--text-main);">
-            <li><strong>1. Separate Action File 📁</strong> ➔ Always export Server Actions from a file marked with <code>"use server"</code> at line 1.</li>
-            <li><strong>2. Mandatory `name` Attribute 🏷️</strong> ➔ Form inputs MUST have `name="..."` for `FormData` parsing.</li>
-            <li><strong>3. Zero Node Code Leaked 🛡️</strong> ➔ Next.js bundler replaces server action imports in client bundles with lightweight RPC stubs!</li>
-          </ul>
-        </div>
+      <div style="font-size: 0.95rem; color: var(--text-main); line-height: 1.85;">
+        <ul style="margin-left: 1.5rem; display: flex; flex-direction: column; gap: 0.9rem;">
+          <li><strong>Client Component Boundary Rule:</strong> Jis file me upar <code>"use client"</code> likha ho, uske andar inline <code>"use server"</code> function nahi likh sakte. Red Screen compile error aayega.</li>
+          <li><strong>Dedicated Action File:</strong> Server Actions ko hamesha ek alag file me likho, jiske sabse pehle line par <code>"use server"</code> likha ho, aur wahan se <code>export async function</code> karo.</li>
+          <li><strong>No Magic Filenames:</strong> File ka naam kuch bhi ho sakta hai (jaise instructor ne <code>test.js</code> rakha tha), par standard convention ke mutabik hum <code>app/actions/userAction.js</code> rakhte hain.</li>
+          <li><strong>Controlled Inputs Me "name" Attribute:</strong> Bhale hi aap React state (<code>value={email} onChange={...}</code>) se inputs control kar rahe ho, HTML input par <code>name="email"</code> lagana 100% compulsory hai, warna server par data nahi pahuchega!</li>
+          <li><strong>Zero Page Reload:</strong> Form submit karne par poora page reload nahi hota, Next.js background me fetch POST bhejta hai.</li>
+          <li><strong>The Return Value Dilemma (Cliffhanger):</strong> Server action jo response return karta hai wo DevTools Network Tab me to dikhta hai par Client Component me direct nahi milta. Iske liye agle chapter me hum <strong><code>useActionState</code></strong> hook seekhenge!</li>
+        </ul>
       </div>
     </div>
 
     <footer>
-      Next.js Server Actions in Client Components Guide &bull; Section 11 Lesson 02
+      Next.js Deep Dive Series • Section 11: Server Actions • Chapter 02 Complete Hinglish Guide
     </footer>
   </div>
 
   <script>
-    function updateStateDisplay() {
+    function updateLiveState() {
       const name = document.getElementById('input-name').value;
       const email = document.getElementById('input-email').value;
-      document.getElementById('state-display').innerText = `Current React Client State: { name: "${name}", email: "${email}" }`;
+      const password = document.getElementById('input-password').value;
+      document.getElementById('live-state-pill').innerText = 
+        `🟢 React Client State (Real-time): { name: "${name}", email: "${email}", password: "${password}" }`;
     }
 
-    function submitFormAction() {
+    function simulateServerActionSubmit() {
       const name = document.getElementById('input-name').value;
       const email = document.getElementById('input-email').value;
       const password = document.getElementById('input-password').value;
       const consoleBox = document.getElementById('sim-console');
 
       consoleBox.innerHTML = `
-        <span style="color: var(--client-color)">[CLIENT COMPONENT] Triggered &lt;form action={registerUser}&gt;</span><br>
-        <span style="color: var(--purple-color)">[RPC STUB EXECUTED] Package FormData payload and send POST HTTP to Node.js server...</span><br>
-        <span style="color: var(--server-color)">[NODE.JS SERVER TERMINAL (app/actions/userAction.js)] Executed registerUser(formData):</span><br>
-        <span style="color: var(--server-color)">&nbsp;&nbsp;➔ formData.get("name") = "${name}"</span><br>
-        <span style="color: var(--server-color)">&nbsp;&nbsp;➔ formData.get("email") = "${email}"</span><br>
-        <span style="color: var(--server-color)">&nbsp;&nbsp;➔ formData.get("password") = "${password}"</span><br>
-        <span style="color: var(--server-color)">[RESPONSE] { message: "Got the data" } ✅</span>
+        <span style="color: var(--client-color);">[CLIENT BROWSER: app/register/page.js]</span><br>
+        &nbsp;&nbsp;➔ User ne Submit button click kiya (&lt;form action={registerUser}&gt; triggered).<br>
+        &nbsp;&nbsp;➔ Next.js ne default browser full-page reload rok diya (Zero reload!).<br>
+        &nbsp;&nbsp;➔ Inputs ke "name" attributes se native FormData banaya: { name: "${name}", email: "${email}", password: "${password}" }<br>
+        <span style="color: var(--purple-color);">[NEXT.JS RPC NETWORK CALL]</span><br>
+        &nbsp;&nbsp;➔ Background me HTTP POST bheja http://localhost:3000/register par with Next-Action header.<br>
+        <span style="color: var(--server-color);">[NODE.JS SERVER TERMINAL: app/actions/userAction.js]</span><br>
+        &nbsp;&nbsp;✔ Server Action registerUser(formData) successfully chala:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;formData.get("name")     ➔ "${name}"<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;formData.get("email")    ➔ "${email}"<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;formData.get("password") ➔ "${password}"<br>
+        <span style="color: var(--amber-color);">[SERVER SE RESPONSE AAYA]</span><br>
+        &nbsp;&nbsp;➔ Server ne return kiya: { success: true, message: "Got the data" }<br>
+        <span style="color: var(--danger-color);">[CLIENT PAR BADA SAWAL (CLIFFHANGER)]</span><br>
+        &nbsp;&nbsp;⚠️ Response Network tab me toh aa gaya, par Client Component is return value ko kaise catch karega? ➔ (Chapter 03: useActionState hook!)
       `;
     }
 
-    function checkAnswer(element, isCorrect) {
+    function checkQuizAnswer(element, isCorrect) {
       const parent = element.parentElement;
-      parent.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('correct', 'incorrect'));
-      if (isCorrect) element.classList.add('correct');
-      else element.classList.add('incorrect');
+      parent.querySelectorAll('.quiz-option').forEach(el => {
+        el.classList.remove('correct', 'incorrect');
+      });
+      if (isCorrect) {
+        element.classList.add('correct');
+      } else {
+        element.classList.add('incorrect');
+      }
     }
   </script>
 </body>

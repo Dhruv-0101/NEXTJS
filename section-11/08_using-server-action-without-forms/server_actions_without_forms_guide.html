@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Next.js Guide: Using Server Actions Without Forms</title>
+  <title>Chapter 08: Server Actions Without Forms (Direct onClick &amp; Logout) | Next.js Deep Dive</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
@@ -20,91 +20,116 @@
       
       --server-color: #10b981;
       --server-bg: rgba(16, 185, 129, 0.12);
+      --server-border: rgba(16, 185, 129, 0.35);
       
       --client-color: #38bdf8;
       --client-bg: rgba(56, 189, 248, 0.12);
+      --client-border: rgba(56, 189, 248, 0.35);
 
       --danger-color: #f43f5e;
-      --danger-bg: rgba(244, 63, 94, 0.15);
+      --danger-bg: rgba(244, 63, 94, 0.12);
       --danger-border: rgba(244, 63, 94, 0.4);
-      
-      --warning-color: #fbbf24;
-      --warning-bg: rgba(251, 191, 36, 0.12);
-      
-      --purple-color: #a855f7;
-      --purple-bg: rgba(168, 85, 247, 0.12);
-      
+
+      --purple-color: #c084fc;
+      --purple-bg: rgba(192, 132, 252, 0.12);
+      --purple-border: rgba(192, 132, 252, 0.35);
+
+      --amber-color: #fbbf24;
+      --amber-bg: rgba(251, 191, 36, 0.12);
+      --amber-border: rgba(251, 191, 36, 0.35);
+
       --radius-sm: 8px;
-      --radius-md: 14px;
-      --radius-lg: 20px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
       background-color: var(--bg-dark);
       color: var(--text-main);
-      line-height: 1.6;
-      padding: 2rem 1rem;
-      min-height: 100vh;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.7;
+      padding: 2.5rem 1rem;
     }
 
-    .container { max-width: 1150px; margin: 0 auto; }
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+    }
 
-    /* HERO HEADER */
-    header.hero {
+    /* HERO */
+    .hero {
       text-align: center;
-      padding: 3rem 1.5rem;
-      background: radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.15) 0%, rgba(7, 10, 17, 0) 70%);
+      padding: 3.2rem 1.8rem;
+      background: linear-gradient(180deg, rgba(192, 132, 252, 0.12) 0%, rgba(56, 189, 248, 0.06) 50%, rgba(7, 10, 17, 0) 100%);
       border: 1px solid var(--border-color);
       border-radius: var(--radius-lg);
       margin-bottom: 2.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 75%;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--purple-color), var(--client-color), var(--server-color), transparent);
     }
 
     .badge-group {
       display: flex;
+      gap: 0.6rem;
       justify-content: center;
-      gap: 0.75rem;
-      margin-bottom: 1rem;
       flex-wrap: wrap;
+      margin-bottom: 1.25rem;
     }
 
     .badge {
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      padding: 0.35rem 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 0.95rem;
       border-radius: 9999px;
-      border: 1px solid var(--border-color);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
     }
 
-    .badge-purple { background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4); }
-    .badge-server { background: var(--server-bg); color: var(--server-color); border-color: rgba(16, 185, 129, 0.4); }
-    .badge-client { background: var(--client-bg); color: var(--client-color); border-color: rgba(56, 189, 248, 0.4); }
+    .badge-purple { background: var(--purple-bg); color: var(--purple-color); border: 1px solid var(--purple-border); }
+    .badge-client { background: var(--client-bg); color: var(--client-color); border: 1px solid var(--client-border); }
+    .badge-danger { background: var(--danger-bg); color: var(--danger-color); border: 1px solid var(--danger-border); }
+    .badge-server { background: var(--server-bg); color: var(--server-color); border: 1px solid var(--server-border); }
+    .badge-amber { background: var(--amber-bg); color: var(--amber-color); border: 1px solid var(--amber-border); }
 
     h1 {
-      font-size: 2.4rem;
+      font-size: 2.35rem;
       font-weight: 800;
-      margin-bottom: 0.75rem;
-      background: linear-gradient(135deg, #ffffff 40%, #a855f7 100%);
+      letter-spacing: -0.03em;
+      margin-bottom: 1rem;
+      line-height: 1.25;
+      background: linear-gradient(135deg, #ffffff 40%, #cbd5e1 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
     .hero-subtitle {
-      font-size: 1.1rem;
+      font-size: 1.15rem;
       color: var(--text-muted);
-      max-width: 800px;
+      max-width: 860px;
       margin: 0 auto;
+      line-height: 1.7;
     }
 
+    /* CARD STYLING */
     .card {
       background: var(--bg-card);
       border: 1px solid var(--border-color);
       border-radius: var(--radius-lg);
-      padding: 2rem;
+      padding: 2.4rem;
       margin-bottom: 2.5rem;
       box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
     }
@@ -112,22 +137,48 @@
     .card-header {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 1rem;
       margin-bottom: 1.5rem;
+      padding-bottom: 1.1rem;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.6);
     }
 
     .badge-icon {
-      width: 40px;
-      height: 40px;
+      width: 48px;
+      height: 48px;
       border-radius: var(--radius-sm);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.2rem;
+      font-size: 1.5rem;
       font-weight: bold;
-      background: var(--purple-bg);
-      color: var(--purple-color);
-      border: 1px solid rgba(168, 85, 247, 0.4);
+      flex-shrink: 0;
+    }
+
+    .card h2 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+    }
+
+    /* TEACHER BOX */
+    .teacher-box {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(15, 23, 42, 0.8) 100%);
+      border-left: 4px solid var(--client-color);
+      border-radius: var(--radius-sm);
+      padding: 1.25rem 1.5rem;
+      margin: 1.25rem 0;
+    }
+
+    .teacher-title {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--client-color);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
     }
 
     /* ARCHITECTURE GRID */
@@ -135,22 +186,31 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 1.5rem;
+      margin: 1.5rem 0;
     }
 
-    @media (max-width: 768px) { .arch-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 820px) { .arch-grid { grid-template-columns: 1fr; } }
 
     .arch-box {
       border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
       padding: 1.5rem;
-      background: rgba(30, 41, 59, 0.4);
+      background: rgba(30, 41, 59, 0.3);
+      position: relative;
     }
 
-    .arch-box.form-based { border-color: var(--client-color); background: var(--client-bg); }
-    .arch-box.event-based { border-color: rgba(168, 85, 247, 0.4); background: var(--purple-bg); }
+    .arch-box.form-way {
+      border-color: var(--amber-border);
+      background: linear-gradient(180deg, rgba(251, 191, 36, 0.08) 0%, rgba(15, 23, 42, 0.6) 100%);
+    }
+
+    .arch-box.direct-way {
+      border-color: var(--purple-border);
+      background: linear-gradient(180deg, rgba(192, 132, 252, 0.08) 0%, rgba(15, 23, 42, 0.6) 100%);
+    }
 
     .arch-title {
-      font-size: 1.15rem;
+      font-size: 1.1rem;
       font-weight: 700;
       margin-bottom: 0.75rem;
       display: flex;
@@ -158,77 +218,34 @@
       gap: 0.5rem;
     }
 
-    /* SIMULATOR */
-    .simulator-container {
-      background: #030712;
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md);
-      padding: 1.5rem;
-      margin-top: 1rem;
-    }
-
-    .mock-user-card {
-      background: #0b0f19;
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md);
-      padding: 1.5rem;
-      max-width: 450px;
-      margin: 0 auto 1.5rem auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .sim-btn-logout {
-      padding: 0.6rem 1.25rem;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--danger-border);
-      font-weight: 700;
-      font-size: 0.85rem;
-      cursor: pointer;
-      background: var(--danger-bg);
-      color: var(--danger-color);
-      transition: all 0.2s ease;
-    }
-
-    .sim-btn-logout:hover {
-      background: rgba(244, 63, 94, 0.25);
-    }
-
-    .mock-console {
-      background: #020617;
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-sm);
-      font-family: 'Fira Code', monospace;
-      padding: 1rem;
-      font-size: 0.85rem;
-      line-height: 1.6;
-    }
-
-    /* CODE COMPARISON */
+    /* CODE COMPARISON PANELS */
     .code-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 1.25rem;
+      margin: 1.5rem 0;
     }
 
-    @media (max-width: 850px) { .code-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 900px) { .code-grid { grid-template-columns: 1fr; } }
 
     .code-panel {
       background: #050811;
       border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
 
     .code-panel-header {
-      padding: 0.65rem 1rem;
+      padding: 0.85rem 1.1rem;
       background: #0d1322;
       border-bottom: 1px solid var(--border-color);
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       font-weight: 700;
       display: flex;
       justify-content: space-between;
+      align-items: center;
     }
 
     .code-content {
@@ -237,291 +254,525 @@
       font-size: 0.85rem;
       white-space: pre;
       overflow-x: auto;
-      line-height: 1.6;
+      line-height: 1.65;
+      flex: 1;
     }
 
+    /* SYNTAX */
     .hl-kw { color: #f472b6; }
     .hl-imp { color: #38bdf8; }
     .hl-str { color: #a3e635; }
     .hl-func { color: #fbbf24; }
     .hl-comment { color: var(--text-dim); font-style: italic; }
     .hl-tag { color: #818cf8; }
-    .hl-purple { color: #a855f7; font-weight: bold; }
-    .hl-danger { color: #f43f5e; font-weight: bold; }
     .hl-green { color: #10b981; font-weight: bold; }
+    .hl-purple { color: #c084fc; font-weight: bold; }
+    .hl-danger { color: #f43f5e; font-weight: bold; }
+    .hl-amber { color: #fbbf24; font-weight: bold; }
+
+    /* SIMULATOR */
+    .simulator-container {
+      background: #030712;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.8rem;
+      margin: 1.5rem 0;
+    }
+
+    .sim-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 850px) { .sim-layout { grid-template-columns: 1fr; } }
+
+    .sim-panel {
+      background: #0b0f19;
+      padding: 1.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .sim-btn-logout {
+      padding: 0.8rem 1.4rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(244, 63, 94, 0.4);
+      font-weight: 700;
+      font-size: 0.92rem;
+      cursor: pointer;
+      background: rgba(244, 63, 94, 0.15);
+      color: #fda4af;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .sim-btn-logout:hover {
+      background: rgba(244, 63, 94, 0.25);
+      border-color: var(--danger-color);
+      color: #fff;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.3rem 0.7rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-family: 'Fira Code', monospace;
+    }
+
+    .mock-console {
+      background: #020617;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      font-family: 'Fira Code', monospace;
+      padding: 1.25rem;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      margin-top: 1.5rem;
+      min-height: 170px;
+    }
+
+    /* REVELATION / CALLOUT CARD */
+    .revelation-card {
+      background: linear-gradient(135deg, rgba(192, 132, 252, 0.08) 0%, rgba(15, 23, 42, 0.8) 100%);
+      border: 1px solid var(--purple-border);
+      border-radius: var(--radius-lg);
+      padding: 2.2rem;
+      margin-bottom: 2.5rem;
+    }
 
     /* QUIZ */
     .quiz-option {
       background: var(--bg-card-hover);
       border: 1px solid var(--border-color);
-      padding: 1rem;
+      padding: 1rem 1.25rem;
       border-radius: var(--radius-sm);
       margin-bottom: 0.75rem;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 0.75rem;
+      transition: all 0.2s ease;
     }
 
+    .quiz-option:hover { border-color: var(--text-muted); }
     .quiz-option.correct { background: var(--server-bg) !important; border-color: var(--server-color) !important; color: var(--server-color); }
     .quiz-option.incorrect { background: var(--danger-bg) !important; border-color: var(--danger-color) !important; color: var(--danger-color); }
-    .radio-circle { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--text-dim); }
+
+    .radio-circle {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid var(--text-dim);
+      flex-shrink: 0;
+    }
 
     footer {
       text-align: center;
-      padding: 2rem 0;
+      padding: 2.5rem 0;
       color: var(--text-dim);
-      font-size: 0.875rem;
+      font-size: 0.9rem;
       border-top: 1px solid var(--border-color);
-      margin-top: 3rem;
+      margin-top: 3.5rem;
     }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <!-- HERO -->
+    <!-- HERO HEADER -->
     <header class="hero">
       <div class="badge-group">
-        <span class="badge badge-purple">Server Actions Without Forms</span>
-        <span class="badge badge-client">onClick Event Callbacks</span>
-        <span class="badge badge-server">logoutUser() &amp; Promise Invocation</span>
+        <span class="badge badge-purple">No Forms Required</span>
+        <span class="badge badge-client">Direct onClick Binding</span>
+        <span class="badge badge-danger">Logout Feature</span>
+        <span class="badge badge-server">Mutations Deep Dive</span>
       </div>
       <h1>Using Server Actions Without Forms</h1>
       <p class="hero-subtitle">
-        Understand how Server Actions are regular asynchronous RPC functions that can be invoked directly inside button <code>onClick</code> handlers, <code>useEffect</code> hooks, or custom event listeners.
+        Sabse bada myth busted! Server Action chalane ke liye <code>&lt;form&gt;</code> tag ki koi zaroorat nahi hoti! Seekhein kaise kisi bhi normal button ke <code>onClick</code> event se server action call hota hai, arbitrary data pass kiya jaata hai, MongoDB se Session delete karke cookie destroy hoti hai, aur Todo CRUD mutations kaise perform hote hain!
       </p>
     </header>
 
-    <!-- SECTION 1: ARCHITECTURE -->
+    <!-- SECTION 1: THE MYTH BUSTED -->
     <div class="card">
       <div class="card-header">
-        <div class="badge-icon">⚙️</div>
-        <h2>1. Form Actions vs. Event-Driven Direct Invocations</h2>
+        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border: 1px solid var(--purple-border);">💥</div>
+        <div>
+          <h2>1. Sabse Bada Myth: "Kya Server Actions Sirf Forms Ke Sath Hi Chalte Hain?"</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">Forms vs Direct Event-Driven Invocations (onClick, useEffect)</p>
+        </div>
+      </div>
+
+      <div class="teacher-box">
+        <div class="teacher-title">👨‍🏫 Instructor Ki Zubani:</div>
+        <p style="font-size: 0.95rem; color: var(--text-main); line-height: 1.7;">
+          <em>"Is video me hum dekhenge ki Server Actions ko bina form ke kaise use karte hain. Hamare to-do app me jo Logout button hai, uske charo taraf koi form nahi hai! Ab tak Logout ka logic Route Handler (fetch API) se chal raha tha. Ab hum direct <code>onClick</code> handler se Server Action call karke user ko logout karenge!"</em>
+        </p>
       </div>
 
       <div class="arch-grid">
-        <div class="arch-box form-based">
-          <div class="arch-title">
-            <span>📝 Form-Based Binding (&lt;form action={...}&gt;)</span>
+        <div class="arch-box form-way">
+          <div class="arch-title" style="color: var(--amber-color);">
+            <span>📋 Form-Driven Invocations (&lt;form action={...}&gt;)</span>
           </div>
-          <p style="font-size: 0.9rem; color: var(--text-muted);">
-            Binds action directly to standard HTML <code>&lt;form&gt;</code> submissions.<br>
-            Receives <code>FormData</code> automatically from inputs.<br>
-            Supports progressive enhancement (no-JS fallback).
+          <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6;">
+            Inputs, FormData, aur progressive enhancement ke liye best hota hai. Usually Register aur Login jaise complex forms me use hota hai.
           </p>
         </div>
 
-        <div class="arch-box event-based">
-          <div class="arch-title">
-            <span>⚡ Event-Driven Direct Call (onClick Handler)</span>
+        <div class="arch-box direct-way">
+          <div class="arch-title" style="color: var(--purple-color);">
+            <span>⚡ Direct Event-Driven Invocations (onClick)</span>
           </div>
-          <p style="font-size: 0.9rem; color: var(--text-muted);">
-            Invokes Server Action as a standard async JavaScript function.<br>
-            Triggered by any element: <code>&lt;button onClick={handleLogout}&gt;</code>.<br>
-            Returns a Promise that can be <code>await</code>ed directly!
+          <p style="font-size: 0.9rem; color: var(--text-main); line-height: 1.6;">
+            Koi form tag nahi chahiye! Kisi bhi button ke <code>onClick</code>, toggle switch, ya <code>useEffect</code> me normal async function ki tarah <code>await logoutUser()</code> call kar sakte hain!
           </p>
         </div>
       </div>
     </div>
 
-    <!-- SECTION 2: LOGOUT USER PATTERN -->
+    <!-- SECTION 2: LOGOUT FEATURE -->
     <div class="card">
       <div class="card-header">
-        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4);">🔓</div>
-        <h2>2. The `logoutUser()` Action &amp; Direct `onClick` Binding</h2>
-      </div>
-
-      <div style="font-family: 'Fira Code', monospace; background: #020617; padding: 1.25rem; border-radius: var(--radius-sm); font-size: 0.85rem; border-left: 4px solid var(--purple-color); margin-bottom: 1rem;">
-        // app/actions/userActions.js<br>
-        "use server";<br><br>
-        import { cookies } from "next/headers";<br>
-        import { getUserSessionId } from "@/lib/auth";<br>
-        import Session from "@/models/sessionModel";<br><br>
-        export async function logoutUser() {<br>
-        &nbsp;&nbsp;const cookieStore = await cookies();<br>
-        &nbsp;&nbsp;const sessionId = await getUserSessionId();<br>
-        &nbsp;&nbsp;await Session.findByIdAndDelete(sessionId); // Delete from MongoDB<br>
-        &nbsp;&nbsp;cookieStore.delete("sid"); // Delete cookie from browser<br>
-        &nbsp;&nbsp;return { success: true };<br>
-        }
-      </div>
-
-      <div style="font-family: 'Fira Code', monospace; background: #0b0f19; padding: 1.25rem; border-radius: var(--radius-sm); font-size: 0.85rem; border-left: 4px solid var(--client-color);">
-        // app/page.js ("use client")<br>
-        const handleLogout = async () =&gt; {<br>
-        &nbsp;&nbsp;<span style="color: #a7f3d0;">const response = await logoutUser();</span> // 👈 Direct async function invocation!<br>
-        &nbsp;&nbsp;if (response.success) {<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;router.push("/login");<br>
-        &nbsp;&nbsp;}<br>
-        };<br><br>
-        return &lt;button <span style="color: #f472b6;">onClick={handleLogout}</span>&gt;Logout&lt;/button&gt;; // 👈 No &lt;form&gt; element required!
-      </div>
-    </div>
-
-    <!-- SECTION 3: LIVE SIMULATOR -->
-    <div class="card">
-      <div class="card-header">
-        <div class="badge-icon">🎮</div>
-        <h2>3. Live Interactive `onClick` Server Action Simulator</h2>
-      </div>
-
-      <div class="simulator-container">
-        <div class="mock-user-card">
-          <div>
-            <div style="font-weight: 700; font-size: 1rem;">ProCodrr</div>
-            <div style="font-size: 0.85rem; color: var(--text-muted);">procodrr@gmail.com</div>
-          </div>
-          <button class="sim-btn-logout" onclick="simulateDirectLogout()">
-            Logout (onClick Server Action)
-          </button>
-        </div>
-
-        <div id="sim-console" class="mock-console">
-          Console Log: User logged in. Click Logout button (triggered via onClick event).
+        <div class="badge-icon" style="background: var(--danger-bg); color: var(--danger-color); border: 1px solid var(--danger-border);">🚪</div>
+        <div>
+          <h2>2. Logout Feature: Server Action &amp; Session Cleanup</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">Pehle API route se Status 204 aata tha — ab Server Action se direct { success: true }</p>
         </div>
       </div>
-    </div>
 
-    <!-- SECTION 4: CODE BREAKDOWN -->
-    <div class="card">
-      <div class="card-header">
-        <div class="badge-icon">🔍</div>
-        <h2>4. Side-by-Side Code Anatomy</h2>
-      </div>
+      <p style="font-size: 0.95rem; color: var(--text-main); line-height: 1.7; margin-bottom: 1rem;">
+        Logout karne ke liye hume client se koi data bhejne ki zaroorat nahi hoti! Kyunki browser request ke sath signed <strong><code>sid</code></strong> cookie automatically server par aati hai!
+      </p>
 
       <div class="code-grid">
-        <div class="code-panel">
-          <div class="code-panel-header">
-            <span style="color: var(--server-color);">app/actions/userActions.js</span>
-            <span>Server Action File</span>
+        <!-- SERVER ACTION -->
+        <div class="code-panel" style="border-color: var(--server-border);">
+          <div class="code-panel-header" style="color: var(--server-color);">
+            <span>app/actions/userActions.js (logoutUser)</span>
+            <span>Server Action</span>
           </div>
-          <div class="code-content"><span class="hl-green">"use server"</span>;
+          <div class="code-content"><span class="hl-kw">"use server"</span>;
+<span class="hl-imp">import</span> { cookies } <span class="hl-imp">from</span> <span class="hl-str">"next/headers"</span>;
+<span class="hl-imp">import</span> Session <span class="hl-imp">from</span> <span class="hl-str">"@/models/sessionModel"</span>;
+<span class="hl-imp">import</span> { getUserSessionId } <span class="hl-imp">from</span> <span class="hl-str">"@/lib/auth"</span>;
 
-<span class="hl-kw">export async function</span> <span class="hl-func">logoutUser</span>() {
+<span class="hl-imp">export async function</span> <span class="hl-func">logoutUser</span>() {
   <span class="hl-kw">const</span> cookieStore = <span class="hl-kw">await</span> <span class="hl-func">cookies</span>();
   <span class="hl-kw">const</span> sessionId = <span class="hl-kw">await</span> <span class="hl-func">getUserSessionId</span>();
 
-  <span class="hl-comment">// 1️⃣ Delete session from MongoDB:</span>
+  <span class="hl-comment">// 1. MongoDB se session document delete karo</span>
   <span class="hl-kw">await</span> Session.<span class="hl-func">findByIdAndDelete</span>(sessionId);
 
-  <span class="hl-comment">// 2️⃣ Delete cookie from browser:</span>
+  <span class="hl-comment">// 2. Browser ki cookie destroy karo</span>
   cookieStore.<span class="hl-func">delete</span>(<span class="hl-str">"sid"</span>);
 
-  <span class="hl-kw">return</span> { <span class="hl-purple">success: true</span> };
+  <span class="hl-comment">// 3. Return clean plain object</span>
+  <span class="hl-imp">return</span> { success: <span class="hl-kw">true</span> };
 }</div>
         </div>
 
-        <div class="code-panel">
-          <div class="code-panel-header">
-            <span style="color: var(--client-color);">app/page.js</span>
-            <span>Client Page (onClick Handler)</span>
+        <!-- CLIENT ONCLICK -->
+        <div class="code-panel" style="border-color: var(--client-border);">
+          <div class="code-panel-header" style="color: var(--client-color);">
+            <span>app/page.js (handleLogout)</span>
+            <span>Direct onClick Handler</span>
           </div>
-          <div class="code-content"><span class="hl-str">"use client"</span>;
-
+          <div class="code-content"><span class="hl-kw">"use client"</span>;
+<span class="hl-imp">import</span> { useRouter } <span class="hl-imp">from</span> <span class="hl-str">"next/navigation"</span>;
 <span class="hl-imp">import</span> { logoutUser } <span class="hl-imp">from</span> <span class="hl-str">"./actions/userActions"</span>;
 
-<span class="hl-kw">export default function</span> <span class="hl-func">Home</span>() {
+<span class="hl-imp">export default function</span> <span class="hl-func">Home</span>() {
   <span class="hl-kw">const</span> router = <span class="hl-func">useRouter</span>();
 
   <span class="hl-kw">const</span> <span class="hl-func">handleLogout</span> = <span class="hl-kw">async</span> () =&gt; {
-    <span class="hl-comment">// ⚡ Invoked directly on button click:</span>
+    <span class="hl-comment">// Direct function call! No fetch, no headers!</span>
     <span class="hl-kw">const</span> response = <span class="hl-kw">await</span> <span class="hl-func">logoutUser</span>();
 
     <span class="hl-kw">if</span> (response.success) {
-      router.<span class="hl-func">push</span>(<span class="hl-str">"/login"</span>);
+      <span class="hl-imp">return</span> router.<span class="hl-func">push</span>(<span class="hl-str">"/login"</span>);
     }
   };
 
-  <span class="hl-kw">return</span> (
-    &lt;<span class="hl-tag">button</span> <span class="hl-purple">onClick={handleLogout}</span>&gt;
+  <span class="hl-imp">return</span> (
+    <span class="hl-tag">&lt;button</span> <span class="hl-purple">onClick={handleLogout}</span><span class="hl-tag">&gt;</span>
       Logout
-    &lt;/<span class="hl-tag">button</span>&gt;
+    <span class="hl-tag">&lt;/button&gt;</span>
   );
 }</div>
         </div>
       </div>
     </div>
 
-    <!-- SECTION 5: KNOWLEDGE CHECK -->
+    <!-- SECTION 3: PASSING ARBITRARY ARGUMENTS -->
     <div class="card">
       <div class="card-header">
-        <div class="badge-icon">❓</div>
-        <h2>5. Quick Knowledge Check</h2>
+        <div class="badge-icon" style="background: var(--amber-bg); color: var(--amber-color); border: 1px solid var(--amber-border);">📦</div>
+        <div>
+          <h2>3. Passing Arbitrary Arguments: FormData Ki Koi Zaroorat Nahi!</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">Instructor ne logoutUser({ name: "anurag" }) pass karke dikhaya</p>
+        </div>
       </div>
 
-      <div>
-        <h4 style="margin-bottom: 0.75rem;">Q1: Can Server Actions be invoked directly inside an onClick button event handler without a form?</h4>
-        <div class="quiz-option" onclick="checkAnswer(this, true)">
-          <span class="radio-circle"></span>
-          <span>A) Yes! Server Actions are regular async RPC functions and can be awaited inside any event handler.</span>
+      <p style="font-size: 0.95rem; color: var(--text-main); line-height: 1.7;">
+        Jab hum form ke bina Server Action call karte hain, toh hum function me <strong>jo chahein wo arguments</strong> bhej sakte hain (numbers, strings, objects, IDs)!
+      </p>
+
+      <div style="background: #020617; border-left: 4px solid var(--amber-color); border-radius: var(--radius-sm); padding: 1.25rem; font-family: 'Fira Code', monospace; font-size: 0.88rem; margin: 1rem 0;">
+        // Client Call:<br>
+        const res = await <span style="color: var(--purple-color);">logoutUser</span>({ name: "anurag", reason: "user_clicked" });<br><br>
+        // Server Action:<br>
+        export async function logoutUser(<span style="color: #38bdf8;">payload</span>) {<br>
+        &nbsp;&nbsp;console.log(payload); // ➔ { name: "anurag", reason: "user_clicked" }<br>
+        }
+      </div>
+
+      <p style="font-size: 0.92rem; color: var(--text-muted); line-height: 1.7;">
+        Next.js is payload ko **React Flight Protocol** ke through serialize karke server action ko direct deliver kar deta hai. Parameter ka naam `formData` rakhne ki koi pabandi nahi hai!
+      </p>
+    </div>
+
+    <!-- SECTION 4: SERVER ACTIONS ARE FOR MUTATIONS -->
+    <div class="revelation-card">
+      <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+        <span style="font-size: 2rem;">⚡</span>
+        <h2 style="font-size: 1.4rem; color: var(--purple-color); font-weight: 800;">4. Master Concept: Server Actions Ka Asli Kaam Hai "MUTATIONS"</h2>
+      </div>
+
+      <p style="font-size: 1rem; color: var(--text-main); line-height: 1.8;">
+        Instructor ne ek bahut important architectural principle explain kiya:
+        <br>
+        <strong>"Server Actions ka main purpose data MUTATIONS karna hai — yaani Create, Update, aur Delete!"</strong>
+      </p>
+
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-top: 1.25rem;">
+        <div style="background: rgba(11, 15, 25, 0.8); border: 1px solid var(--server-border); border-radius: var(--radius-sm); padding: 1.2rem;">
+          <h4 style="color: var(--server-color); margin-bottom: 0.4rem; font-size: 0.95rem;">➕ Create Mutation</h4>
+          <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
+            Naya todo create karna:<br>
+            <code>await createTodo({ text })</code>
+          </p>
         </div>
-        <div class="quiz-option" onclick="checkAnswer(this, false)">
-          <span class="radio-circle"></span>
-          <span>B) No, Server Actions only work inside &lt;form action="..."&gt; tags.</span>
+
+        <div style="background: rgba(11, 15, 25, 0.8); border: 1px solid var(--client-border); border-radius: var(--radius-sm); padding: 1.2rem;">
+          <h4 style="color: var(--client-color); margin-bottom: 0.4rem; font-size: 0.95rem;">✏️ Update Mutation</h4>
+          <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
+            Checkbox toggle ya edit karna:<br>
+            <code>await toggleTodo(id, completed)</code>
+          </p>
         </div>
-        <div class="quiz-option" onclick="checkAnswer(this, false)">
-          <span class="radio-circle"></span>
-          <span>C) Only if wrapped inside a custom REST API endpoint.</span>
+
+        <div style="background: rgba(11, 15, 25, 0.8); border: 1px solid var(--danger-border); border-radius: var(--radius-sm); padding: 1.2rem;">
+          <h4 style="color: var(--danger-color); margin-bottom: 0.4rem; font-size: 0.95rem;">🗑️ Delete Mutation</h4>
+          <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
+            Todo ya session delete karna:<br>
+            <code>await deleteTodo(id)</code>
+          </p>
+        </div>
+      </div>
+
+      <p style="font-size: 0.93rem; color: #cbd5e1; margin-top: 1.25rem; line-height: 1.7;">
+        <strong>Data Read (GET) karne ke liye kya use karein?</strong> Data read karne ke liye Next.js me **React Server Components (RSC)** recommended hote hain, jahan component direct database query chala kar HTML render karta hai!
+      </p>
+    </div>
+
+    <!-- SECTION 5: LIVE INTERACTIVE SIMULATOR -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--client-bg); color: var(--client-color); border: 1px solid var(--client-border);">🎮</div>
+        <div>
+          <h2>5. Live Interactive Direct onClick &amp; Logout Simulator</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">Bina kisi form ke button dabao, live session delete hote hue dekho, aur cookie destroy feel karo!</p>
+        </div>
+      </div>
+
+      <div class="simulator-container">
+        <div class="sim-layout">
+          <!-- DASHBOARD VIEW -->
+          <div class="sim-panel">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main);">
+                🏠 Home Dashboard
+              </h4>
+              <span id="user-badge" class="status-badge" style="background: var(--server-bg); color: var(--server-color); border: 1px solid var(--server-border);">
+                ● ProCodrr (Logged In)
+              </span>
+            </div>
+
+            <div style="background: #030712; padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); font-size: 0.85rem; color: var(--text-muted);">
+              User Email: <span style="color: #fff; font-family: 'Fira Code', monospace;">procodrr@gmail.com</span><br>
+              Protected Status: <span style="color: var(--server-color);">Authenticated with Session</span>
+            </div>
+
+            <div style="font-size: 0.82rem; color: var(--text-muted);">
+              Optional Test Payload to Server Action:
+              <input id="sim-custom-arg" type="text" value='{ name: "anurag" }' style="width: 100%; margin-top: 0.35rem; padding: 0.5rem; background: #020617; border: 1px solid var(--border-color); color: #fff; border-radius: 4px; font-family: 'Fira Code', monospace; font-size: 0.8rem;">
+            </div>
+
+            <button id="sim-logout-btn" class="sim-btn-logout" onclick="runDirectLogoutSim()">
+              <span>🚪 Logout (No Form - Direct onClick)</span>
+            </button>
+          </div>
+
+          <!-- SERVER & COOKIE STATUS -->
+          <div class="sim-panel" style="background: #080d1a;">
+            <h4 style="font-size: 0.9rem; font-weight: 700; color: var(--purple-color); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+              🍃 MongoDB Session &amp; Cookie Status
+            </h4>
+
+            <div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem;">MongoDB Session:</div>
+              <div id="sim-session-display" style="font-family: 'Fira Code', monospace; font-size: 0.78rem; background: #030712; padding: 0.7rem; border-radius: 4px; color: #a7f3d0;">
+                { _id: "6743b89fa...", userId: "6743b7...", active: true }
+              </div>
+            </div>
+
+            <div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.3rem;">Browser sid Cookie:</div>
+              <div id="sim-cookie-display" style="font-family: 'Fira Code', monospace; font-size: 0.78rem; background: #030712; padding: 0.7rem; border-radius: 4px; color: var(--server-color);">
+                sid = s%3A6743b89fa.wK9... [HttpOnly]
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="sim-console" class="mock-console">
+          <span style="color: var(--text-dim);">// Ready! Click the Logout button above to trigger direct onClick Server Action invocation.</span>
         </div>
       </div>
     </div>
 
-    <!-- SECTION 6: POORA SAAR / HINGLISH GOLDEN RULE -->
-    <div class="card">
+    <!-- SECTION 6: SECTION 11 GRAND SUMMARY -->
+    <div class="card" style="border-color: rgba(16, 185, 129, 0.4); background: linear-gradient(180deg, rgba(16, 185, 129, 0.05) 0%, rgba(15, 23, 42, 0.8) 100%);">
       <div class="card-header">
-        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4);">💡</div>
-        <h2>6. Poora Saar &amp; Golden Master Rule (Hinglish)</h2>
+        <div class="badge-icon" style="background: var(--server-bg); color: var(--server-color); border: 1px solid var(--server-border);">🎓</div>
+        <div>
+          <h2>6. Section 11 Graduation: Server Actions Ka Poora Safar</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">Pehle video se aakhri video tak ka complete evolutionary map</p>
+        </div>
       </div>
 
-      <div style="padding: 1.5rem; background: #020617; border-left: 5px solid var(--purple-color); border-radius: var(--radius-md);">
-        <h3 style="color: var(--purple-color); margin-bottom: 0.75rem; font-size: 1.15rem;">💡 Server Actions Without Forms Ka Poora Saar:</h3>
+      <div style="font-size: 0.95rem; color: var(--text-main); line-height: 1.85;">
+        <ul style="margin-left: 1.5rem; display: flex; flex-direction: column; gap: 0.8rem;">
+          <li><strong>Chapter 01:</strong> Route Handlers (API routes) ko Server Actions se replace karne ka vision samjha.</li>
+          <li><strong>Chapter 02:</strong> Client Components me Server Actions use karne ka compiler error aur dedicated file separation rule seekha.</li>
+          <li><strong>Chapter 03:</strong> React 19 ka <code>useActionState</code> hook, <code>[state, formAction, isPending]</code> aur <code>previousData</code> ka trap master kiya.</li>
+          <li><strong>Chapter 04:</strong> Server Actions ko manually call karna aur submission rok kar Client-side validation lagana seekha.</li>
+          <li><strong>Chapter 05:</strong> Zod v4 se Single Source of Truth schema banaya aur Client + Server Dual-layer validation lagayi.</li>
+          <li><strong>Chapter 06:</strong> MongoDB Atlas &amp; Compass me actual user registration, bcrypt hashing, aur Error 11000 handle kiya.</li>
+          <li><strong>Chapter 07:</strong> Login feature, anti-enumeration security, aur <code>cookies()</code> se session management implement kiya.</li>
+          <li><strong>Chapter 08 (Grand Finale):</strong> Form ke bina direct <code>onClick</code> par Server Actions call karke Logout aur Todo CRUD mutations seekhe!</li>
+        </ul>
+      </div>
+    </div>
 
-        <p style="font-size: 0.98rem; color: var(--text-main); line-height: 1.8; margin-bottom: 1rem;">
-          Bohot se developers samajhte hain ki Server Action sirf `<form action="...">` me hi use ho sakta hai — <strong>ye ek BADI MYTH hai!</strong>
-        </p>
+    <!-- SECTION 7: QUIZ -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--amber-bg); color: var(--amber-color); border: 1px solid var(--amber-border);">🧠</div>
+        <div>
+          <h2>7. Final Knowledge Check</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">Sahi option choose karo</p>
+        </div>
+      </div>
 
-        <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 1.25rem;">
-          Server Action under the hood ek simple <strong>asynchronous RPC function</strong> hota hai jo Node.js server par chalta hai.
-          <br><br>
-          1. **Direct `onClick` Invocation**: Aap ise kisi bhi HTML element ke event listener me call kar sakte ho: `<button onClick={handleLogout}>Logout</button>`.
-          <br>2. **Returns a Standard Promise**: Kyunki Server Action ek `async` function hai, aap ise `await logoutUser()` karke direct result evaluate kar sakte ho.
-          <br>3. **Dual Session Cleanup (`logoutUser`)**: Server Action ke andar direct `Session.findByIdAndDelete(sessionId)` aur `cookieStore.delete("sid")` chalao, aur result `success: true` milne par client side par `router.push('/login')` kar do!
-        </p>
+      <div style="margin-bottom: 1.5rem;">
+        <p style="font-weight: 700; margin-bottom: 0.75rem;">Sawaal 1: Kya Server Action chalane ke liye form tag lagana zaroori hai?</p>
+        <div class="quiz-option" onclick="checkQuiz(this, false)">
+          <div class="radio-circle"></div>
+          <span>Haan, React 19 sirf form ke action attribute me server functions allow karta hai.</span>
+        </div>
+        <div class="quiz-option" onclick="checkQuiz(this, true)">
+          <div class="radio-circle"></div>
+          <span>Nahi! Server action kisi bhi button ke onClick ya normal JS function me direct await karke call ho sakta hai.</span>
+        </div>
+      </div>
 
-        <div style="background: rgba(168, 85, 247, 0.1); border: 1px dashed var(--purple-color); padding: 1rem; border-radius: var(--radius-sm); font-size: 0.9rem;">
-          <strong style="color: var(--purple-color); display: block; margin-bottom: 0.5rem;">🔥 Direct Invocation Golden Rules:</strong>
-          <ul style="padding-left: 1.2rem; line-height: 1.8; color: var(--text-main);">
-            <li><strong>1. No Form Required ⚡</strong> ➔ Call Server Actions directly in `onClick`, `onChange`, `useEffect`, or custom handlers.</li>
-            <li><strong>2. Standard Promises 📦</strong> ➔ `const res = await myServerAction(arg1, arg2)` returns a regular JS promise result.</li>
-            <li><strong>3. Dual-Layer Cleanup 🧹</strong> ➔ Perform server DB/cookie deletion inside action, then handle client routing on response.</li>
-          </ul>
+      <div>
+        <p style="font-weight: 700; margin-bottom: 0.75rem;">Sawaal 2: Server Actions ka primary purpose web development me kya hota hai?</p>
+        <div class="quiz-option" onclick="checkQuiz(this, true)">
+          <div class="radio-circle"></div>
+          <span>Server State Mutations (Create, Update, Delete) perform karna!</span>
+        </div>
+        <div class="quiz-option" onclick="checkQuiz(this, false)">
+          <div class="radio-circle"></div>
+          <span>Server se heavy HTML strings download karna.</span>
         </div>
       </div>
     </div>
 
     <footer>
-      Next.js Server Actions Without Forms Guide &bull; Section 11 Lesson 08
+      Next.js Deep Dive Series • Section 11: Server Actions Complete Masterclass • Chapter 08 Guide
     </footer>
   </div>
 
   <script>
-    function simulateDirectLogout() {
+    let sessionActive = true;
+
+    function runDirectLogoutSim() {
       const consoleBox = document.getElementById('sim-console');
+      const submitBtn = document.getElementById('sim-logout-btn');
+      const customArg = document.getElementById('sim-custom-arg').value;
+      const userBadge = document.getElementById('user-badge');
+      const sessionDisplay = document.getElementById('sim-session-display');
+      const cookieDisplay = document.getElementById('sim-cookie-display');
+
+      if (!sessionActive) {
+        alert("Already Logged Out! Please refresh or reload to test again.");
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span>⏳ Logging out via Server Action...</span>';
 
       consoleBox.innerHTML = `
-        <span style="color: var(--purple-color)">[CLIENT EVENT] Button onClick event triggered handleLogout()</span><br>
-        <span style="color: var(--purple-color)">[RPC CALL] const res = await logoutUser() (Invoked directly without form!)</span><br>
-        <span style="color: var(--server-color)">[NODE.JS SERVER] Session.findByIdAndDelete(sessionId) ➔ Session deleted from MongoDB!</span><br>
-        <span style="color: var(--server-color)">[NODE.JS SERVER] cookieStore.delete("sid") ➔ Cookie removed!</span><br>
-        <span style="color: var(--server-color)">[SERVER RETURN] { success: true }</span><br>
-        <span style="color: var(--client-color)">[CLIENT ROUTER] res.success === true ➔ router.push("/login") 🚀</span>
+        <span style="color: var(--client-color)">[CLIENT ONCLICK] Button onClick triggered handleLogout()!</span><br>
+        <span style="color: var(--purple-color)">[RPC CALL] Calling logoutUser(${customArg})... (No form tag involved!)</span><br>
+        <span style="color: var(--text-dim)">[WIRE] Sending HTTP POST to current route with Next-Action header...</span>
       `;
+
+      setTimeout(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>🚪 Logged Out</span>';
+        sessionActive = false;
+
+        userBadge.innerText = '○ Logged Out';
+        userBadge.style.background = 'var(--danger-bg)';
+        userBadge.style.color = 'var(--danger-color)';
+        userBadge.style.borderColor = 'var(--danger-border)';
+
+        sessionDisplay.innerHTML = '<span style="color: var(--danger-color)">// Document Deleted from test.sessions! (Session.findByIdAndDelete)</span>';
+        cookieDisplay.innerHTML = '<span style="color: var(--danger-color)">// sid Cookie Deleted! (cookieStore.delete("sid"))</span>';
+
+        consoleBox.innerHTML += `<br>
+          <span style="color: var(--server-color)">[NODE.JS SERVER ACTION: logoutUser]</span><br>
+          <span style="color: var(--amber-color)">&nbsp;&nbsp;➔ Received arbitrary payload: ${customArg}</span><br>
+          <span style="color: var(--server-color)">&nbsp;&nbsp;➔ Session.findByIdAndDelete(sessionId) ➔ Document Deleted!</span><br>
+          <span style="color: var(--server-color)">&nbsp;&nbsp;➔ cookieStore.delete("sid") ➔ Cookie Expired!</span><br>
+          <span style="color: var(--server-color)">&nbsp;&nbsp;➔ Returned { success: true } (HTTP 200 OK)</span><br>
+          <span style="color: var(--client-color); font-weight: bold;">[CLIENT CALLBACK] response.success is TRUE!</span><br>
+          <span style="color: #38bdf8; font-weight: bold;">🧭 Executing router.push("/login") ➔ User safely navigated to Login Screen!</span>
+        `;
+
+        alert("🎉 Logout Successful!\n\nSession Deleted from MongoDB & Cookie Removed.\n\nExecuting router.push('/login')!");
+      }, 1000);
     }
 
-    function checkAnswer(element, isCorrect) {
+    function checkQuiz(element, isCorrect) {
       const parent = element.parentElement;
-      parent.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('correct', 'incorrect'));
+      parent.querySelectorAll('.quiz-option').forEach(el => {
+        el.classList.remove('correct', 'incorrect');
+      });
       if (isCorrect) element.classList.add('correct');
       else element.classList.add('incorrect');
     }

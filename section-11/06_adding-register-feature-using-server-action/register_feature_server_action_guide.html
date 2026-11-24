@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Next.js Guide: Full User Registration Feature with Server Actions</title>
+  <title>Chapter 06: Server Actions Se Full User Registration Feature | Next.js Deep Dive</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
@@ -20,91 +20,115 @@
       
       --server-color: #10b981;
       --server-bg: rgba(16, 185, 129, 0.12);
+      --server-border: rgba(16, 185, 129, 0.35);
       
       --client-color: #38bdf8;
       --client-bg: rgba(56, 189, 248, 0.12);
+      --client-border: rgba(56, 189, 248, 0.35);
 
       --danger-color: #f43f5e;
-      --danger-bg: rgba(244, 63, 94, 0.15);
+      --danger-bg: rgba(244, 63, 94, 0.12);
       --danger-border: rgba(244, 63, 94, 0.4);
-      
-      --warning-color: #fbbf24;
-      --warning-bg: rgba(251, 191, 36, 0.12);
-      
-      --purple-color: #a855f7;
-      --purple-bg: rgba(168, 85, 247, 0.12);
-      
+
+      --purple-color: #c084fc;
+      --purple-bg: rgba(192, 132, 252, 0.12);
+      --purple-border: rgba(192, 132, 252, 0.35);
+
+      --amber-color: #fbbf24;
+      --amber-bg: rgba(251, 191, 36, 0.12);
+      --amber-border: rgba(251, 191, 36, 0.35);
+
       --radius-sm: 8px;
-      --radius-md: 14px;
-      --radius-lg: 20px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
       background-color: var(--bg-dark);
       color: var(--text-main);
-      line-height: 1.6;
-      padding: 2rem 1rem;
-      min-height: 100vh;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.7;
+      padding: 2.5rem 1rem;
     }
 
-    .container { max-width: 1150px; margin: 0 auto; }
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+    }
 
-    /* HERO HEADER */
-    header.hero {
+    /* HERO */
+    .hero {
       text-align: center;
-      padding: 3rem 1.5rem;
-      background: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.15) 0%, rgba(7, 10, 17, 0) 70%);
+      padding: 3.2rem 1.8rem;
+      background: linear-gradient(180deg, rgba(16, 185, 129, 0.12) 0%, rgba(56, 189, 248, 0.06) 50%, rgba(7, 10, 17, 0) 100%);
       border: 1px solid var(--border-color);
       border-radius: var(--radius-lg);
       margin-bottom: 2.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 75%;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--server-color), var(--client-color), var(--purple-color), transparent);
     }
 
     .badge-group {
       display: flex;
+      gap: 0.6rem;
       justify-content: center;
-      gap: 0.75rem;
-      margin-bottom: 1rem;
       flex-wrap: wrap;
+      margin-bottom: 1.25rem;
     }
 
     .badge {
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      padding: 0.35rem 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 0.95rem;
       border-radius: 9999px;
-      border: 1px solid var(--border-color);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
     }
 
-    .badge-server { background: var(--server-bg); color: var(--server-color); border-color: rgba(16, 185, 129, 0.4); }
-    .badge-client { background: var(--client-bg); color: var(--client-color); border-color: rgba(56, 189, 248, 0.4); }
-    .badge-purple { background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4); }
+    .badge-server { background: var(--server-bg); color: var(--server-color); border: 1px solid var(--server-border); }
+    .badge-client { background: var(--client-bg); color: var(--client-color); border: 1px solid var(--client-border); }
+    .badge-purple { background: var(--purple-bg); color: var(--purple-color); border: 1px solid var(--purple-border); }
+    .badge-amber { background: var(--amber-bg); color: var(--amber-color); border: 1px solid var(--amber-border); }
 
     h1 {
-      font-size: 2.4rem;
+      font-size: 2.35rem;
       font-weight: 800;
-      margin-bottom: 0.75rem;
-      background: linear-gradient(135deg, #ffffff 40%, #10b981 100%);
+      letter-spacing: -0.03em;
+      margin-bottom: 1rem;
+      line-height: 1.25;
+      background: linear-gradient(135deg, #ffffff 40%, #cbd5e1 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
     .hero-subtitle {
-      font-size: 1.1rem;
+      font-size: 1.15rem;
       color: var(--text-muted);
-      max-width: 800px;
+      max-width: 860px;
       margin: 0 auto;
+      line-height: 1.7;
     }
 
+    /* CARD STYLING */
     .card {
       background: var(--bg-card);
       border: 1px solid var(--border-color);
       border-radius: var(--radius-lg);
-      padding: 2rem;
+      padding: 2.4rem;
       margin-bottom: 2.5rem;
       box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
     }
@@ -112,95 +136,180 @@
     .card-header {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 1rem;
       margin-bottom: 1.5rem;
+      padding-bottom: 1.1rem;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.6);
     }
 
     .badge-icon {
-      width: 40px;
-      height: 40px;
+      width: 48px;
+      height: 48px;
       border-radius: var(--radius-sm);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.2rem;
+      font-size: 1.5rem;
       font-weight: bold;
-      background: var(--server-bg);
-      color: var(--server-color);
-      border: 1px solid rgba(16, 185, 129, 0.4);
+      flex-shrink: 0;
     }
 
-    /* PIPELINE GRID */
-    .pipeline-grid {
+    .card h2 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+    }
+
+    /* TEACHER BOX */
+    .teacher-box {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(15, 23, 42, 0.8) 100%);
+      border-left: 4px solid var(--client-color);
+      border-radius: var(--radius-sm);
+      padding: 1.25rem 1.5rem;
+      margin: 1.25rem 0;
+    }
+
+    .teacher-title {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--client-color);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    /* PIPELINE 5-STEP GRID */
+    .pipe-grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      gap: 0.75rem;
-      margin-top: 1rem;
+      gap: 0.85rem;
+      margin: 1.5rem 0;
     }
 
-    @media (max-width: 1000px) { .pipeline-grid { grid-template-columns: 1fr 1fr 1fr; } }
-    @media (max-width: 600px) { .pipeline-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 950px) { .pipe-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 600px) { .pipe-grid { grid-template-columns: 1fr; } }
 
-    .pipe-step {
-      background: rgba(15, 23, 42, 0.6);
+    .pipe-card {
+      background: rgba(15, 23, 42, 0.7);
       border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
-      padding: 1rem;
+      padding: 1.1rem;
+      position: relative;
     }
 
-    .pipe-step-num {
-      width: 24px;
-      height: 24px;
+    .pipe-number {
+      width: 26px;
+      height: 26px;
       border-radius: 50%;
       background: var(--server-bg);
       color: var(--server-color);
-      border: 1px solid rgba(16, 185, 129, 0.4);
+      border: 1px solid var(--server-border);
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 800;
       font-size: 0.75rem;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.6rem;
     }
 
-    .pipe-title {
-      font-size: 0.85rem;
+    .pipe-card h4 {
+      font-size: 0.9rem;
       font-weight: 700;
-      margin-bottom: 0.3rem;
       color: var(--text-main);
+      margin-bottom: 0.35rem;
     }
 
-    .pipe-desc {
+    .pipe-card p {
       font-size: 0.78rem;
       color: var(--text-muted);
-      line-height: 1.4;
+      line-height: 1.45;
     }
+
+    /* CODE COMPARISON */
+    .code-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin: 1.5rem 0;
+    }
+
+    @media (max-width: 900px) { .code-grid { grid-template-columns: 1fr; } }
+
+    .code-panel {
+      background: #050811;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .code-panel-header {
+      padding: 0.85rem 1.1rem;
+      background: #0d1322;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .code-content {
+      padding: 1.25rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      white-space: pre;
+      overflow-x: auto;
+      line-height: 1.65;
+      flex: 1;
+    }
+
+    /* SYNTAX */
+    .hl-kw { color: #f472b6; }
+    .hl-imp { color: #38bdf8; }
+    .hl-str { color: #a3e635; }
+    .hl-func { color: #fbbf24; }
+    .hl-comment { color: var(--text-dim); font-style: italic; }
+    .hl-tag { color: #818cf8; }
+    .hl-green { color: #10b981; font-weight: bold; }
+    .hl-purple { color: #c084fc; font-weight: bold; }
+    .hl-danger { color: #f43f5e; font-weight: bold; }
+    .hl-amber { color: #fbbf24; font-weight: bold; }
 
     /* SIMULATOR */
     .simulator-container {
       background: #030712;
       border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
-      padding: 1.5rem;
-      margin-top: 1rem;
+      padding: 1.8rem;
+      margin: 1.5rem 0;
     }
 
-    .sim-form {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      max-width: 500px;
-      margin: 0 auto 1.5rem auto;
+    .sim-layout {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 850px) { .sim-layout { grid-template-columns: 1fr; } }
+
+    .sim-form-box {
       background: #0b0f19;
       padding: 1.5rem;
       border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
     }
 
     .form-group {
       display: flex;
       flex-direction: column;
-      gap: 0.4rem;
+      gap: 0.35rem;
     }
 
     .form-group label {
@@ -210,31 +319,75 @@
     }
 
     .form-group input {
-      padding: 0.65rem 0.85rem;
+      padding: 0.7rem 0.85rem;
       border-radius: var(--radius-sm);
       border: 1px solid var(--border-color);
       background: #020617;
       color: var(--text-main);
       font-family: 'Fira Code', monospace;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
     }
 
-    .err-msg {
+    .err-text {
       font-size: 0.75rem;
       color: var(--danger-color);
       font-family: 'Fira Code', monospace;
+      min-height: 1rem;
     }
 
     .sim-btn-submit {
-      padding: 0.75rem 1.5rem;
+      padding: 0.8rem 1.4rem;
       border-radius: 9999px;
       border: none;
       font-weight: 700;
-      font-size: 0.9rem;
+      font-size: 0.92rem;
       cursor: pointer;
       background: linear-gradient(135deg, #10b981 0%, #38bdf8 100%);
-      color: #000;
+      color: #030712;
       transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .sim-btn-submit:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background: #334155;
+      color: #fff;
+    }
+
+    .sim-compass-box {
+      background: #080d1a;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .compass-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.75rem;
+      margin-bottom: 1rem;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .compass-body {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.8rem;
+      color: #cbd5e1;
+      overflow-y: auto;
+      max-height: 250px;
+      background: #030712;
+      padding: 0.85rem;
+      border-radius: 6px;
+      line-height: 1.5;
     }
 
     .mock-console {
@@ -242,372 +395,584 @@
       border: 1px solid var(--border-color);
       border-radius: var(--radius-sm);
       font-family: 'Fira Code', monospace;
-      padding: 1rem;
-      font-size: 0.85rem;
-      line-height: 1.6;
-    }
-
-    /* CODE COMPARISON */
-    .code-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.25rem;
-    }
-
-    @media (max-width: 850px) { .code-grid { grid-template-columns: 1fr; } }
-
-    .code-panel {
-      background: #050811;
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md);
-      overflow: hidden;
-    }
-
-    .code-panel-header {
-      padding: 0.65rem 1rem;
-      background: #0d1322;
-      border-bottom: 1px solid var(--border-color);
-      font-size: 0.8rem;
-      font-weight: 700;
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .code-content {
       padding: 1.25rem;
-      font-family: 'Fira Code', monospace;
       font-size: 0.85rem;
-      white-space: pre;
-      overflow-x: auto;
       line-height: 1.6;
+      margin-top: 1.5rem;
+      min-height: 160px;
     }
 
-    .hl-kw { color: #f472b6; }
-    .hl-imp { color: #38bdf8; }
-    .hl-str { color: #a3e635; }
-    .hl-func { color: #fbbf24; }
-    .hl-comment { color: var(--text-dim); font-style: italic; }
-    .hl-tag { color: #818cf8; }
-    .hl-purple { color: #a855f7; font-weight: bold; }
-    .hl-danger { color: #f43f5e; font-weight: bold; }
-    .hl-green { color: #10b981; font-weight: bold; }
+    /* REVELATION / CALLOUT CARD */
+    .revelation-card {
+      background: linear-gradient(135deg, rgba(244, 63, 94, 0.08) 0%, rgba(15, 23, 42, 0.8) 100%);
+      border: 1px solid var(--danger-border);
+      border-radius: var(--radius-lg);
+      padding: 2.2rem;
+      margin-bottom: 2.5rem;
+    }
+
+    /* REDIRECTION CARD */
+    .redirect-card {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(15, 23, 42, 0.8) 100%);
+      border: 1px solid var(--client-border);
+      border-radius: var(--radius-lg);
+      padding: 2.2rem;
+      margin-bottom: 2.5rem;
+    }
 
     /* QUIZ */
     .quiz-option {
       background: var(--bg-card-hover);
       border: 1px solid var(--border-color);
-      padding: 1rem;
+      padding: 1rem 1.25rem;
       border-radius: var(--radius-sm);
       margin-bottom: 0.75rem;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 0.75rem;
+      transition: all 0.2s ease;
     }
 
+    .quiz-option:hover { border-color: var(--text-muted); }
     .quiz-option.correct { background: var(--server-bg) !important; border-color: var(--server-color) !important; color: var(--server-color); }
     .quiz-option.incorrect { background: var(--danger-bg) !important; border-color: var(--danger-color) !important; color: var(--danger-color); }
-    .radio-circle { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--text-dim); }
+
+    .radio-circle {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid var(--text-dim);
+      flex-shrink: 0;
+    }
 
     footer {
       text-align: center;
-      padding: 2rem 0;
+      padding: 2.5rem 0;
       color: var(--text-dim);
-      font-size: 0.875rem;
+      font-size: 0.9rem;
       border-top: 1px solid var(--border-color);
-      margin-top: 3rem;
+      margin-top: 3.5rem;
     }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <!-- HERO -->
+    <!-- HERO HEADER -->
     <header class="hero">
       <div class="badge-group">
-        <span class="badge badge-server">Server Action DB Feature</span>
-        <span class="badge badge-purple">Bcrypt Salt Hashing</span>
-        <span class="badge badge-client">Mongo Error 11000 &amp; router.push</span>
+        <span class="badge badge-server">MongoDB Atlas &amp; Compass</span>
+        <span class="badge badge-purple">bcrypt Hashing</span>
+        <span class="badge badge-danger">11000 Duplicate Key Error</span>
+        <span class="badge badge-client">router.push('/login')</span>
       </div>
-      <h1>Full User Registration Feature with Server Actions</h1>
+      <h1>Full User Registration Feature With Server Actions</h1>
       <p class="hero-subtitle">
-        Understand the complete end-to-end production flow: Zod schema parsing, MongoDB connection, salted password hashing, duplicate index error handling, and client navigation.
+        Theory khatam, ab Real Database action shuru! Seekhein kaise Server Action ke andar <code>connectDB()</code> call hota hai, <code>bcrypt.hash</code> se password encrypt hota hai, MongoDB me actual user create hota hai, Duplicate Email error (11000) handle hota hai, aur <code>router.push('/login')</code> se user redirect hota hai!
       </p>
     </header>
 
-    <!-- SECTION 1: THE PIPELINE -->
+    <!-- SECTION 1: THE BIG TRANSITION -->
     <div class="card">
       <div class="card-header">
-        <div class="badge-icon">⚙️</div>
-        <h2>1. The Complete 5-Step Production Registration Pipeline</h2>
+        <div class="badge-icon" style="background: var(--server-bg); color: var(--server-color); border: 1px solid var(--server-border);">🚀</div>
+        <div>
+          <h2>1. Asli Database Me User Creation: API Routes Ka The End!</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">Fake simulation se nikal kar real MongoDB Atlas &amp; Compass me document banana</p>
+        </div>
       </div>
 
-      <div class="pipeline-grid">
-        <div class="pipe-step">
-          <div class="pipe-step-num">1</div>
-          <div class="pipe-title">Zod Parse</div>
-          <div class="pipe-desc">
-            <code>registerSchema.safeParse(formData)</code> verifies types &amp; rules on Node.js.
-          </div>
+      <div class="teacher-box">
+        <div class="teacher-title">👨‍🏫 Instructor Ki Zubani:</div>
+        <p style="font-size: 0.95rem; color: var(--text-main); line-height: 1.7;">
+          <em>"Ab tak humne Server Actions ko bahut acche se seekh liya hai — data bhejna, receive karna, client validation, Zod schemas sab clear hai. Ab hum ready hain Server Action se actual database me user save karne ke liye! Maine apna MongoDB Compass aur Atlas open kar liya hai, purane users delete kar diye hain taaki fresh user live create hote hue dikhe!"</em>
+        </p>
+      </div>
+
+      <p style="font-size: 0.95rem; color: var(--text-main); line-height: 1.7;">
+        Pehle jab hum API route (<code>app/api/register/route.js</code>) use karte the, toh hum likhte the:
+        <code>const body = await request.json()</code> aur <code>NextResponse.json(...)</code>.
+        <br><br>
+        <strong style="color: var(--server-color);">Server Action Ka Kamal:</strong> Yahan na koi <code>request.json()</code> chahiye, na <code>NextResponse</code>! Zod validation se hume seedha clean <strong><code>data</code></strong> milta hai jisme <code>name</code>, <code>email</code>, aur <code>password</code> ready hote hain!
+      </p>
+    </div>
+
+    <!-- SECTION 2: THE 5-STEP PIPELINE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border: 1px solid var(--purple-border);">🔄</div>
+        <div>
+          <h2>2. The Complete 5-Step Production Registration Pipeline</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">Frontend click se lekar MongoDB document banne tak ka safar</p>
+        </div>
+      </div>
+
+      <div class="pipe-grid">
+        <div class="pipe-card">
+          <div class="pipe-number">1</div>
+          <h4>Client Zod</h4>
+          <p>Browser me 0ms instant validation. Galat format hone par request wahi ruk jaati hai.</p>
         </div>
 
-        <div class="pipe-step">
-          <div class="pipe-step-num">2</div>
-          <div class="pipe-title">Connect DB</div>
-          <div class="pipe-desc">
-            <code>await connectDB()</code> initializes or reuses the MongoDB Mongoose connection.
-          </div>
+        <div class="pipe-card">
+          <div class="pipe-number">2</div>
+          <h4>Server Zod</h4>
+          <p>Server Action me <code>registerSchema.safeParse</code> dobara check karta hai security ke liye.</p>
         </div>
 
-        <div class="pipe-step">
-          <div class="pipe-step-num">3</div>
-          <div class="pipe-title">Bcrypt Hash</div>
-          <div class="pipe-desc">
-            <code>await bcrypt.hash(password, 10)</code> hashes password with 10 salt rounds.
-          </div>
+        <div class="pipe-card">
+          <div class="pipe-number">3</div>
+          <h4>connectDB &amp; bcrypt</h4>
+          <p>Mongoose se MongoDB connect hota hai aur password 10 salt rounds se hash hota hai.</p>
         </div>
 
-        <div class="pipe-step">
-          <div class="pipe-step-num">4</div>
-          <div class="pipe-title">User.create()</div>
-          <div class="pipe-desc">
-            Saves user document into MongoDB collection. Catches Mongo <code>code === 11000</code>.
-          </div>
+        <div class="pipe-card">
+          <div class="pipe-number">4</div>
+          <h4>User.create</h4>
+          <p>MongoDB me document save hota hai. Duplicate hone par Error 11000 catch hota hai.</p>
         </div>
 
-        <div class="pipe-step">
-          <div class="pipe-step-num">5</div>
-          <div class="pipe-title">Client Redirect</div>
-          <div class="pipe-desc">
-            Client <code>useEffect</code> detects <code>state.success</code> and triggers <code>router.push('/login')</code>.
-          </div>
+        <div class="pipe-card">
+          <div class="pipe-number">5</div>
+          <h4>router.push</h4>
+          <p>Client par <code>state.success</code> milte hi user automatically <code>/login</code> par redirect ho jaata hai!</p>
         </div>
       </div>
     </div>
 
-    <!-- SECTION 2: ERROR HANDLING & REDIRECTION -->
-    <div class="card">
-      <div class="card-header">
-        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4);">🛡️</div>
-        <h2>2. MongoDB Duplicate Error (11000) &amp; Client Router Navigation</h2>
+    <!-- SECTION 3: MONGODB ERROR 11000 DEEP DIVE -->
+    <div class="revelation-card">
+      <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+        <span style="font-size: 2rem;">💥</span>
+        <h2 style="font-size: 1.4rem; color: var(--danger-color); font-weight: 800;">3. Sabse Bada Trap: MongoDB Error 11000 (Duplicate Email)</h2>
       </div>
 
-      <div style="font-family: 'Fira Code', monospace; background: #020617; padding: 1.25rem; border-radius: var(--radius-sm); font-size: 0.85rem; border-left: 4px solid var(--purple-color); margin-bottom: 1rem;">
-        // Server Action catch block:<br>
-        catch (err) {<br>
-        &nbsp;&nbsp;if (err.code === 11000) {<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;return { errors: { email: "Email already exists" } };<br>
-        &nbsp;&nbsp;}<br>
-        &nbsp;&nbsp;return { errors: { name: "Something went wrong." } };<br>
-        }
+      <p style="font-size: 1rem; color: var(--text-main); line-height: 1.8;">
+        Jab user kisi aise email se register karta hai jo pehle se database me exist karta hai, toh MongoDB crash nahi hota — wo ek specific error code phekta hai: <strong><code>err.code === 11000</code></strong> (E11000 duplicate key error).
+      </p>
+
+      <div class="code-panel" style="margin: 1.25rem 0; border-color: var(--danger-border);">
+        <div class="code-panel-header" style="color: var(--danger-color);">
+          <span>Catch Block Error Mapping (app/actions/userAction.js)</span>
+          <span>Matching Zod's FieldErrors Shape</span>
+        </div>
+        <div class="code-content">} <span class="hl-kw">catch</span> (err) {
+  <span class="hl-kw">if</span> (err.<span class="hl-danger">code === 11000</span>) {
+    <span class="hl-comment">// Return errors in the exact same format as Zod!</span>
+    <span class="hl-imp">return</span> {
+      <span class="hl-danger">errors</span>: {
+        <span class="hl-danger">email</span>: <span class="hl-str">"Email already exists"</span>,
+      },
+    };
+  } <span class="hl-kw">else</span> {
+    <span class="hl-imp">return</span> {
+      <span class="hl-danger">errors</span>: {
+        name: <span class="hl-str">"Something went wrong."</span>,
+      },
+    };
+  }
+}</div>
       </div>
 
-      <div style="font-family: 'Fira Code', monospace; background: #0b0f19; padding: 1.25rem; border-radius: var(--radius-sm); font-size: 0.85rem; border-left: 4px solid var(--client-color);">
-        // Client Page useEffect Hook:<br>
-        useEffect(() =&gt; {<br>
-        &nbsp;&nbsp;if (state.success) {<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;router.push("/login"); // 👈 Automatic navigation to login page on success!<br>
-        &nbsp;&nbsp;} else {<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;setErrors(state.errors);<br>
-        &nbsp;&nbsp;}<br>
-        }, [state]);
+      <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.7;">
+        <strong style="color: var(--server-color);">Kamaal Ki Architecture:</strong> Humne return format bilkul Zod ke fieldErrors jaisa rakha: <code>errors: { email: "Email already exists" }</code>. Iska fayda? Client UI me alag se koi naya code nahi likhna pada — wahi <code>&lt;p className="text-red-500"&gt;{errors?.email}&lt;/p&gt;</code> database error ko bhi seamlessly display kar deta hai!
+      </p>
+    </div>
+
+    <!-- SECTION 4: CLIENT REDIRECTION WITH ROUTER.PUSH -->
+    <div class="redirect-card">
+      <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+        <span style="font-size: 2rem;">🧭</span>
+        <h2 style="font-size: 1.4rem; color: var(--client-color); font-weight: 800;">4. Client-Side Par Success Redirection (router.push)</h2>
+      </div>
+
+      <p style="font-size: 1rem; color: var(--text-main); line-height: 1.8;">
+        Jab registration successful ho jaye, toh user ko usi page par baithaye rakhne ka koi matlab nahi hota. Use turant <strong>Login page</strong> par bhej dena chahiye!
+      </p>
+
+      <div class="code-panel" style="margin: 1.25rem 0; border-color: var(--client-border);">
+        <div class="code-panel-header" style="color: var(--client-color);">
+          <span>Client Redirection Logic (app/register/page.js)</span>
+          <span>useEffect + useRouter</span>
+        </div>
+        <div class="code-content"><span class="hl-kw">const</span> router = <span class="hl-func">useRouter</span>();
+
+<span class="hl-func">useEffect</span>(() =&gt; {
+  <span class="hl-kw">if</span> (state.success) {
+    <span class="hl-comment">// Success hote hi user ko Login page par redirect karo!</span>
+    router.<span class="hl-func">push</span>(<span class="hl-str">"/login"</span>);
+  } <span class="hl-kw">else</span> {
+    <span class="hl-comment">// Failure hone par server errors ko UI me set karo!</span>
+    <span class="hl-func">setErrors</span>(state.errors);
+  }
+}, [state]);</div>
       </div>
     </div>
 
-    <!-- SECTION 3: LIVE SIMULATOR -->
+    <!-- SECTION 5: LIVE INTERACTIVE SIMULATOR -->
     <div class="card">
       <div class="card-header">
-        <div class="badge-icon">🎮</div>
-        <h2>3. Live Interactive Registration Feature Simulator</h2>
+        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border: 1px solid var(--purple-border);">🎮</div>
+        <div>
+          <h2>5. Live Interactive Registration &amp; MongoDB Compass Simulator</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">Register karo, Compass me live hashed document dekho, duplicate email test karo, aur redirect feel karo!</p>
+        </div>
       </div>
 
       <div class="simulator-container">
-        <div class="sim-form">
-          <div class="form-group">
-            <label>Name</label>
-            <input id="input-name" type="text" value="ProCodrr">
+        <div class="sim-layout">
+          <!-- FORM -->
+          <div class="sim-form-box">
+            <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--client-color); display: flex; align-items: center; gap: 0.5rem;">
+              <span>📝</span> Register Form (UI)
+            </h4>
+
+            <div class="form-group">
+              <label>Name</label>
+              <input id="input-name" type="text" value="ProCodrr">
+              <div id="err-name" class="err-text"></div>
+            </div>
+
+            <div class="form-group">
+              <label>Email</label>
+              <input id="input-email" type="email" value="procodrr@gmail.com">
+              <div id="err-email" class="err-text"></div>
+            </div>
+
+            <div class="form-group">
+              <label>Password</label>
+              <input id="input-password" type="password" value="1234ABcd">
+              <div id="err-password" class="err-text"></div>
+            </div>
+
+            <button id="sim-submit-btn" class="sim-btn-submit" onclick="runRegistrationSim()">
+              <span>Register User</span>
+            </button>
+
+            <button style="background: transparent; border: 1px dashed var(--border-color); color: var(--text-dim); padding: 0.4rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer;" onclick="resetSimDatabase()">
+              🗑️ Reset Compass Database (Delete All)
+            </button>
           </div>
 
-          <div class="form-group">
-            <label>Email</label>
-            <input id="input-email" type="email" value="procodrr@gmail.com">
-            <div id="err-email" class="err-msg"></div>
-          </div>
+          <!-- MONGODB COMPASS VIEW -->
+          <div class="sim-compass-box">
+            <div class="compass-header">
+              <span style="color: var(--server-color); display: flex; align-items: center; gap: 0.4rem;">
+                <span>🍃</span> MongoDB Compass: test.users
+              </span>
+              <span id="doc-count-badge" style="background: rgba(16, 185, 129, 0.2); color: var(--server-color); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">
+                0 Documents
+              </span>
+            </div>
 
-          <div class="form-group">
-            <label>Password (Valid: 1234ABcd)</label>
-            <input id="input-password" type="password" value="1234ABcd">
+            <div id="compass-viewer" class="compass-body">
+              <span style="color: var(--text-dim);">// Database is clean. No users registered yet. Fill form and submit to create document!</span>
+            </div>
           </div>
-
-          <button class="sim-btn-submit" onclick="simulateRegistration()">
-            ⚡ Register User via Server Action
-          </button>
         </div>
 
         <div id="sim-console" class="mock-console">
-          Console Log: System initialized. Test with default email or 'existing@gmail.com'.
+          <span style="color: var(--text-dim);">// Ready! Click 'Register User' above.</span>
         </div>
       </div>
     </div>
 
-    <!-- SECTION 4: CODE BREAKDOWN -->
+    <!-- SECTION 6: FULL CODE COMPARISON -->
     <div class="card">
       <div class="card-header">
-        <div class="badge-icon">🔍</div>
-        <h2>4. Side-by-Side Code Anatomy</h2>
+        <div class="badge-icon" style="background: var(--client-bg); color: var(--client-color); border: 1px solid var(--client-border);">💻</div>
+        <div>
+          <h2>6. Project Files Ka Final Production Code</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">app/register/page.js vs app/actions/userAction.js</p>
+        </div>
       </div>
 
       <div class="code-grid">
+        <!-- CLIENT -->
         <div class="code-panel">
           <div class="code-panel-header">
-            <span style="color: var(--server-color);">app/actions/userAction.js</span>
-            <span>Server Action</span>
+            <span style="color: var(--client-color);">🌐 app/register/page.js ("use client")</span>
+            <span class="badge badge-client">Client Page</span>
           </div>
-          <div class="code-content"><span class="hl-green">"use server"</span>;
+          <div class="code-content"><span class="hl-kw">"use client"</span>;
+<span class="hl-imp">import</span> { useActionState, useEffect, useState } <span class="hl-imp">from</span> <span class="hl-str">"react"</span>;
+<span class="hl-imp">import</span> { useRouter } <span class="hl-imp">from</span> <span class="hl-str">"next/navigation"</span>;
+<span class="hl-imp">import</span> { registerUser } <span class="hl-imp">from</span> <span class="hl-str">"../actions/userAction"</span>;
+<span class="hl-imp">import</span> { registerSchema } <span class="hl-imp">from</span> <span class="hl-str">"@/lib/schema/userSchema"</span>;
+<span class="hl-imp">import</span> { z } <span class="hl-imp">from</span> <span class="hl-str">"zod/v4"</span>;
 
-<span class="hl-imp">import</span> bcrypt <span class="hl-imp">from</span> <span class="hl-str">"bcrypt"</span>;
-<span class="hl-imp">import</span> { connectDB } <span class="hl-imp">from</span> <span class="hl-str">"@/lib/connectDB"</span>;
-<span class="hl-imp">import</span> User <span class="hl-imp">from</span> <span class="hl-str">"@/models/userModel"</span>;
-
-<span class="hl-kw">export async function</span> <span class="hl-func">registerUser</span>(_, formData) {
-  <span class="hl-kw">const</span> { success, data } = registerSchema.<span class="hl-func">safeParse</span>(formData);
-  <span class="hl-kw">if</span> (!success) <span class="hl-kw">return</span> { success: <span class="hl-kw">false</span>, errors: ... };
-
-  <span class="hl-kw">await</span> <span class="hl-func">connectDB</span>();
-  <span class="hl-kw">try</span> {
-    <span class="hl-kw">const</span> hashedPassword = <span class="hl-kw">await</span> bcrypt.<span class="hl-func">hash</span>(data.password, 10);
-    <span class="hl-kw">await</span> User.<span class="hl-func">create</span>({ ...data, password: hashedPassword });
-    <span class="hl-kw">return</span> { <span class="hl-purple">success: true</span>, message: <span class="hl-str">"Registered!"</span> };
-  } <span class="hl-kw">catch</span> (err) {
-    <span class="hl-kw">if</span> (err.code === <span class="hl-danger">11000</span>) {
-      <span class="hl-kw">return</span> { errors: { email: <span class="hl-str">"Email already exists"</span> } };
-    }
-  }
-}</div>
-        </div>
-
-        <div class="code-panel">
-          <div class="code-panel-header">
-            <span style="color: var(--client-color);">app/register/page.js</span>
-            <span>Client Page</span>
-          </div>
-          <div class="code-content"><span class="hl-str">"use client"</span>;
-
-<span class="hl-kw">export default function</span> <span class="hl-func">RegisterPage</span>() {
+<span class="hl-imp">export default function</span> <span class="hl-func">RegisterPage</span>() {
   <span class="hl-kw">const</span> router = <span class="hl-func">useRouter</span>();
-  <span class="hl-kw">const</span> [state, formAction, isPending] = 
-    <span class="hl-func">useActionState</span>(registerUser, {});
+  <span class="hl-kw">const</span> [state, formAction, isPending] = <span class="hl-func">useActionState</span>(registerUser, {});
+  <span class="hl-kw">const</span> [errors, setErrors] = <span class="hl-func">useState</span>({});
 
+  <span class="hl-comment">// Auto redirect on success, or set server errors</span>
   <span class="hl-func">useEffect</span>(() =&gt; {
-    <span class="hl-kw">if</span> (<span class="hl-purple">state.success</span>) {
-      <span class="hl-comment">// 🚀 Redirect to login on success:</span>
+    <span class="hl-kw">if</span> (state.success) {
       router.<span class="hl-func">push</span>(<span class="hl-str">"/login"</span>);
     } <span class="hl-kw">else</span> {
       <span class="hl-func">setErrors</span>(state.errors);
     }
   }, [state]);
 
-  <span class="hl-kw">return</span> &lt;<span class="hl-tag">form</span> action={<span class="hl-func">handleFormAction</span>}&gt;...&lt;/<span class="hl-tag">form</span>&gt;;
+  <span class="hl-kw">const</span> <span class="hl-func">handleFormAction</span> = <span class="hl-kw">async</span> (formData) =&gt; {
+    <span class="hl-kw">const</span> newUser = {
+      name: formData.<span class="hl-func">get</span>(<span class="hl-str">"name"</span>),
+      email: formData.<span class="hl-func">get</span>(<span class="hl-str">"email"</span>),
+      password: formData.<span class="hl-func">get</span>(<span class="hl-str">"password"</span>),
+    };
+
+    <span class="hl-kw">const</span> { success, data, error } = registerSchema.<span class="hl-func">safeParse</span>(newUser);
+    <span class="hl-kw">if</span> (!success) {
+      <span class="hl-kw">return</span> <span class="hl-func">setErrors</span>(z.<span class="hl-func">flattenError</span>(error).fieldErrors);
+    }
+
+    <span class="hl-func">setErrors</span>({});
+    <span class="hl-func">formAction</span>(data);
+  };
+
+  <span class="hl-imp">return</span> (
+    <span class="hl-tag">&lt;form</span> <span class="hl-green">action={handleFormAction}</span> <span class="hl-purple">noValidate</span><span class="hl-tag">&gt;</span>
+      ...
+    <span class="hl-tag">&lt;/form&gt;</span>
+  );
+}</div>
+        </div>
+
+        <!-- SERVER -->
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span style="color: var(--server-color);">⚙️ app/actions/userAction.js ("use server")</span>
+            <span class="badge badge-server">Server Action</span>
+          </div>
+          <div class="code-content"><span class="hl-kw">"use server"</span>;
+<span class="hl-imp">import</span> bcrypt <span class="hl-imp">from</span> <span class="hl-str">"bcrypt"</span>;
+<span class="hl-imp">import</span> { connectDB } <span class="hl-imp">from</span> <span class="hl-str">"@/lib/connectDB"</span>;
+<span class="hl-imp">import</span> User <span class="hl-imp">from</span> <span class="hl-str">"@/models/userModel"</span>;
+<span class="hl-imp">import</span> { registerSchema } <span class="hl-imp">from</span> <span class="hl-str">"@/lib/schema/userSchema"</span>;
+<span class="hl-imp">import</span> { z } <span class="hl-imp">from</span> <span class="hl-str">"zod/v4"</span>;
+
+<span class="hl-imp">export async function</span> <span class="hl-func">registerUser</span>(_, formData) {
+  <span class="hl-kw">const</span> { success, data, error } = registerSchema.<span class="hl-func">safeParse</span>(formData);
+  <span class="hl-kw">if</span> (!success) {
+    <span class="hl-imp">return</span> { success: <span class="hl-kw">false</span>, errors: z.<span class="hl-func">flattenError</span>(error).fieldErrors };
+  }
+
+  <span class="hl-kw">await</span> <span class="hl-func">connectDB</span>();
+
+  <span class="hl-kw">try</span> {
+    <span class="hl-kw">const</span> { name, email, password } = data;
+    <span class="hl-kw">const</span> hashedPassword = <span class="hl-kw">await</span> bcrypt.<span class="hl-func">hash</span>(password, <span class="hl-purple">10</span>);
+    <span class="hl-kw">await</span> User.<span class="hl-func">create</span>({
+      name,
+      email,
+      password: hashedPassword,
+    });
+    <span class="hl-imp">return</span> { success: <span class="hl-kw">true</span>, message: <span class="hl-str">"User registered successfully"</span> };
+  } <span class="hl-kw">catch</span> (err) {
+    <span class="hl-kw">if</span> (err.<span class="hl-danger">code === 11000</span>) {
+      <span class="hl-imp">return</span> { errors: { email: <span class="hl-str">"Email already exists"</span> } };
+    } <span class="hl-kw">else</span> {
+      <span class="hl-imp">return</span> { errors: { name: <span class="hl-str">"Something went wrong."</span> } };
+    }
+  }
 }</div>
         </div>
       </div>
     </div>
 
-    <!-- SECTION 5: KNOWLEDGE CHECK -->
+    <!-- SECTION 7: QUIZ -->
     <div class="card">
       <div class="card-header">
-        <div class="badge-icon">❓</div>
-        <h2>5. Quick Knowledge Check</h2>
+        <div class="badge-icon" style="background: var(--amber-bg); color: var(--amber-color); border: 1px solid var(--amber-border);">🧠</div>
+        <div>
+          <h2>7. Quick Quiz: Apne Concepts Test Karo</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">Sahi option choose karo</p>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 1.5rem;">
+        <p style="font-weight: 700; margin-bottom: 0.75rem;">Sawaal 1: MongoDB me jab duplicate email se user register karne ki koshish ki jaati hai, toh kaunsa error code aata hai?</p>
+        <div class="quiz-option" onclick="checkQuiz(this, true)">
+          <div class="radio-circle"></div>
+          <span>err.code === 11000 (Duplicate key error)</span>
+        </div>
+        <div class="quiz-option" onclick="checkQuiz(this, false)">
+          <div class="radio-circle"></div>
+          <span>err.code === 404 (Not Found)</span>
+        </div>
+        <div class="quiz-option" onclick="checkQuiz(this, false)">
+          <div class="radio-circle"></div>
+          <span>err.code === 500 (Internal Server Error)</span>
+        </div>
       </div>
 
       <div>
-        <h4 style="margin-bottom: 0.75rem;">Q1: What MongoDB error code indicates a duplicate email unique index collision?</h4>
-        <div class="quiz-option" onclick="checkAnswer(this, false)">
-          <span class="radio-circle"></span>
-          <span>A) Error 404</span>
+        <p style="font-weight: 700; margin-bottom: 0.75rem;">Sawaal 2: Server Action me response return karte waqt kya `NextResponse.json()` use karna padta hai?</p>
+        <div class="quiz-option" onclick="checkQuiz(this, false)">
+          <div class="radio-circle"></div>
+          <span>Haan, Next.js me bina NextResponse ke response client tak nahi jaata.</span>
         </div>
-        <div class="quiz-option" onclick="checkAnswer(this, true)">
-          <span class="radio-circle"></span>
-          <span>B) Error Code 11000</span>
-        </div>
-        <div class="quiz-option" onclick="checkAnswer(this, false)">
-          <span class="radio-circle"></span>
-          <span>C) Error 500</span>
+        <div class="quiz-option" onclick="checkQuiz(this, true)">
+          <div class="radio-circle"></div>
+          <span>Nahi! Server Actions me simple Plain JavaScript Object (jaise `{ success: true }`) direct return kar sakte hain.</span>
         </div>
       </div>
     </div>
 
-    <!-- SECTION 6: POORA SAAR / HINGLISH GOLDEN RULE -->
-    <div class="card">
+    <!-- SECTION 8: POORA SAAR -->
+    <div class="card" style="border-color: rgba(16, 185, 129, 0.4); background: linear-gradient(180deg, rgba(16, 185, 129, 0.05) 0%, rgba(15, 23, 42, 0.8) 100%);">
       <div class="card-header">
-        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4);">💡</div>
-        <h2>6. Poora Saar &amp; Golden Master Rule (Hinglish)</h2>
+        <div class="badge-icon" style="background: var(--server-bg); color: var(--server-color); border: 1px solid var(--server-border);">⭐</div>
+        <div>
+          <h2>8. Poora Saar (Golden Key Takeaways)</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">Real-world registration feature ke 5 golden rules</p>
+        </div>
       </div>
 
-      <div style="padding: 1.5rem; background: #020617; border-left: 5px solid var(--purple-color); border-radius: var(--radius-md);">
-        <h3 style="color: var(--purple-color); margin-bottom: 0.75rem; font-size: 1.15rem;">💡 User Registration Feature Ka Poora Saar:</h3>
-
-        <p style="font-size: 0.98rem; color: var(--text-main); line-height: 1.8; margin-bottom: 1rem;">
-          Production apps me User Registration implementation me 5 interconnected building blocks hote hain:
-        </p>
-
-        <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 1.25rem;">
-          1. <strong>Zod Validation (`safeParse`)</strong> ➔ Client par form submitting se pehle checks chalao, aur Server Action me re-validate karo.
-          <br>2. <strong>MongoDB Connection (`connectDB()`)</strong> ➔ Direct Server Action ke andar `connectDB()` call karke Mongoose pool reuse karo.
-          <br>3. <strong>Bcrypt Hashing (`bcrypt.hash`)</strong> ➔ Never store plain-text passwords! Password ko 10 salt rounds se hash karo (`await bcrypt.hash(password, 10)`).
-          <br>4. <strong>Mongo Duplicate Error (`11000`)</strong> ➔ Unique email index error ko `catch (err)` me check karo: `if (err.code === 11000)` return `{ errors: { email: "Email already exists" } }`.
-          <br>5. <strong>Client Navigation (`router.push`)</strong> ➔ Client Page me `useEffect` se `state.success` detect karo aur user ko `/login` page par send kar do!
-        </p>
-
-        <div style="background: rgba(168, 85, 247, 0.1); border: 1px dashed var(--purple-color); padding: 1rem; border-radius: var(--radius-sm); font-size: 0.9rem;">
-          <strong style="color: var(--purple-color); display: block; margin-bottom: 0.5rem;">🔥 Full Registration Golden Checklist:</strong>
-          <ul style="padding-left: 1.2rem; line-height: 1.8; color: var(--text-main);">
-            <li><strong>1. Salted Hash Passwords 🛡️</strong> ➔ Hash passwords using `bcrypt.hash(password, 10)` before calling `User.create()`.</li>
-            <li><strong>2. Handle Code 11000 🏷️</strong> ➔ Explicitly map Mongo error 11000 to user-friendly `{ errors: { email: "Email already exists" } }`.</li>
-            <li><strong>3. React state Effect Navigation 🚀</strong> ➔ Trigger `router.push('/login')` inside `useEffect` watching `state.success`.</li>
-          </ul>
-        </div>
+      <div style="font-size: 0.95rem; color: var(--text-main); line-height: 1.85;">
+        <ul style="margin-left: 1.5rem; display: flex; flex-direction: column; gap: 0.8rem;">
+          <li><strong>No API Boilerplate:</strong> Server Actions me <code>request.json()</code> aur <code>NextResponse.json()</code> ki zaroorat nahi padti — seedha validated <code>data</code> use karo aur plain object return karo.</li>
+          <li><strong>Secure Hashing:</strong> Database me plain password kabhi save nahi karte; <code>await bcrypt.hash(password, 10)</code> se encrypt karke save kiya jaata hai.</li>
+          <li><strong>Catch Error 11000:</strong> Duplicate email par MongoDB Error 11000 throw karta hai, jise catch karke <code>errors: { email: "Email already exists" }</code> return karte hain.</li>
+          <li><strong>Smooth Redirection:</strong> Registration success hone par <code>router.push('/login')</code> se user ko turant login page par navigate karwaya jaata hai.</li>
+          <li><strong>Matching Error Shape:</strong> Server errors ko hamesha Zod ke <code>fieldErrors</code> format me return karo taaki frontend me extra error state logic na likhna pade.</li>
+        </ul>
       </div>
     </div>
 
     <footer>
-      Next.js User Registration Feature Guide &bull; Section 11 Lesson 06
+      Next.js Deep Dive Series • Section 11: Server Actions • Chapter 06: Full User Registration Feature Complete Guide
     </footer>
   </div>
 
   <script>
-    function simulateRegistration() {
-      const email = document.getElementById('input-email').value;
-      const name = document.getElementById('input-name').value;
-      const password = document.getElementById('input-password').value;
+    // IN-MEMORY COMPASS SIMULATION
+    let simulatedDatabase = [];
+
+    function runRegistrationSim() {
+      const name = document.getElementById('input-name').value.trim();
+      const email = document.getElementById('input-email').value.trim();
+      const password = document.getElementById('input-password').value.trim();
+
+      const errName = document.getElementById('err-name');
       const errEmail = document.getElementById('err-email');
+      const errPassword = document.getElementById('err-password');
       const consoleBox = document.getElementById('sim-console');
+      const submitBtn = document.getElementById('sim-submit-btn');
 
-      errEmail.innerText = "";
+      errName.innerText = '';
+      errEmail.innerText = '';
+      errPassword.innerText = '';
 
-      if (email === "existing@gmail.com") {
-        errEmail.innerText = "Email already exists";
-        consoleBox.innerHTML = `
-          <span style="color: var(--purple-color)">[SERVER ACTION] connectDB() ➔ User.create({ name: "${name}", email: "${email}" })</span><br>
-          <span style="color: var(--danger-color)">[MONGOOSE ERROR] MongoServerError: E11000 duplicate key error collection: users index: email_1</span><br>
-          <span style="color: var(--warning-color)">[CATCH BLOCK] err.code === 11000 matched!</span><br>
-          <span style="color: var(--danger-color)">[RETURN] { errors: { email: "Email already exists" } }</span>
-        `;
-      } else {
-        consoleBox.innerHTML = `
-          <span style="color: var(--purple-color)">[SERVER ACTION] registerSchema.safeParse PASSED ✅</span><br>
-          <span style="color: var(--purple-color)">[SERVER ACTION] connectDB() connected to MongoDB!</span><br>
-          <span style="color: var(--purple-color)">[BCRYPT] bcrypt.hash("${password}", 10) ➔ "$2b$10$e8F...X9z"</span><br>
-          <span style="color: var(--server-color)">[MONGOOSE] User.create() saved new user document!</span><br>
-          <span style="color: var(--server-color)">[RETURN] { success: true, message: "User registered successfully" }</span><br>
-          <span style="color: var(--client-color)">[CLIENT useEffect] state.success === true detected ➔ router.push("/login") 🚀</span>
-        `;
+      // STEP 1: CLIENT ZOD VALIDATION
+      if (name.length < 3) {
+        errName.innerText = "Name should be at least 3 characters";
+        consoleBox.innerHTML = '<span style="color: var(--danger-color)">[CLIENT ZOD] Name validation failed! (Min 3 chars required).</span>';
+        return;
       }
+      if (!email.includes('@') || !email.includes('.')) {
+        errEmail.innerText = "Please enter a valid email";
+        consoleBox.innerHTML = '<span style="color: var(--danger-color)">[CLIENT ZOD] Email validation failed! (Missing @ or domain).</span>';
+        return;
+      }
+      const pwdRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+      if (!pwdRegex.test(password)) {
+        errPassword.innerText = "Enter at least 8 characters, with uppercase, lowercase, and a number.";
+        consoleBox.innerHTML = '<span style="color: var(--danger-color)">[CLIENT ZOD] Password validation failed! (Must include lower, upper, digit, 8+ chars).</span>';
+        return;
+      }
+
+      // STEP 2: DISPATCH TO SERVER ACTION
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span>⏳ Saving to MongoDB Atlas...</span>';
+
+      consoleBox.innerHTML = `
+        <span style="color: var(--client-color)">[CLIENT] Passed Client Validation! Calling formAction(data)...</span><br>
+        <span style="color: var(--purple-color)">[SERVER ACTION] registerUser executed on Node.js runtime:</span><br>
+        <span style="color: var(--text-dim)">&nbsp;&nbsp;➔ Validating with registerSchema.safeParse()... (PASSED)</span><br>
+        <span style="color: var(--text-dim)">&nbsp;&nbsp;➔ Awaiting connectDB()... (Connected)</span><br>
+        <span style="color: var(--purple-color)">&nbsp;&nbsp;➔ Hashing password with bcrypt.hash(password, 10)...</span>
+      `;
+
+      setTimeout(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>Register User</span>';
+
+        // CHECK DUPLICATE EMAIL (MONGO ERROR 11000)
+        const isDuplicate = simulatedDatabase.some(u => u.email.toLowerCase() === email.toLowerCase());
+
+        if (isDuplicate) {
+          errEmail.innerText = "Email already exists";
+          consoleBox.innerHTML += `<br>
+            <span style="color: var(--danger-color)">[MONGODB DRIVER] MongoServerError: E11000 duplicate key error collection: test.users index: email_1 dup key: { email: "${email}" }</span><br>
+            <span style="color: var(--amber-color)">[SERVER CATCH BLOCK] Caught err.code === 11000!</span><br>
+            <span style="color: var(--amber-color)">&nbsp;&nbsp;➔ Returning { errors: { email: "Email already exists" } }</span><br>
+            <span style="color: var(--client-color)">[CLIENT UI] useEffect updated setErrors. Displayed red text under email input!</span>
+          `;
+          return;
+        }
+
+        // CREATE NEW USER DOCUMENT
+        const fakeHash = `$2b$10$eK7X` + Math.random().toString(36).substring(2, 12) + `Zq7W...`;
+        const newUserDoc = {
+          _id: `ObjectId("${Math.random().toString(16).substring(2, 10)}1106a")`,
+          name,
+          email,
+          password: fakeHash,
+          createdAt: new Date().toISOString()
+        };
+
+        simulatedDatabase.push(newUserDoc);
+        updateCompassViewer();
+
+        consoleBox.innerHTML += `<br>
+          <span style="color: var(--server-color)">[MONGODB ATLAS] User.create() SUCCESS! Document inserted into 'users' collection!</span><br>
+          <span style="color: var(--server-color)">&nbsp;&nbsp;➔ Returned: { success: true, message: "User registered successfully" }</span><br>
+          <span style="color: var(--client-color); font-weight: bold;">[CLIENT useEffect] Detected state.success === true!</span><br>
+          <span style="color: #38bdf8; font-weight: bold;">🧭 Triggering router.push("/login") ➔ Navigating user to Login Screen!</span>
+        `;
+
+        alert("🎉 User Registered Successfully in MongoDB!\n\nClient useEffect now executing: router.push('/login')");
+      }, 1200);
     }
 
-    function checkAnswer(element, isCorrect) {
+    function updateCompassViewer() {
+      const viewer = document.getElementById('compass-viewer');
+      const badge = document.getElementById('doc-count-badge');
+      badge.innerText = `${simulatedDatabase.length} Documents`;
+
+      if (simulatedDatabase.length === 0) {
+        viewer.innerHTML = '<span style="color: var(--text-dim);">// Database is clean. No users registered yet. Fill form and submit to create document!</span>';
+        return;
+      }
+
+      viewer.innerHTML = simulatedDatabase.map((u, i) => `
+        <div style="border-bottom: 1px dashed var(--border-color); padding-bottom: 0.6rem; margin-bottom: 0.6rem;">
+          <span style="color: var(--amber-color)">/* Document #${i + 1} */</span><br>
+          {<br>
+          &nbsp;&nbsp;<span style="color: var(--client-color)">_id</span>: <span style="color: var(--text-main)">${u._id}</span>,<br>
+          &nbsp;&nbsp;<span style="color: var(--client-color)">name</span>: <span style="color: var(--server-color)">"${u.name}"</span>,<br>
+          &nbsp;&nbsp;<span style="color: var(--client-color)">email</span>: <span style="color: var(--server-color)">"${u.email}"</span>,<br>
+          &nbsp;&nbsp;<span style="color: var(--client-color)">password</span>: <span style="color: #f43f5e">"${u.password}"</span> <span style="color: var(--text-dim)">// (bcrypt hashed)</span>,<br>
+          &nbsp;&nbsp;<span style="color: var(--client-color)">createdAt</span>: <span style="color: var(--text-dim)">"${u.createdAt}"</span><br>
+          }
+        </div>
+      `).join('');
+    }
+
+    function resetSimDatabase() {
+      simulatedDatabase = [];
+      updateCompassViewer();
+      document.getElementById('sim-console').innerHTML = '<span style="color: var(--amber-color)">[COMPASS RESET] Deleted all user documents from test.users!</span>';
+    }
+
+    function checkQuiz(element, isCorrect) {
       const parent = element.parentElement;
-      parent.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('correct', 'incorrect'));
+      parent.querySelectorAll('.quiz-option').forEach(el => {
+        el.classList.remove('correct', 'incorrect');
+      });
       if (isCorrect) element.classList.add('correct');
       else element.classList.add('incorrect');
     }

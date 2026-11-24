@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Next.js Guide: Understanding useActionState Hook (React 19)</title>
+  <title>Chapter 03: useActionState Hook Deep Dive | React 19 & Next.js</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
@@ -20,91 +20,116 @@
       
       --server-color: #10b981;
       --server-bg: rgba(16, 185, 129, 0.12);
+      --server-border: rgba(16, 185, 129, 0.35);
       
       --client-color: #38bdf8;
       --client-bg: rgba(56, 189, 248, 0.12);
+      --client-border: rgba(56, 189, 248, 0.35);
 
       --danger-color: #f43f5e;
-      --danger-bg: rgba(244, 63, 94, 0.15);
+      --danger-bg: rgba(244, 63, 94, 0.12);
       --danger-border: rgba(244, 63, 94, 0.4);
-      
-      --warning-color: #fbbf24;
-      --warning-bg: rgba(251, 191, 36, 0.12);
-      
-      --purple-color: #a855f7;
-      --purple-bg: rgba(168, 85, 247, 0.12);
-      
+
+      --purple-color: #c084fc;
+      --purple-bg: rgba(192, 132, 252, 0.12);
+      --purple-border: rgba(192, 132, 252, 0.35);
+
+      --amber-color: #fbbf24;
+      --amber-bg: rgba(251, 191, 36, 0.12);
+      --amber-border: rgba(251, 191, 36, 0.35);
+
       --radius-sm: 8px;
-      --radius-md: 14px;
-      --radius-lg: 20px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
       background-color: var(--bg-dark);
       color: var(--text-main);
-      line-height: 1.6;
-      padding: 2rem 1rem;
-      min-height: 100vh;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.7;
+      padding: 2.5rem 1rem;
     }
 
-    .container { max-width: 1150px; margin: 0 auto; }
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+    }
 
-    /* HERO HEADER */
-    header.hero {
+    /* HERO */
+    .hero {
       text-align: center;
-      padding: 3rem 1.5rem;
-      background: radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.15) 0%, rgba(7, 10, 17, 0) 70%);
+      padding: 3.2rem 1.8rem;
+      background: linear-gradient(180deg, rgba(192, 132, 252, 0.1) 0%, rgba(56, 189, 248, 0.06) 50%, rgba(7, 10, 17, 0) 100%);
       border: 1px solid var(--border-color);
       border-radius: var(--radius-lg);
       margin-bottom: 2.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 75%;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--purple-color), var(--client-color), var(--server-color), transparent);
     }
 
     .badge-group {
       display: flex;
+      gap: 0.6rem;
       justify-content: center;
-      gap: 0.75rem;
-      margin-bottom: 1rem;
       flex-wrap: wrap;
+      margin-bottom: 1.25rem;
     }
 
     .badge {
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      padding: 0.35rem 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 0.95rem;
       border-radius: 9999px;
-      border: 1px solid var(--border-color);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
     }
 
-    .badge-purple { background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4); }
-    .badge-server { background: var(--server-bg); color: var(--server-color); border-color: rgba(16, 185, 129, 0.4); }
-    .badge-client { background: var(--client-bg); color: var(--client-color); border-color: rgba(56, 189, 248, 0.4); }
+    .badge-purple { background: var(--purple-bg); color: var(--purple-color); border: 1px solid var(--purple-border); }
+    .badge-client { background: var(--client-bg); color: var(--client-color); border: 1px solid var(--client-border); }
+    .badge-server { background: var(--server-bg); color: var(--server-color); border: 1px solid var(--server-border); }
+    .badge-danger { background: var(--danger-bg); color: var(--danger-color); border: 1px solid var(--danger-border); }
+    .badge-amber { background: var(--amber-bg); color: var(--amber-color); border: 1px solid var(--amber-border); }
 
     h1 {
       font-size: 2.4rem;
       font-weight: 800;
-      margin-bottom: 0.75rem;
-      background: linear-gradient(135deg, #ffffff 40%, #a855f7 100%);
+      letter-spacing: -0.03em;
+      margin-bottom: 1rem;
+      line-height: 1.25;
+      background: linear-gradient(135deg, #ffffff 40%, #cbd5e1 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
     .hero-subtitle {
-      font-size: 1.1rem;
+      font-size: 1.15rem;
       color: var(--text-muted);
-      max-width: 800px;
+      max-width: 860px;
       margin: 0 auto;
+      line-height: 1.7;
     }
 
+    /* CARD STYLING */
     .card {
       background: var(--bg-card);
       border: 1px solid var(--border-color);
       border-radius: var(--radius-lg);
-      padding: 2rem;
+      padding: 2.4rem;
       margin-bottom: 2.5rem;
       box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
     }
@@ -112,88 +137,206 @@
     .card-header {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 1rem;
       margin-bottom: 1.5rem;
+      padding-bottom: 1.1rem;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.6);
     }
 
     .badge-icon {
-      width: 40px;
-      height: 40px;
+      width: 48px;
+      height: 48px;
       border-radius: var(--radius-sm);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.2rem;
+      font-size: 1.5rem;
       font-weight: bold;
-      background: var(--purple-bg);
-      color: var(--purple-color);
-      border: 1px solid rgba(168, 85, 247, 0.4);
+      flex-shrink: 0;
     }
 
-    /* ARCHITECTURE GRID */
-    .arch-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
+    .card h2 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
     }
 
-    @media (max-width: 768px) { .arch-grid { grid-template-columns: 1fr; } }
+    /* TEACHER BOX */
+    .teacher-box {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(15, 23, 42, 0.8) 100%);
+      border-left: 4px solid var(--client-color);
+      border-radius: var(--radius-sm);
+      padding: 1.25rem 1.5rem;
+      margin: 1.25rem 0;
+    }
 
-    .arch-box {
-      border: 1px solid var(--border-color);
+    .teacher-title {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--client-color);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    /* AHA MOMENT BOX */
+    .aha-box {
+      background: #18090d;
+      border: 1px solid var(--danger-border);
+      border-left: 5px solid var(--danger-color);
       border-radius: var(--radius-md);
       padding: 1.5rem;
-      background: rgba(30, 41, 59, 0.4);
+      margin: 1.5rem 0;
     }
 
-    .arch-box.without-hook { border-color: var(--danger-border); background: var(--danger-bg); }
-    .arch-box.with-hook { border-color: rgba(168, 85, 247, 0.4); background: var(--purple-bg); }
-
-    .arch-title {
-      font-size: 1.15rem;
-      font-weight: 700;
+    .aha-title {
+      color: var(--danger-color);
+      font-weight: 800;
+      font-size: 1.05rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
       margin-bottom: 0.75rem;
+    }
+
+    .terminal-snippet {
+      background: #090305;
+      border: 1px solid rgba(244, 63, 94, 0.35);
+      border-radius: var(--radius-sm);
+      padding: 1rem 1.25rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.88rem;
+      color: #fda4af;
+      overflow-x: auto;
+      white-space: pre;
+      line-height: 1.6;
+    }
+
+    /* TUPLE GRID */
+    .tuple-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+      margin: 1.5rem 0;
+    }
+
+    @media (max-width: 850px) { .tuple-grid { grid-template-columns: 1fr; } }
+
+    .tuple-item {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.4rem;
+      position: relative;
+    }
+
+    .tuple-item.state-box { border-top: 4px solid var(--server-color); }
+    .tuple-item.action-box { border-top: 4px solid var(--purple-color); }
+    .tuple-item.pending-box { border-top: 4px solid var(--amber-color); }
+
+    .tuple-index {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 0.6rem;
+    }
+
+    .tuple-name {
+      font-size: 1.15rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
       display: flex;
       align-items: center;
       gap: 0.5rem;
     }
 
-    /* TUPLE DESTRUCTURING BOX */
-    .tuple-box {
-      background: #020617;
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md);
-      padding: 1.25rem;
-      font-family: 'Fira Code', monospace;
-      font-size: 0.9rem;
-      margin-top: 1rem;
+    /* CODE COMPARISON */
+    .code-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin: 1.5rem 0;
     }
 
-    .tuple-item {
-      margin-bottom: 0.75rem;
-      padding-left: 1rem;
-      border-left: 3px solid var(--border-color);
+    @media (max-width: 900px) { .code-grid { grid-template-columns: 1fr; } }
+
+    .code-panel {
+      background: #050811;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
+
+    .code-panel-header {
+      padding: 0.85rem 1.1rem;
+      background: #0d1322;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .code-content {
+      padding: 1.25rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      white-space: pre;
+      overflow-x: auto;
+      line-height: 1.65;
+      flex: 1;
+    }
+
+    /* SYNTAX */
+    .hl-kw { color: #f472b6; }
+    .hl-imp { color: #38bdf8; }
+    .hl-str { color: #a3e635; }
+    .hl-func { color: #fbbf24; }
+    .hl-comment { color: var(--text-dim); font-style: italic; }
+    .hl-tag { color: #818cf8; }
+    .hl-green { color: #10b981; font-weight: bold; }
+    .hl-purple { color: #c084fc; font-weight: bold; }
+    .hl-danger { color: #f43f5e; font-weight: bold; }
 
     /* SIMULATOR */
     .simulator-container {
       background: #030712;
       border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
-      padding: 1.5rem;
-      margin-top: 1rem;
+      padding: 1.8rem;
+      margin: 1.5rem 0;
+    }
+
+    .sim-controls {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      background: #0d1322;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-sm);
+      align-items: center;
+      flex-wrap: wrap;
     }
 
     .sim-form {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      max-width: 500px;
+      max-width: 540px;
       margin: 0 auto 1.5rem auto;
       background: #0b0f19;
-      padding: 1.5rem;
+      padding: 1.6rem;
       border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      gap: 1.1rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     }
 
     .form-group {
@@ -203,13 +346,15 @@
     }
 
     .form-group label {
-      font-size: 0.85rem;
+      font-size: 0.88rem;
       font-weight: 600;
       color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
     }
 
     .form-group input {
-      padding: 0.65rem 0.85rem;
+      padding: 0.75rem 0.9rem;
       border-radius: var(--radius-sm);
       border: 1px solid var(--border-color);
       background: #020617;
@@ -219,15 +364,19 @@
     }
 
     .sim-btn-submit {
-      padding: 0.75rem 1.5rem;
+      padding: 0.85rem 1.5rem;
       border-radius: 9999px;
       border: none;
       font-weight: 700;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       cursor: pointer;
-      background: linear-gradient(135deg, #a855f7 0%, #38bdf8 100%);
+      background: linear-gradient(135deg, #38bdf8 0%, #a855f7 100%);
       color: #fff;
       transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
     }
 
     .sim-btn-submit:disabled {
@@ -236,381 +385,597 @@
       background: #334155;
     }
 
+    .status-msg-box {
+      font-size: 0.85rem;
+      font-family: 'Fira Code', monospace;
+      padding: 0.5rem 0.75rem;
+      border-radius: 4px;
+      display: none;
+    }
+
+    .status-msg-box.success {
+      display: block;
+      color: #10b981;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .status-msg-box.error {
+      display: block;
+      color: #f43f5e;
+      background: rgba(244, 63, 94, 0.1);
+      border: 1px solid rgba(244, 63, 94, 0.3);
+    }
+
     .mock-console {
       background: #020617;
       border: 1px solid var(--border-color);
       border-radius: var(--radius-sm);
       font-family: 'Fira Code', monospace;
-      padding: 1rem;
-      font-size: 0.85rem;
-      line-height: 1.6;
-    }
-
-    /* CODE COMPARISON */
-    .code-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.25rem;
-    }
-
-    @media (max-width: 850px) { .code-grid { grid-template-columns: 1fr; } }
-
-    .code-panel {
-      background: #050811;
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md);
-      overflow: hidden;
-    }
-
-    .code-panel-header {
-      padding: 0.65rem 1rem;
-      background: #0d1322;
-      border-bottom: 1px solid var(--border-color);
-      font-size: 0.8rem;
-      font-weight: 700;
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .code-content {
       padding: 1.25rem;
-      font-family: 'Fira Code', monospace;
       font-size: 0.85rem;
-      white-space: pre;
-      overflow-x: auto;
       line-height: 1.6;
+      min-height: 180px;
     }
 
-    .hl-kw { color: #f472b6; }
-    .hl-imp { color: #38bdf8; }
-    .hl-str { color: #a3e635; }
-    .hl-func { color: #fbbf24; }
-    .hl-comment { color: var(--text-dim); font-style: italic; }
-    .hl-tag { color: #818cf8; }
-    .hl-purple { color: #a855f7; font-weight: bold; }
-    .hl-danger { color: #f43f5e; font-weight: bold; }
-    .hl-green { color: #10b981; font-weight: bold; }
+    /* 200 STATUS REVELATION */
+    .revelation-card {
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.08) 0%, rgba(15, 23, 42, 0.8) 100%);
+      border: 1px solid var(--amber-border);
+      border-radius: var(--radius-lg);
+      padding: 2.2rem;
+      margin-bottom: 2.5rem;
+    }
 
     /* QUIZ */
     .quiz-option {
       background: var(--bg-card-hover);
       border: 1px solid var(--border-color);
-      padding: 1rem;
+      padding: 1rem 1.25rem;
       border-radius: var(--radius-sm);
       margin-bottom: 0.75rem;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 0.75rem;
+      transition: all 0.2s ease;
     }
 
+    .quiz-option:hover { border-color: var(--text-muted); }
     .quiz-option.correct { background: var(--server-bg) !important; border-color: var(--server-color) !important; color: var(--server-color); }
     .quiz-option.incorrect { background: var(--danger-bg) !important; border-color: var(--danger-color) !important; color: var(--danger-color); }
-    .radio-circle { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--text-dim); }
+
+    .radio-circle {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid var(--text-dim);
+      flex-shrink: 0;
+    }
 
     footer {
       text-align: center;
-      padding: 2rem 0;
+      padding: 2.5rem 0;
       color: var(--text-dim);
-      font-size: 0.875rem;
+      font-size: 0.9rem;
       border-top: 1px solid var(--border-color);
-      margin-top: 3rem;
+      margin-top: 3.5rem;
     }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <!-- HERO -->
+    <!-- HERO HEADER -->
     <header class="hero">
       <div class="badge-group">
-        <span class="badge badge-purple">React 19 Hook</span>
-        <span class="badge badge-client">useActionState</span>
-        <span class="badge badge-server">isPending &amp; Returned State</span>
+        <span class="badge badge-purple">React 19 New Hook</span>
+        <span class="badge badge-server">useActionState</span>
+        <span class="badge badge-client">Server Actions Bridge</span>
+        <span class="badge badge-amber">Pure Hinglish Feel</span>
       </div>
-      <h1>Understanding <code>useActionState</code> Hook in React 19 / Next.js</h1>
+      <h1>useActionState Hook: Server Action Return Value Ko Client Me Catch Karna</h1>
       <p class="hero-subtitle">
-        Learn how React 19's <code>useActionState</code> hook bridges Client Component UI with Server Action responses, managing pending states and server feedback objects automatically.
+        Pichle video ka sabse bada suspense solve hone wala hai! Server se data return ho raha tha, Network tab me dikh raha tha, par code me nahi mil raha tha. Aao seekhein <code>useActionState</code> ka tuple destructuring, <code>previousData</code> ka jadoo, loading states, aur Next.js ka 200 HTTP response secret!
       </p>
     </header>
 
-    <!-- SECTION 1: THE PROBLEM VS SOLUTION -->
+    <!-- SECTION 1: THE CLIFFHANGER RESOLVED -->
     <div class="card">
       <div class="card-header">
-        <div class="badge-icon">⚙️</div>
-        <h2>1. Why <code>useActionState</code> is Necessary</h2>
-      </div>
-
-      <div class="arch-grid">
-        <div class="arch-box without-hook">
-          <div class="arch-title">
-            <span>❌ Without useActionState (Lesson 02)</span>
-          </div>
-          <p style="font-size: 0.9rem; color: var(--text-muted);">
-            • Client form has NO way to catch return values (e.g., <code>{ error: "Email exists" }</code>).<br>
-            • NO built-in pending state (users could double-click submit button multiple times!).
-          </p>
-        </div>
-
-        <div class="arch-box with-hook">
-          <div class="arch-title">
-            <span>✅ With useActionState (Lesson 03)</span>
-          </div>
-          <p style="font-size: 0.9rem; color: var(--text-muted);">
-            • <code>state</code> ➔ Captures return value from Server Action for rendering messages.<br>
-            • <code>isPending</code> ➔ Automatically switches to <code>true</code> during execution to disable submit buttons!
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- SECTION 2: HOOK DESTRUCTURING & SIGNATURE CHANGE -->
-    <div class="card">
-      <div class="card-header">
-        <div class="badge-icon">📌</div>
-        <h2>2. Hook Tuple Destructuring &amp; Action Signature Change</h2>
-      </div>
-
-      <div class="tuple-box">
-        <div style="color: var(--purple-color); font-weight: bold; margin-bottom: 0.75rem;">
-          const [state, formAction, isPending] = useActionState(actionFn, initialState);
-        </div>
-
-        <div class="tuple-item" style="border-color: #38bdf8;">
-          <strong style="color: #38bdf8;">1. state:</strong> Contains the latest object returned by the Server Action (starts as <code>initialState</code>).
-        </div>
-        <div class="tuple-item" style="border-color: #a855f7;">
-          <strong style="color: #a855f7;">2. formAction:</strong> The wrapped function to pass to <code>&lt;form action={formAction}&gt;</code>.
-        </div>
-        <div class="tuple-item" style="border-color: #10b981;">
-          <strong style="color: #10b981;">3. isPending:</strong> Boolean flag (<code>true</code> while Server Action is executing, <code>false</code> when done).
+        <div class="badge-icon" style="background: var(--client-bg); color: var(--client-color); border: 1px solid var(--client-border);">🎬</div>
+        <div>
+          <h2>1. Pichle Video Ka Suspense: Return Value Code Me Kaise Aaye?</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">Network Tab me response aa raha hai, par React Component me kaise pakdein?</p>
         </div>
       </div>
 
-      <div style="margin-top: 1.25rem; padding: 1.25rem; background: rgba(251, 191, 36, 0.08); border-left: 4px solid var(--warning-color); border-radius: var(--radius-sm);">
-        <h4 style="color: var(--warning-color); margin-bottom: 0.5rem;">⚠️ CRITICAL: Server Action Signature Transformation!</h4>
-        <p style="font-size: 0.9rem; color: var(--text-main); line-height: 1.7;">
-          When a Server Action function is passed to <code>useActionState</code>, its first argument MUST be <strong><code>previousState</code></strong>!
+      <div class="teacher-box">
+        <div class="teacher-title">👨‍🏫 Instructor Ki Zubani:</div>
+        <p style="font-size: 0.95rem; color: var(--text-main); line-height: 1.7;">
+          <em>"Pichli video me hum client se server data bhej pa rahe the. Server action se return kiya hua data Network tab me preview ho raha tha — `{ message: 'Got the data' }`. Lekin hamare React code me ye data accessible nahi tha! Kyunki `<form action={registerUser}>` ek void action hota hai. Is return value ko apne code me receive karne ke liye hum use karenge React ka naya hook: <strong>useActionState</strong>!"</em>
         </p>
-        <div style="font-family: 'Fira Code', monospace; background: #020617; padding: 0.75rem 1rem; border-radius: 6px; font-size: 0.85rem; color: #fef08a; margin-top: 0.5rem;">
-          // ❌ Before useActionState: registerUser(formData)<br>
-          // ✅ With useActionState:&nbsp;&nbsp;registerUser(<span style="color: #f472b6; font-weight: bold;">previousState</span>, formData)
-        </div>
-      </div>
-    </div>
-
-    <!-- SECTION 3: LIVE SIMULATOR -->
-    <div class="card">
-      <div class="card-header">
-        <div class="badge-icon">🎮</div>
-        <h2>3. Live Interactive <code>useActionState</code> Simulator</h2>
       </div>
 
-      <p style="color: var(--text-muted); margin-bottom: 1.25rem;">
-        Click "Register" below to simulate Server Action execution and observe <code>isPending</code> and <code>state</code> updates in real time:
+      <p style="font-size: 0.95rem; color: var(--text-main); line-height: 1.7;">
+        Ek baat dhyan se samajh lo: <strong>Server Functions aur `use server` directive React ka feature hai, sirf Next.js ka nahi!</strong> Next.js ne is React ke foundation par Server Actions banaye hain. Aur yeh <strong>`useActionState`</strong> hook bhi direct <strong>`react`</strong> package se import hota hai:
       </p>
 
+      <div style="background: #050811; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.9rem 1.25rem; font-family: 'Fira Code', monospace; color: var(--purple-color); font-size: 0.92rem; margin-top: 0.75rem;">
+        import { useActionState } from "react";
+      </div>
+    </div>
+
+    <!-- SECTION 2: TUPLE DESTRUCTURING -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border: 1px solid var(--purple-border);">🧩</div>
+        <div>
+          <h2>2. useActionState Kya Return Karta Hai? (3 Values Ka Array)</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">Instructor ne console.log(a) karke dekha toh 3 cheezein mili</p>
+        </div>
+      </div>
+
+      <p style="font-size: 0.95rem; color: var(--text-main); line-height: 1.7;">
+        Jab hum <code>useActionState(registerUser, {})</code> call karte hain, toh ye hume ek Array (Tuple) return karta hai jisme 3 powerful weapons hote hain:
+      </p>
+
+      <div style="background: #020617; border: 1px solid var(--purple-border); border-radius: var(--radius-sm); padding: 1rem 1.25rem; font-family: 'Fira Code', monospace; font-size: 0.95rem; color: #fff; margin: 1.25rem 0;">
+        const [<span style="color: var(--server-color); font-weight: bold;">state</span>, <span style="color: var(--purple-color); font-weight: bold;">formAction</span>, <span style="color: var(--amber-color); font-weight: bold;">isPending</span>] = useActionState(registerUser, {});
+      </div>
+
+      <div class="tuple-grid">
+        <!-- 1. STATE -->
+        <div class="tuple-item state-box">
+          <span class="tuple-index" style="background: var(--server-bg); color: var(--server-color);">Value 0</span>
+          <div class="tuple-name" style="color: var(--server-color);">
+            <span>📦 state</span>
+          </div>
+          <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6;">
+            Yeh wo variable hai jisme <strong>Server Action ka return value</strong> aakar baithta hai! Jab tak submit nahi hua, tab tak yeh <code>initialState</code> (jo humne second argument me pass kiya) rehta hai. Submit hone ke baad server ka return object isme aa jaata hai.
+          </p>
+        </div>
+
+        <!-- 2. FORMACTION -->
+        <div class="tuple-item action-box">
+          <span class="tuple-index" style="background: var(--purple-bg); color: var(--purple-color);">Value 1</span>
+          <div class="tuple-name" style="color: var(--purple-color);">
+            <span>⚡ formAction</span>
+          </div>
+          <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6;">
+            Yeh ek wrapped function hai jo <code>useActionState</code> hume deta hai. Ab hum original <code>registerUser</code> ko form par nahi lagayenge, balki is <strong><code>formAction</code></strong> ko <code>&lt;form action={formAction}&gt;</code> par lagayenge!
+          </p>
+        </div>
+
+        <!-- 3. ISPENDING -->
+        <div class="tuple-item pending-box">
+          <span class="tuple-index" style="background: var(--amber-bg); color: var(--amber-color);">Value 2</span>
+          <div class="tuple-name" style="color: var(--amber-color);">
+            <span>⏳ isPending</span>
+          </div>
+          <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6;">
+            Ek Boolean (<code>true</code> / <code>false</code>). Jaise hi user ne submit button dabaya, jab tak server se response wapas nahi aa jaata, tab tak yeh <strong><code>true</code></strong> rehta hai! Iska use button disable karne aur loader dikhane ke liye hota hai.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: THE BIG AHA MOMENT (PREVIOUS DATA TRAP) -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--danger-bg); color: var(--danger-color); border: 1px solid var(--danger-border);">💥</div>
+        <div>
+          <h2>3. Bada Trap (Aha Moment #1): "Cannot read properties of undefined (reading 'get')"</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">useActionState lagate hi Server par error kyu aaya aur arguments kaise badle?</p>
+        </div>
+      </div>
+
+      <div class="aha-box">
+        <div class="aha-title">
+          <span>🚨 Server Terminal Par Aaya Fatal Error:</span>
+        </div>
+        <div class="terminal-snippet">TypeError: Cannot read properties of undefined (reading 'get')
+  at registerUser (app/actions/userAction.js:5:18)</div>
+      </div>
+
+      <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1.4rem; margin-top: 1.25rem;">
+        <h4 style="color: var(--amber-color); margin-bottom: 0.6rem; font-size: 1.05rem;">🧠 Dhyan Se Samjho: Arguments Ka Khel Badal Gaya!</h4>
+        <p style="font-size: 0.95rem; color: var(--text-main); line-height: 1.75;">
+          Jab hum Server Action ko seedha <code>&lt;form action={registerUser}&gt;</code> par lagate the, toh function ko sirf 1 argument milta tha: <strong><code>formData</code></strong>.
+          <br><br>
+          Lekin jab aap Server Action ko <strong><code>useActionState</code></strong> ke through pass karte ho, toh React aapke function ko <strong>DO (2) arguments</strong> bhejta hai:
+        </p>
+
+        <div class="code-grid" style="margin-top: 1rem;">
+          <div class="code-panel" style="border-color: var(--danger-border);">
+            <div class="code-panel-header" style="color: var(--danger-color);">❌ Pehle Direct Form Action Tha:</div>
+            <div class="code-content"><span class="hl-imp">export async function</span> <span class="hl-func">registerUser</span>(<span class="hl-danger">formData</span>) {
+  <span class="hl-comment">// Sirf 1 argument milta tha: formData</span>
+  <span class="hl-kw">const</span> name = formData.<span class="hl-func">get</span>(<span class="hl-str">"name"</span>);
+}</div>
+          </div>
+
+          <div class="code-panel" style="border-color: var(--server-border);">
+            <div class="code-panel-header" style="color: var(--server-color);">✅ useActionState Ke Sath Signature:</div>
+            <div class="code-content"><span class="hl-imp">export async function</span> <span class="hl-func">registerUser</span>(<span class="hl-purple">previousData</span>, <span class="hl-green">formData</span>) {
+  <span class="hl-comment">// Argument 1 = previousData (State of previous cycle)</span>
+  <span class="hl-comment">// Argument 2 = formData (Asli form inputs!)</span>
+  <span class="hl-kw">const</span> name = formData.<span class="hl-func">get</span>(<span class="hl-str">"name"</span>);
+}</div>
+          </div>
+        </div>
+
+        <p style="font-size: 0.92rem; color: var(--text-muted); margin-top: 1rem; line-height: 1.7;">
+          <strong style="color: var(--purple-color);">previousData kya hota hai?</strong><br>
+          Pehli baar submit karne par <code>previousData</code> wahi hota hai jo aapne initial state diya tha (jaise `{}` ya `undefined`). Lekin jab user dobara form submit karta hai, toh server action ne pichli cycle me jo return kiya tha (jaise `{ message: "procodrr@gmail.com registered" }`), wo <code>previousData</code> bankar server ke paas wapas pahunchta hai!
+        </p>
+      </div>
+    </div>
+
+    <!-- SECTION 4: INITIAL STATE FIX -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--amber-bg); color: var(--amber-color); border: 1px solid var(--amber-border);">💡</div>
+        <div>
+          <h2>4. Trap #2: Cannot read properties of undefined (reading 'message')</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">Initial State pass karna kyu mandatory ban jaata hai?</p>
+        </div>
+      </div>
+
+      <p style="font-size: 0.95rem; color: var(--text-main); line-height: 1.7;">
+        Instructor ne jab UI par message show karne ke liye likha:
+        <code style="color: var(--purple-color); font-size: 0.9rem;">&lt;p&gt;{state.message}&lt;/p&gt;</code>, toh page crash ho gaya!
+        <br>
+        <strong>Kyun?</strong> Kyunki by default <code>state</code> ki initial value <code>undefined</code> hoti hai. Aur JavaScript me <code>undefined.message</code> padhne jaoge toh browser fat jayega!
+      </p>
+
+      <div style="background: rgba(16, 185, 129, 0.08); border-left: 4px solid var(--server-color); border-radius: var(--radius-sm); padding: 1.25rem; margin-top: 1rem;">
+        <h4 style="color: var(--server-color); margin-bottom: 0.4rem; font-size: 1rem;">✅ The Clean Fix: Initial Value Pass Karo</h4>
+        <div style="font-family: 'Fira Code', monospace; color: var(--text-main); font-size: 0.9rem;">
+          const [state, formAction, isPending] = useActionState(registerUser, <span style="color: #a3e635; font-weight: bold;">{}</span>);
+        </div>
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 0.5rem;">
+          Ab page load hote hi <code>state</code> ek empty object <code>{}</code> hoga. Aur <code>{}.message</code> JavaScript me error nahi deta, balki safely <code>undefined</code> return karta hai, jisse UI crash hone se bach jaata hai!
+        </p>
+      </div>
+    </div>
+
+    <!-- SECTION 5: LIVE INTERACTIVE SIMULATOR -->
+    <div class="card">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border: 1px solid var(--purple-border);">🎮</div>
+        <div>
+          <h2>5. Live Interactive Simulator (With Network Throttling &amp; isPending)</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">Slow 4G lagao, submit karo, aur dekho button kaise disable hota hai aur response kaise aata hai!</p>
+        </div>
+      </div>
+
       <div class="simulator-container">
+        <!-- CONTROLS -->
+        <div class="sim-controls">
+          <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem;">
+            <span>🌐 Network Speed:</span>
+            <select id="sim-speed" style="background: #020617; border: 1px solid var(--border-color); color: var(--text-main); padding: 0.35rem 0.75rem; border-radius: 4px; font-family: 'Fira Code', monospace;">
+              <option value="fast">Fast (Instant - 300ms)</option>
+              <option value="slow" selected>Slow 4G Throttling (2000ms delay)</option>
+            </select>
+          </label>
+
+          <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem; margin-left: auto;">
+            <span>Server Response Mode:</span>
+            <select id="sim-response-mode" style="background: #020617; border: 1px solid var(--border-color); color: var(--text-main); padding: 0.35rem 0.75rem; border-radius: 4px; font-family: 'Fira Code', monospace;">
+              <option value="success">Success ({ message: "email registered" })</option>
+              <option value="error">Error ({ error: "email not registered" })</option>
+            </select>
+          </label>
+        </div>
+
+        <!-- FORM -->
         <div class="sim-form">
           <div class="form-group">
-            <label>Name</label>
+            <label>Name <span>name="name"</span></label>
             <input id="input-name" type="text" value="ProCodrr">
           </div>
           <div class="form-group">
-            <label>Email</label>
+            <label>Email <span>name="email"</span></label>
             <input id="input-email" type="email" value="procodrr@gmail.com">
           </div>
-
-          <div id="status-badge" style="font-size: 0.8rem; font-family: 'Fira Code', monospace; padding: 0.5rem; border-radius: 4px; background: rgba(56, 189, 248, 0.1); color: var(--client-color); margin-bottom: 0.5rem;">
-            isPending: false | state: {}
+          <div class="form-group">
+            <label>Password <span>name="password"</span></label>
+            <input id="input-password" type="password" value="123456">
           </div>
 
-          <div id="message-display" style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem;"></div>
+          <!-- STATUS MESSAGE PARAGRAPH -->
+          <div id="sim-status-msg" class="status-msg-box"></div>
 
-          <button id="sim-btn" class="sim-btn-submit" onclick="simulateActionState()">
-            Register (useActionState)
+          <!-- SUBMIT BUTTON -->
+          <button id="sim-submit-btn" class="sim-btn-submit" onclick="runHookSimulation()">
+            <span>Register (Submit)</span>
           </button>
+
+          <div style="font-size: 0.78rem; font-family: 'Fira Code', monospace; color: var(--amber-color); text-align: center;">
+            isPending: <span id="pending-status-text">false</span> | Button Disabled: <span id="btn-disabled-text">false</span>
+          </div>
         </div>
 
+        <!-- CONSOLE -->
         <div id="sim-console" class="mock-console">
-          Console Log: System initialized. Click Register to test.
+          <span style="color: var(--text-dim);">// Ready! Click Register to see useActionState in action.</span>
         </div>
       </div>
     </div>
 
-    <!-- SECTION 4: CODE COMPARISON -->
+    <!-- SECTION 6: 200 STATUS REVELATION -->
+    <div class="revelation-card">
+      <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+        <span style="font-size: 2rem;">⚡</span>
+        <h2 style="font-size: 1.4rem; color: var(--amber-color); font-weight: 800;">6. Sabse Bada Architectural Revelation: Server Actions Me Hamesha 200 OK Kyu Aata Hai?</h2>
+      </div>
+
+      <p style="font-size: 1rem; color: var(--text-main); line-height: 1.8;">
+        Purane REST API routes me jab user galat password daalta tha ya account nahi banta tha, toh hum backend se <strong>HTTP 400 ya 500</strong> bhejte the:
+        <code style="color: var(--danger-color);">res.status(400).json({ error: "Failed" })</code>.
+      </p>
+
+      <div style="background: rgba(11, 15, 25, 0.9); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.4rem; margin: 1.25rem 0;">
+        <h4 style="color: var(--server-color); font-size: 1.1rem; margin-bottom: 0.5rem;">🔥 Server Actions Ka Golden Rule:</h4>
+        <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.75;">
+          <strong>Server Actions REST API ki tarah behave nahi karte!</strong> Server Action hamesha ek <strong>HTTP POST</strong> request hota hai aur uska HTTP Status code hamesha <strong><code>200 OK</code></strong> hi hota hai — chahe database fail ho, ya user validation fail ho!
+          <br><br>
+          Agar error aata hai, toh hum server se payload ke andar data bhejte hain jaise:
+          <br>
+          <code style="color: #fda4af;">return { error: "procodrr@gmail.com not registered" }</code> ya <code style="color: #fda4af;">return { myError: "Something went wrong" }</code>.
+          <br><br>
+          Aap property ka naam kuch bhi rakh sakte ho (<code>error</code>, <code>myError</code>, <code>status</code>). Phir UI par aap <code>state.error</code> ya <code>state.message</code> check karke red/green text dikha sakte ho.
+        </p>
+      </div>
+    </div>
+
+    <!-- SECTION 7: SIDE-BY-SIDE CODE BREAKDOWN -->
     <div class="card">
       <div class="card-header">
-        <div class="badge-icon">🔍</div>
-        <h2>4. Side-by-Side Code Anatomy</h2>
+        <div class="badge-icon" style="background: var(--client-bg); color: var(--client-color); border: 1px solid var(--client-border);">💻</div>
+        <div>
+          <h2>7. Project Files Ka Final Code (Side-by-Side View)</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">app/register/page.js aur app/actions/userAction.js ka exact working code</p>
+        </div>
       </div>
 
       <div class="code-grid">
+        <!-- PAGE.JS -->
         <div class="code-panel">
           <div class="code-panel-header">
-            <span style="color: var(--client-color);">app/register/page.js</span>
-            <span>Client Component</span>
+            <span style="color: var(--client-color);">🌐 app/register/page.js ("use client")</span>
+            <span class="badge badge-client">React 19 Hook</span>
           </div>
-          <div class="code-content"><span class="hl-str">"use client"</span>;
-
-<span class="hl-imp">import</span> { useActionState } <span class="hl-imp">from</span> <span class="hl-str">"react"</span>;
+          <div class="code-content"><span class="hl-kw">"use client"</span>;
+<span class="hl-imp">import</span> { useActionState, useState } <span class="hl-imp">from</span> <span class="hl-str">"react"</span>;
 <span class="hl-imp">import</span> { registerUser } <span class="hl-imp">from</span> <span class="hl-str">"../actions/userAction"</span>;
 
-<span class="hl-kw">export default function</span> <span class="hl-func">RegisterPage</span>() {
-  <span class="hl-kw">const</span> [state, formAction, isPending] = 
-    <span class="hl-purple">useActionState</span>(registerUser, {});
+<span class="hl-imp">export default function</span> <span class="hl-func">RegisterPage</span>() {
+  <span class="hl-comment">// Destructure state, formAction, isPending</span>
+  <span class="hl-kw">const</span> [<span class="hl-server">state</span>, <span class="hl-purple">formAction</span>, <span class="hl-amber">isPending</span>] = <span class="hl-func">useActionState</span>(registerUser, <span class="hl-green">{}</span>);
 
-  <span class="hl-kw">return</span> (
-    &lt;<span class="hl-tag">form</span> action={<span class="hl-purple">formAction</span>}&gt;
-      &lt;<span class="hl-tag">input</span> name=<span class="hl-str">"email"</span> /&gt;
-      
-      {state.error &amp;&amp; &lt;<span class="hl-tag">p</span> className=<span class="hl-str">"error"</span>&gt;{state.error}&lt;/<span class="hl-tag">p</span>&gt;}
-      {state.message &amp;&amp; &lt;<span class="hl-tag">p</span> className=<span class="hl-str">"success"</span>&gt;{state.message}&lt;/<span class="hl-tag">p</span>&gt;}
+  <span class="hl-kw">const</span> [name, setName] = <span class="hl-func">useState</span>(<span class="hl-str">"ProCodrr"</span>);
+  <span class="hl-kw">const</span> [email, setEmail] = <span class="hl-func">useState</span>(<span class="hl-str">"procodrr@gmail.com"</span>);
+  <span class="hl-kw">const</span> [password, setPassword] = <span class="hl-func">useState</span>(<span class="hl-str">"123456"</span>);
 
-      &lt;<span class="hl-tag">button</span> <span class="hl-danger">disabled={isPending}</span>&gt;
-        {isPending ? <span class="hl-str">"Loading..."</span> : <span class="hl-str">"Register"</span>}
-      &lt;/<span class="hl-tag">button</span>&gt;
-    &lt;/<span class="hl-tag">form</span>&gt;
+  <span class="hl-imp">return</span> (
+    <span class="hl-tag">&lt;form</span> <span class="hl-green">action={formAction}</span><span class="hl-tag">&gt;</span>
+      <span class="hl-tag">&lt;input</span> <span class="hl-danger">name="name"</span> <span class="hl-kw">value</span>={name} <span class="hl-kw">onChange</span>={...} <span class="hl-tag">/&gt;</span>
+      <span class="hl-tag">&lt;input</span> <span class="hl-danger">name="email"</span> <span class="hl-kw">value</span>={email} <span class="hl-kw">onChange</span>={...} <span class="hl-tag">/&gt;</span>
+      <span class="hl-tag">&lt;input</span> <span class="hl-danger">name="password"</span> <span class="hl-kw">value</span>={password} <span class="hl-kw">onChange</span>={...} <span class="hl-tag">/&gt;</span>
+
+      <span class="hl-comment">{/* Show Return Values */}</span>
+      <span class="hl-tag">&lt;p</span> <span class="hl-kw">className</span>=<span class="hl-str">"text-xs text-green-500"</span><span class="hl-tag">&gt;</span>{state.message}<span class="hl-tag">&lt;/p&gt;</span>
+      <span class="hl-tag">&lt;p</span> <span class="hl-kw">className</span>=<span class="hl-str">"text-xs text-red-500"</span><span class="hl-tag">&gt;</span>{state.error}<span class="hl-tag">&lt;/p&gt;</span>
+
+      <span class="hl-tag">&lt;button</span>
+        <span class="hl-kw">type</span>=<span class="hl-str">"submit"</span>
+        <span class="hl-purple">disabled={isPending}</span>
+        <span class="hl-kw">className</span>=<span class="hl-str">"disabled:opacity-50 disabled:cursor-not-allowed"</span>
+      <span class="hl-tag">&gt;</span>
+        Register
+      <span class="hl-tag">&lt;/button&gt;</span>
+    <span class="hl-tag">&lt;/form&gt;</span>
   );
 }</div>
         </div>
 
+        <!-- USERACTION.JS -->
         <div class="code-panel">
           <div class="code-panel-header">
-            <span style="color: var(--server-color);">app/actions/userAction.js</span>
-            <span>Server Action File</span>
+            <span style="color: var(--server-color);">⚙️ app/actions/userAction.js ("use server")</span>
+            <span class="badge badge-server">Server Handler</span>
           </div>
-          <div class="code-content"><span class="hl-green">"use server"</span>;
+          <div class="code-content"><span class="hl-kw">"use server"</span>;
 
-<span class="hl-comment">// 👈 Must accept previousData as 1st parameter!</span>
-<span class="hl-kw">export async function</span> <span class="hl-func">registerUser</span>(<span class="hl-purple">previousData</span>, formData) {
+<span class="hl-comment">// Notice the 2 parameters: previousData & formData!</span>
+<span class="hl-imp">export async function</span> <span class="hl-func">registerUser</span>(<span class="hl-purple">previousData</span>, <span class="hl-green">formData</span>) {
+  console.<span class="hl-func">log</span>({ previousData });
+
+  <span class="hl-kw">const</span> name = formData.<span class="hl-func">get</span>(<span class="hl-str">"name"</span>);
   <span class="hl-kw">const</span> email = formData.<span class="hl-func">get</span>(<span class="hl-str">"email"</span>);
+  <span class="hl-kw">const</span> password = formData.<span class="hl-func">get</span>(<span class="hl-str">"password"</span>);
 
-  <span class="hl-comment">// Simulate DB check logic:</span>
-  <span class="hl-kw">if</span> (email === <span class="hl-str">"procodrr@gmail.com"</span>) {
-    <span class="hl-kw">return</span> { <span class="hl-str">error</span>: <span class="hl-str">`${email} not registered`</span> };
-  }
+  <span class="hl-comment">// Success Case:</span>
+  <span class="hl-comment">// return { message: `${email} registered` };</span>
 
-  <span class="hl-kw">return</span> { <span class="hl-str">message</span>: <span class="hl-str">`${email} registered successfully!`</span> };
+  <span class="hl-comment">// Error Case:</span>
+  <span class="hl-imp">return</span> {
+    error: <span class="hl-str">`${email} not registered`</span>
+  };
 }</div>
         </div>
       </div>
     </div>
 
-    <!-- SECTION 5: KNOWLEDGE CHECK -->
+    <!-- SECTION 8: CLIFFHANGER & HOMEWORK (CHAPTER 04 PREVIEW) -->
+    <div class="card" style="border-color: var(--purple-border); background: linear-gradient(135deg, rgba(192, 132, 252, 0.08) 0%, rgba(15, 23, 42, 0.8) 100%);">
+      <div class="card-header">
+        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border: 1px solid var(--purple-border);">🎯</div>
+        <div>
+          <h2>8. Instructor Ka Homework &amp; Agle Chapter Ka Teaser!</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">Client-side validation vs Server-side validation ka suspension</p>
+        </div>
+      </div>
+
+      <p style="font-size: 1rem; color: var(--text-main); line-height: 1.75;">
+        Video ke end me instructor ne ek bahut zaroori mudda uthaya:
+        <br><br>
+        <em>"Abhi tak jab hum form submit kar rahe hain, toh button click hote hi data sidha server par chala jaata hai. Hamare paas data ko submit hone se pehle check karne ka koi control nahi hai! Agar hume Javascript/React ke level par validation lagana ho (jaise: Name kam se kam 3 characters ka ho, Password ka pattern match ho), toh hum kaise karenge?"</em>
+      </p>
+
+      <div style="background: rgba(11, 15, 25, 0.9); border-left: 4px solid var(--purple-color); border-radius: var(--radius-sm); padding: 1.3rem; margin-top: 1.25rem;">
+        <h4 style="color: var(--purple-color); font-size: 1.05rem; margin-bottom: 0.5rem;">🔥 Dono Taraf Validation Kyu Zaroori Hai?</h4>
+        <ul style="margin-left: 1.5rem; font-size: 0.93rem; color: var(--text-muted); line-height: 1.8;">
+          <li><strong>Client-Side Validation (Next Video):</strong> User ko turant fast feedback dene ke liye taaki bina server request gaye hi pata chal jaye ki form galat hai.</li>
+          <li><strong>Server-Side Validation (Uske Baad):</strong> Security ke liye! Kyunki koi bhi smart developer ya hacker browser validation bypass karke directly Server Action ko hit kar sakta hai!</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- SECTION 9: QUIZ -->
     <div class="card">
       <div class="card-header">
-        <div class="badge-icon">❓</div>
-        <h2>5. Quick Knowledge Check</h2>
+        <div class="badge-icon" style="background: var(--amber-bg); color: var(--amber-color); border: 1px solid var(--amber-border);">🧠</div>
+        <div>
+          <h2>9. Quick Quiz: Apne Concepts Test Karo</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">Sahi option choose karo</p>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 1.5rem;">
+        <p style="font-weight: 700; margin-bottom: 0.75rem;">Sawaal 1: Jab hum Server Action ko useActionState ke sath use karte hain, toh Server Action ko kitne arguments milte hain?</p>
+        <div class="quiz-option" onclick="checkQuiz(this, false)">
+          <div class="radio-circle"></div>
+          <span>Sirf 1 argument milta hai: formData</span>
+        </div>
+        <div class="quiz-option" onclick="checkQuiz(this, true)">
+          <div class="radio-circle"></div>
+          <span>2 arguments milte hain: Pehla previousData aur doosra formData!</span>
+        </div>
+        <div class="quiz-option" onclick="checkQuiz(this, false)">
+          <div class="radio-circle"></div>
+          <span>3 arguments milte hain: req, res aur next</span>
+        </div>
       </div>
 
       <div>
-        <h4 style="margin-bottom: 0.75rem;">Q1: What parameter does a Server Action receive as its FIRST argument when passed to useActionState?</h4>
-        <div class="quiz-option" onclick="checkAnswer(this, false)">
-          <span class="radio-circle"></span>
-          <span>A) The native FormData object.</span>
+        <p style="font-weight: 700; margin-bottom: 0.75rem;">Sawaal 2: Server Action me jab koi validation error aata hai, toh HTTP status code kya hota hai?</p>
+        <div class="quiz-option" onclick="checkQuiz(this, false)">
+          <div class="radio-circle"></div>
+          <span>HTTP 400 Bad Request ya 500 Internal Error</span>
         </div>
-        <div class="quiz-option" onclick="checkAnswer(this, true)">
-          <span class="radio-circle"></span>
-          <span>B) The previousState object (the state from the previous execution or initial state).</span>
-        </div>
-        <div class="quiz-option" onclick="checkAnswer(this, false)">
-          <span class="radio-circle"></span>
-          <span>C) The HTTP Request object.</span>
+        <div class="quiz-option" onclick="checkQuiz(this, true)">
+          <div class="radio-circle"></div>
+          <span>Hamesha HTTP 200 OK hota hai, aur error payload ke roop me return hota hai!</span>
         </div>
       </div>
     </div>
 
-    <!-- SECTION 6: POORA SAAR / HINGLISH GOLDEN RULE -->
-    <div class="card">
+    <!-- SECTION 10: POORA SAAR -->
+    <div class="card" style="border-color: rgba(16, 185, 129, 0.4); background: linear-gradient(180deg, rgba(16, 185, 129, 0.05) 0%, rgba(15, 23, 42, 0.8) 100%);">
       <div class="card-header">
-        <div class="badge-icon" style="background: var(--purple-bg); color: var(--purple-color); border-color: rgba(168, 85, 247, 0.4);">💡</div>
-        <h2>6. Poora Saar &amp; Golden Master Rule (Hinglish)</h2>
+        <div class="badge-icon" style="background: var(--server-bg); color: var(--server-color); border: 1px solid var(--server-border);">⭐</div>
+        <div>
+          <h2>10. Poora Saar (Golden Key Takeaways)</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">Aapki jeb me rakhne layak 6 sabse zaroori baatein</p>
+        </div>
       </div>
 
-      <div style="padding: 1.5rem; background: #020617; border-left: 5px solid var(--purple-color); border-radius: var(--radius-md);">
-        <h3 style="color: var(--purple-color); margin-bottom: 0.75rem; font-size: 1.15rem;">💡 useActionState Hook Ka Poora Saar:</h3>
-
-        <p style="font-size: 0.98rem; color: var(--text-main); line-height: 1.8; margin-bottom: 1rem;">
-          React 19 ka <strong><code>useActionState</code></strong> hook Server Actions ke saath kaam karne ke liye ek absolute Game Changer hai!
-        </p>
-
-        <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 1.25rem;">
-          Ye humein ek 3-item array tuple deta hai: <code>const [state, formAction, isPending] = useActionState(actionFn, initialState);</code>
-          <br><br>
-          1. <strong>`state`</strong> ➔ Server Action se return hone wale response object (`{ message: "...", error: "..." }`) ko hold karta hai.
-          <br>2. <strong>`formAction`</strong> ➔ Iss function ko `<form action={formAction}>` par pass karte hain.
-          <br>3. <strong>`isPending`</strong> ➔ Server Action execution ke dauran automatic `true` hota hai, jisse hum submit button ko `disabled={isPending}` karke double-submission rokte hain!
-          <br><br>
-          <strong>⚠️ Signature Transformation Rule:</strong>
-          Jab Server Action `useActionState` me pass hota hai, toh uske parameters badal jaate hain:
-          <code>async function registerUser(previousState, formData)</code> ➔ Sabse pehla parameter <strong>`previousState`</strong> ban jata hai aur dusra parameter <strong>`formData`</strong>!
-        </p>
-
-        <div style="background: rgba(168, 85, 247, 0.1); border: 1px dashed var(--purple-color); padding: 1rem; border-radius: var(--radius-sm); font-size: 0.9rem;">
-          <strong style="color: var(--purple-color); display: block; margin-bottom: 0.5rem;">🔥 useActionState Master Formula:</strong>
-          <ul style="padding-left: 1.2rem; line-height: 1.8; color: var(--text-main);">
-            <li><strong>1. Tuple Destructuring 📦</strong> ➔ <code>const [state, formAction, isPending] = useActionState(registerUser, {});</code></li>
-            <li><strong>2. Parameter Shift ⚙️</strong> ➔ Server Action function signature MUST be <code>(previousState, formData)</code>.</li>
-            <li><strong>3. Dynamic UI Response 🎨</strong> ➔ Render <code>{state.message}</code> for success and disable buttons with <code>disabled={isPending}</code>.</li>
-          </ul>
-        </div>
+      <div style="font-size: 0.95rem; color: var(--text-main); line-height: 1.85;">
+        <ul style="margin-left: 1.5rem; display: flex; flex-direction: column; gap: 0.8rem;">
+          <li><strong>useActionState Import:</strong> Yeh React 19 ka hook hai, isko <code>react</code> package se import kiya jaata hai.</li>
+          <li><strong>Tuple Destructuring:</strong> <code>const [state, formAction, isPending] = useActionState(action, initialState)</code>.</li>
+          <li><strong>Function Signature Trap:</strong> <code>useActionState</code> lagate hi Server Action ka pehla parameter <code>previousData</code> ban jaata hai aur doosra <code>formData</code>!</li>
+          <li><strong>Initial State Zaroori Hai:</strong> <code>useActionState(registerUser, {})</code> me empty object <code>{}</code> pass karne se <code>state.message</code> padhne par page crash nahi hota.</li>
+          <li><strong>isPending UX:</strong> Form submit hone par <code>isPending = true</code> hota hai, jisse button disable aur opacity low ki ja sakti hai duplicate submission rokne ke liye.</li>
+          <li><strong>HTTP 200 OK Everywhere:</strong> Server actions me traditional status codes (400/500) nahi aate; success aur error dono 200 OK me custom JSON objects ke roop me aate hain.</li>
+        </ul>
       </div>
     </div>
 
     <footer>
-      Next.js useActionState Hook Guide &bull; Section 11 Lesson 03
+      Next.js Deep Dive Series • Section 11: Server Actions • Chapter 03: useActionState Hook Complete Guide
     </footer>
   </div>
 
   <script>
-    function simulateActionState() {
-      const email = document.getElementById('input-email').value;
-      const statusBadge = document.getElementById('status-badge');
-      const messageDisplay = document.getElementById('message-display');
-      const consoleBox = document.getElementById('sim-console');
-      const btn = document.getElementById('sim-btn');
+    let cycleCount = 0;
+    let lastState = {};
 
-      // Step 1: Set pending state
-      btn.disabled = true;
-      btn.innerText = "Registering (isPending: true)...";
-      statusBadge.style.color = "var(--warning-color)";
-      statusBadge.style.background = "rgba(251, 191, 36, 0.1)";
-      statusBadge.innerText = "isPending: true | state: {} (Executing Server Action on Node.js...)";
+    function runHookSimulation() {
+      const name = document.getElementById('input-name').value;
+      const email = document.getElementById('input-email').value;
+      const password = document.getElementById('input-password').value;
+      const speed = document.getElementById('sim-speed').value;
+      const responseMode = document.getElementById('sim-response-mode').value;
+      
+      const submitBtn = document.getElementById('sim-submit-btn');
+      const pendingText = document.getElementById('pending-status-text');
+      const btnDisabledText = document.getElementById('btn-disabled-text');
+      const statusBox = document.getElementById('sim-status-msg');
+      const consoleBox = document.getElementById('sim-console');
+
+      const delay = speed === 'slow' ? 2000 : 300;
+      cycleCount++;
+
+      // STEP 1: PENDING ACTIVATION
+      submitBtn.disabled = true;
+      pendingText.innerText = 'true';
+      pendingText.style.color = '#38bdf8';
+      btnDisabledText.innerText = 'true';
+      btnDisabledText.style.color = '#f43f5e';
+      submitBtn.innerHTML = '<span>⏳ Submitting... (isPending: true)</span>';
 
       consoleBox.innerHTML = `
-        <span style="color: var(--warning-color)">[CLIENT] isPending switched to TRUE! Submit button disabled.</span><br>
-        <span style="color: var(--purple-color)">[SERVER] Executing registerUser(previousData, formData)...</span>
+        <span style="color: var(--purple-color)">[CYCLE #${cycleCount} STARTED]</span><br>
+        <span style="color: var(--client-color)">[useActionState] isPending set to TRUE. Button Disabled!</span><br>
+        <span style="color: var(--text-dim)">[RPC POST] Dispatching to /register with Action Hash ID... (Network Delay: ${delay}ms)</span>
       `;
 
-      // Step 2: Simulate 1.5s server response
       setTimeout(() => {
-        btn.disabled = false;
-        btn.innerText = "Register (useActionState)";
-        statusBadge.style.color = "var(--server-color)";
-        statusBadge.style.background = "rgba(16, 185, 129, 0.1)";
+        // STEP 2: SERVER EXECUTION
+        const previousDataForLog = JSON.stringify(lastState);
+        let returnPayload = {};
 
-        if (email === "procodrr@gmail.com") {
-          const resObj = { error: `${email} not registered` };
-          statusBadge.innerText = `isPending: false | state: ${JSON.stringify(resObj)}`;
-          messageDisplay.style.color = "var(--danger-color)";
-          messageDisplay.innerText = resObj.error;
-
-          consoleBox.innerHTML += `<br><span style="color: var(--danger-color)">[SERVER RETURN] ${JSON.stringify(resObj)}</span><br><span style="color: var(--server-color)">[CLIENT STATE UPDATE] state updated! Rendered error string.</span>`;
+        if (responseMode === 'success') {
+          returnPayload = { message: `${email} registered successfully!` };
+          statusBox.className = 'status-msg-box success';
+          statusBox.innerText = returnPayload.message;
         } else {
-          const resObj = { message: `${email} registered successfully!` };
-          statusBadge.innerText = `isPending: false | state: ${JSON.stringify(resObj)}`;
-          messageDisplay.style.color = "var(--server-color)";
-          messageDisplay.innerText = resObj.message;
-
-          consoleBox.innerHTML += `<br><span style="color: var(--server-color)">[SERVER RETURN] ${JSON.stringify(resObj)}</span><br><span style="color: var(--server-color)">[CLIENT STATE UPDATE] state updated! Rendered success message.</span>`;
+          returnPayload = { error: `${email} not registered (Simulated Error)` };
+          statusBox.className = 'status-msg-box error';
+          statusBox.innerText = returnPayload.error;
         }
-      }, 1500);
+
+        lastState = returnPayload;
+
+        // STEP 3: RESET PENDING & UPDATE STATE
+        submitBtn.disabled = false;
+        pendingText.innerText = 'false';
+        pendingText.style.color = 'var(--text-dim)';
+        btnDisabledText.innerText = 'false';
+        btnDisabledText.style.color = 'var(--text-dim)';
+        submitBtn.innerHTML = '<span>Register (Submit)</span>';
+
+        consoleBox.innerHTML += `<br>
+          <span style="color: var(--server-color)">[NODE.JS SERVER TERMINAL] registerUser(previousData, formData) executed:</span><br>
+          <span style="color: var(--amber-color)">&nbsp;&nbsp;➔ previousData = ${previousDataForLog}</span><br>
+          <span style="color: var(--server-color)">&nbsp;&nbsp;➔ formData: name="${name}", email="${email}"</span><br>
+          <span style="color: var(--server-color)">&nbsp;&nbsp;➔ Server Returned: ${JSON.stringify(returnPayload)} (HTTP 200 OK)</span><br>
+          <span style="color: var(--purple-color)">[REACT RE-RENDER] state variable updated!</span><br>
+          <span style="color: var(--client-color)">[UI UPDATED] &lt;p&gt; displayed message/error on screen!</span>
+        `;
+      }, delay);
     }
 
-    function checkAnswer(element, isCorrect) {
+    function checkQuiz(element, isCorrect) {
       const parent = element.parentElement;
-      parent.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('correct', 'incorrect'));
+      parent.querySelectorAll('.quiz-option').forEach(el => {
+        el.classList.remove('correct', 'incorrect');
+      });
       if (isCorrect) element.classList.add('correct');
       else element.classList.add('incorrect');
     }
